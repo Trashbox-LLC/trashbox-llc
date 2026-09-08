@@ -20,6 +20,13 @@ import {
 import { PortalSkeleton } from "@/components/features/portal/PortalSkeleton";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
+import {
+  displayPlanTier,
+  planDisplayName,
+  showManageBilling,
+  showStripeCheckout,
+  showUpgradeToTeam,
+} from "@/lib/form-plans";
 import { usePortal, type PortalTab } from "@/lib/portal";
 import { PORTAL_PATHS } from "@/lib/sites";
 import { cn } from "@/lib/utils";
@@ -156,21 +163,20 @@ export function PortalApp({ tab }: PortalAppProps) {
                   Subscription
                 </p>
                 <h2 className="font-headline mt-3 text-2xl font-bold text-white md:text-3xl">
-                  {portal.account.hasBilling
-                    ? portal.account.tier === "team"
-                      ? "Team"
-                      : "Solo"
-                    : "Free"}
+                  {planDisplayName(displayPlanTier(portal.account.tier))}
                 </h2>
                 <p className="text-on-surface-variant mt-3 max-w-2xl text-sm leading-relaxed">
-                  {portal.account.hasBilling
-                    ? portal.account.tier === "team"
-                      ? "Team includes up to 5 seats, 5,000 submissions / month, and submitter confirmations."
-                      : "Solo includes 1 seat and 500 submissions / month. Upgrade to Team for more seats and confirmations."
-                    : "Free includes 10 submissions / month. Add Solo or Team when you need more."}
+                  {displayPlanTier(portal.account.tier) === "team"
+                    ? "Team includes up to 5 seats, 5,000 submissions / month, and submitter confirmations."
+                    : displayPlanTier(portal.account.tier) === "solo"
+                      ? "Solo includes 1 seat and 500 submissions / month. Upgrade to Team for more seats and confirmations."
+                      : "Free includes 10 submissions / month. Add Solo or Team when you need more."}
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  {!portal.account.hasBilling && (
+                  {showStripeCheckout(
+                    portal.account.tier,
+                    Boolean(portal.account.hasBilling),
+                  ) && (
                     <>
                       <Button
                         type="button"
@@ -191,19 +197,21 @@ export function PortalApp({ tab }: PortalAppProps) {
                       </Button>
                     </>
                   )}
-                  {portal.account.hasBilling &&
-                    portal.account.tier !== "team" && (
-                      <Button
-                        type="button"
-                        disabled={portal.billingBusy}
-                        onClick={() => void portal.onUpgrade("team")}
-                      >
-                        {portal.billingBusy
-                          ? "Redirecting…"
-                          : "Upgrade to Team"}
-                      </Button>
-                    )}
-                  {portal.account.hasBilling && (
+                  {showUpgradeToTeam(
+                    portal.account.tier,
+                    Boolean(portal.account.hasBilling),
+                  ) && (
+                    <Button
+                      type="button"
+                      disabled={portal.billingBusy}
+                      onClick={() => void portal.onUpgrade("team")}
+                    >
+                      {portal.billingBusy
+                        ? "Redirecting…"
+                        : "Upgrade to Team"}
+                    </Button>
+                  )}
+                  {showManageBilling(Boolean(portal.account.hasBilling)) && (
                     <Button
                       type="button"
                       variant="outline"

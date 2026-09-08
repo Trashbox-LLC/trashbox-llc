@@ -66,4 +66,51 @@ describe("BillingPlanSettings", () => {
       screen.getByRole("progressbar", { name: /team member seats/i }),
     ).toHaveAttribute("aria-valuemax", "5");
   });
+
+  it("shows agency-granted Solo without Stripe checkout", () => {
+    render(
+      <StubAuthProvider
+        value={{
+          status: "signedIn",
+          configured: true,
+          email: "owner@example.com",
+        }}
+      >
+        <StubPortalProvider
+          value={{
+            ready: true,
+            account: {
+              linked: true,
+              email: "owner@example.com",
+              orgId: "o1",
+              tier: "solo",
+              hasBilling: false,
+              role: "owner",
+              submissionsUsed: 3,
+              submissionLimit: 500,
+              memberCount: 1,
+              memberLimit: 1,
+            },
+            billingBusy: false,
+            onUpgrade: async () => undefined,
+            onManageBilling: async () => undefined,
+          }}
+        >
+          <BillingPlanSettings
+            org={{ ...org, tier: "solo", hasBilling: false }}
+          />
+        </StubPortalProvider>
+      </StubAuthProvider>,
+    );
+
+    expect(
+      screen.getAllByRole("heading", { name: /^Solo$/i }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole("button", { name: /add solo plan/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /manage billing/i }),
+    ).not.toBeInTheDocument();
+  });
 });

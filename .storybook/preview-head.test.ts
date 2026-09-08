@@ -11,6 +11,8 @@ describe("Storybook preview fonts", () => {
 
     expect(head).toContain("fonts.googleapis.com");
     expect(head).toContain("Material+Symbols+Outlined");
+    expect(head).toContain("100..700");
+    expect(head).toContain("display=block");
     expect(head).toContain("family=Manrope");
     expect(head).toContain("family=Space+Grotesk");
   });

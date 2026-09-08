@@ -3,6 +3,7 @@ import { Manrope, Space_Grotesk } from "next/font/google";
 import { AuthProvider } from "@/lib/auth";
 import { MarketingLayout } from "@/components/features/marketing/MarketingLayout";
 import { Toaster } from "@/components/ui/sonner";
+import { MATERIAL_SYMBOLS_STYLESHEET } from "@/lib/material-symbols";
 import "@/styles/globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -55,7 +56,7 @@ export default function RootLayout({
         {/* precedence="low" so globals.css (1.25rem) wins over Google's default 24px */}
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,200,0,0"
+          href={MATERIAL_SYMBOLS_STYLESHEET}
           precedence="low"
         />
       </head>

@@ -79,3 +79,27 @@ export function planDisplayName(tier: PlanTier): string {
 export function seatsForPlanTier(tier: PlanTier): number {
   return FORM_PLANS.find((p) => p.id === normalizePlanTier(tier))?.seats ?? 1;
 }
+
+/** Stored tier is the plan, including agency-granted Solo/Team without Stripe. */
+export function displayPlanTier(tier: PlanTier | string | undefined): PlanTier {
+  return normalizePlanTier(tier);
+}
+
+/** Stripe checkout is only for orgs that are still on unpaid Free. */
+export function showStripeCheckout(
+  tier: PlanTier | string | undefined,
+  hasBilling: boolean,
+): boolean {
+  return !hasBilling && displayPlanTier(tier) === "free";
+}
+
+export function showManageBilling(hasBilling: boolean): boolean {
+  return hasBilling;
+}
+
+export function showUpgradeToTeam(
+  tier: PlanTier | string | undefined,
+  hasBilling: boolean,
+): boolean {
+  return hasBilling && displayPlanTier(tier) === "solo";
+}

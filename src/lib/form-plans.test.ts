@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   FORM_PLANS,
+  displayPlanTier,
   normalizePlanTier,
   planDisplayName,
   seatsForPlanTier,
+  showManageBilling,
+  showStripeCheckout,
+  showUpgradeToTeam,
 } from "./form-plans";
 
 describe("form-plans", () => {
@@ -25,5 +29,20 @@ describe("form-plans", () => {
     expect(seatsForPlanTier("free")).toBe(1);
     expect(seatsForPlanTier("solo")).toBe(1);
     expect(seatsForPlanTier("team")).toBe(5);
+  });
+
+  it("trusts a stored Solo plan even without Stripe", () => {
+    expect(displayPlanTier("solo")).toBe("solo");
+    expect(displayPlanTier("team")).toBe("team");
+    expect(showStripeCheckout("solo", false)).toBe(false);
+    expect(showManageBilling(false)).toBe(false);
+    expect(showUpgradeToTeam("solo", false)).toBe(false);
+  });
+
+  it("offers Stripe checkout only for unpaid Free", () => {
+    expect(showStripeCheckout("free", false)).toBe(true);
+    expect(showStripeCheckout("free", true)).toBe(false);
+    expect(showManageBilling(true)).toBe(true);
+    expect(showUpgradeToTeam("solo", true)).toBe(true);
   });
 });

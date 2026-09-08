@@ -6,7 +6,7 @@ import { SubmissionUsageMeter } from "@/components/features/portal/orgs/Submissi
 import { Button } from "@/components/ui/button";
 import type { OrgSummary } from "@/lib/api";
 import {
-  normalizePlanTier,
+  displayPlanTier,
   planDisplayName,
   seatsForPlanTier,
   type PlanTier,
@@ -18,19 +18,15 @@ interface UsageSettingsProps {
   org: OrgSummary;
 }
 
-function resolveTier(tier: PlanTier, hasBilling: boolean): PlanTier {
-  if (!hasBilling && (tier === "solo" || tier === "free")) return "free";
-  return tier;
+function resolveTier(tier: PlanTier): PlanTier {
+  return displayPlanTier(tier);
 }
 
 /** Organization usage: monthly submission meter and plan context. */
 export function UsageSettings({ org }: UsageSettingsProps) {
   const portal = usePortal();
   const isOwner = org.role === "owner";
-  const tier = resolveTier(
-    normalizePlanTier(portal.account?.tier ?? org.tier),
-    portal.account?.hasBilling ?? org.hasBilling,
-  );
+  const tier = resolveTier(portal.account?.tier ?? org.tier);
   const submissionsUsed = portal.account?.submissionsUsed ?? 0;
   const submissionLimit = portal.account?.submissionLimit;
   const hasSubmissionLimit =

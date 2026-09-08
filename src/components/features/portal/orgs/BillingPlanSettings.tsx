@@ -8,9 +8,12 @@ import { SubmissionUsageMeter } from "@/components/features/portal/orgs/Submissi
 import { Button } from "@/components/ui/button";
 import type { OrgSummary } from "@/lib/api";
 import {
-  normalizePlanTier,
+  displayPlanTier,
   planDisplayName,
   seatsForPlanTier,
+  showManageBilling,
+  showStripeCheckout,
+  showUpgradeToTeam,
   type PlanTier,
 } from "@/lib/form-plans";
 import { usePortal } from "@/lib/portal";
@@ -22,9 +25,7 @@ interface BillingPlanSettingsProps {
   showActions?: boolean;
 }
 
-function tierLabel(tier: PlanTier, hasBilling: boolean): string {
-  if (!hasBilling && tier === "free") return "Free";
-  if (!hasBilling && tier === "solo") return "Free";
+function tierLabel(tier: PlanTier): string {
   return planDisplayName(tier);
 }
 
@@ -36,7 +37,7 @@ export function BillingPlanSettings({
   const portal = usePortal();
   const isOwner = org.role === "owner";
   const hasProjects = org.projects.length > 0;
-  const tier = normalizePlanTier(
+  const tier = displayPlanTier(
     portal.account?.orgId === org.orgId
       ? (portal.account.tier ?? org.tier)
       : org.tier,
@@ -47,8 +48,10 @@ export function BillingPlanSettings({
       : org.hasBilling;
   const submissionsUsed = portal.account?.submissionsUsed;
   const submissionLimit = portal.account?.submissionLimit;
-  const effectiveTier: PlanTier =
-    !hasBilling && (tier === "solo" || tier === "free") ? "free" : tier;
+  const effectiveTier: PlanTier = tier;
+  const offerCheckout = showStripeCheckout(tier, hasBilling);
+  const offerManage = showManageBilling(hasBilling);
+  const offerTeamUpgrade = showUpgradeToTeam(tier, hasBilling);
   const memberCount = portal.account?.memberCount ?? 1;
   const memberLimit = Math.max(
     portal.account?.memberLimit ?? 0,
@@ -90,12 +93,12 @@ export function BillingPlanSettings({
           Subscription
         </p>
         <h3 className="font-headline mt-3 text-2xl font-bold text-white md:text-3xl">
-          {tierLabel(effectiveTier, hasBilling)}
+          {tierLabel(effectiveTier)}
         </h3>
         <p className="text-on-surface-variant mt-3 max-w-2xl text-sm leading-relaxed">
           {effectiveTier === "team"
             ? "Team includes up to 5 seats, 5,000 submissions / month, and submitter confirmations."
-            : effectiveTier === "solo" && hasBilling
+            : effectiveTier === "solo"
               ? "Solo includes 1 seat and 500 submissions / month. Upgrade to Team for more seats and confirmations."
               : "Free includes 10 submissions / month and 1 seat. Add Solo or Team when you need more."}
         </p>
@@ -111,7 +114,7 @@ export function BillingPlanSettings({
         </div>
         {showActions ? (
           <div className="mt-6 flex flex-wrap gap-3">
-            {(!hasBilling || effectiveTier === "free") && (
+            {offerCheckout && (
               <>
                 <Button
                   type="button"
@@ -130,7 +133,7 @@ export function BillingPlanSettings({
                 </Button>
               </>
             )}
-            {hasBilling && effectiveTier === "solo" && (
+            {offerTeamUpgrade && (
               <Button
                 type="button"
                 disabled={portal.billingBusy}
@@ -139,7 +142,7 @@ export function BillingPlanSettings({
                 {portal.billingBusy ? "Redirecting…" : "Upgrade to Team"}
               </Button>
             )}
-            {hasBilling && (
+            {offerManage && (
               <Button
                 type="button"
                 variant="outline"
@@ -165,6 +168,7 @@ export function BillingPlanSettings({
             if (hasBilling) void portal.onManageBilling();
             return;
           }
+          if (!hasBilling && (tier === "solo" || tier === "team")) return;
           void portal.onUpgrade(plan);
         }}
       />
