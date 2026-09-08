@@ -19,7 +19,7 @@ function redirect(path: string) {
   window.location.assign(path);
 }
 
-export function SignupForm() {
+export function JoinForm() {
   const auth = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,30 +47,30 @@ export function SignupForm() {
       if (next === "confirm") {
         setPendingSignupPassword(email, password);
         redirect(pendingConfirmPath(email));
-        return;
       }
     } catch (err) {
       if (isUsernameExistsError(err)) {
-        redirect(portalLoginPath(email));
-        return;
+        try {
+          await auth.signInWithPassword(email, password);
+          return;
+        } catch {
+          redirect(portalLoginPath(email));
+          return;
+        }
       }
-      setError(err instanceof Error ? err.message : "Sign up failed");
+      setError(err instanceof Error ? err.message : "Could not continue");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <AuthShell
-      eyebrow="Sign up"
-      title="Create your account."
-      description="Start with a login. You can create an organization when you're ready."
-    >
+    <AuthShell eyebrow="Portal" title="Continue.">
       <form className="space-y-8" onSubmit={onSubmit}>
         <div>
-          <Label htmlFor="portal-signup-email">Email</Label>
+          <Label htmlFor="portal-join-email">Email</Label>
           <Input
-            id="portal-signup-email"
+            id="portal-join-email"
             type="email"
             autoComplete="email"
             required
@@ -80,11 +80,11 @@ export function SignupForm() {
           />
         </div>
         <div>
-          <Label htmlFor="portal-signup-password">Password</Label>
+          <Label htmlFor="portal-join-password">Password</Label>
           <Input
-            id="portal-signup-password"
+            id="portal-join-password"
             type="password"
-            autoComplete="new-password"
+            autoComplete="current-password"
             required
             minLength={8}
             value={password}
@@ -93,9 +93,9 @@ export function SignupForm() {
           />
         </div>
         <div>
-          <Label htmlFor="portal-signup-confirm">Confirm password</Label>
+          <Label htmlFor="portal-join-confirm">Confirm password</Label>
           <Input
-            id="portal-signup-confirm"
+            id="portal-join-confirm"
             type="password"
             autoComplete="new-password"
             required
@@ -109,12 +109,11 @@ export function SignupForm() {
         {error && <p className="text-sm text-red-300">{error}</p>}
 
         <Button type="submit" size="lg" className="w-full" disabled={busy}>
-          {busy ? "Working…" : "Create account"}
+          {busy ? "Working…" : "Continue"}
         </Button>
       </form>
 
       <p className="text-on-surface-variant text-sm">
-        Already have an account?{" "}
         <Link href={portalLoginPath(email)} className="text-white underline">
           Sign in
         </Link>

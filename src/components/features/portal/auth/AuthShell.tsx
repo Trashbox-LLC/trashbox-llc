@@ -9,7 +9,7 @@ import { PORTAL_PATHS } from "@/lib/sites";
 interface AuthShellProps {
   eyebrow: string;
   title: ReactNode;
-  description: string;
+  description?: string;
   children: ReactNode;
   /** When true, show skeleton while session is loading or already signed in. */
   sessionPending?: boolean;
@@ -53,9 +53,11 @@ export function AuthShell({
         <h1 className="font-headline max-w-3xl text-4xl font-bold tracking-tighter text-white md:text-6xl">
           {title}
         </h1>
-        <p className="text-on-surface-variant mt-6 max-w-xl text-lg">
-          {description}
-        </p>
+        {description ? (
+          <p className="text-on-surface-variant mt-6 max-w-xl text-lg">
+            {description}
+          </p>
+        ) : null}
       </FadeIn>
 
       {pending ? (

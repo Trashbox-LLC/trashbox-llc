@@ -4,7 +4,9 @@ import {
   emailFromSearchString,
   getPendingSignupPassword,
   isPortalAuthPath,
+  isUsernameExistsError,
   pendingConfirmPath,
+  portalJoinPath,
   portalLoginPath,
   portalSignupPath,
   setPendingSignupPassword,
@@ -17,6 +19,7 @@ describe("isPortalAuthPath", () => {
     expect(isPortalAuthPath("/portal/signup/")).toBe(true);
     expect(isPortalAuthPath("/portal/confirm")).toBe(true);
     expect(isPortalAuthPath("/portal/forgot-password/")).toBe(true);
+    expect(isPortalAuthPath("/portal/join/")).toBe(true);
   });
 
   it("rejects product routes and nullish values", () => {
@@ -53,11 +56,27 @@ describe("portal auth paths with email", () => {
     expect(portalLoginPath("a@b.com")).toBe(
       "/portal/login/?email=a%40b.com",
     );
+    expect(portalJoinPath("Owner@Example.com")).toBe(
+      "/portal/join/?email=Owner%40Example.com",
+    );
   });
 
   it("returns the bare path without an email", () => {
     expect(portalSignupPath()).toBe("/portal/signup/");
     expect(portalLoginPath("  ")).toBe("/portal/login/");
+    expect(portalJoinPath()).toBe("/portal/join/");
+  });
+});
+
+describe("isUsernameExistsError", () => {
+  it("detects Cognito username-exists failures", () => {
+    expect(
+      isUsernameExistsError(Object.assign(new Error("User already exists"), {
+        name: "UsernameExistsException",
+      })),
+    ).toBe(true);
+    expect(isUsernameExistsError(new Error("User already exists"))).toBe(true);
+    expect(isUsernameExistsError(new Error("Invalid password"))).toBe(false);
   });
 });
 

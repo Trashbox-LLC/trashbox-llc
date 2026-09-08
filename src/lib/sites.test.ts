@@ -31,6 +31,7 @@ describe("sites helpers", () => {
     expect(PORTAL_PATHS.home).toBe("/portal/");
     expect(PORTAL_PATHS.login).toBe("/portal/login/");
     expect(PORTAL_PATHS.signup).toBe("/portal/signup/");
+    expect(PORTAL_PATHS.join).toBe("/portal/join/");
     expect(PORTAL_PATHS.confirm).toBe("/portal/confirm/");
     expect(PORTAL_PATHS.forgotPassword).toBe("/portal/forgot-password/");
     expect(PORTAL_PATHS.inbox).toBe("/portal/inbox/");

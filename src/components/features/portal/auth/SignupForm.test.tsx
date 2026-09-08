@@ -95,4 +95,29 @@ describe("SignupForm", () => {
       "/portal/confirm/?email=owner%40example.com",
     );
   });
+
+  it("sends an existing login to sign in", async () => {
+    signUpWithPassword.mockRejectedValue(new Error("User already exists"));
+    const user = userEvent.setup();
+    render(
+      <StubAuthProvider
+        value={{
+          status: "signedOut",
+          configured: true,
+          signUpWithPassword,
+        }}
+      >
+        <SignupForm />
+      </StubAuthProvider>,
+    );
+
+    await user.type(screen.getByLabelText(/^email$/i), "owner@example.com");
+    await user.type(screen.getByLabelText(/^password$/i), "password123");
+    await user.type(screen.getByLabelText(/confirm password/i), "password123");
+    await user.click(screen.getByRole("button", { name: /create account/i }));
+
+    expect(assign).toHaveBeenCalledWith(
+      "/portal/login/?email=owner%40example.com",
+    );
+  });
 });

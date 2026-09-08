@@ -42,6 +42,7 @@ export const PORTAL_PATHS = {
   home: "/portal/",
   login: "/portal/login/",
   signup: "/portal/signup/",
+  join: "/portal/join/",
   confirm: "/portal/confirm/",
   forgotPassword: "/portal/forgot-password/",
   inbox: "/portal/inbox/",

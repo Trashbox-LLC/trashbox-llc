@@ -22,7 +22,8 @@ export function isPortalAuthPath(
     path === normalizePath(PORTAL_PATHS.login) ||
     path === normalizePath(PORTAL_PATHS.signup) ||
     path === normalizePath(PORTAL_PATHS.confirm) ||
-    path === normalizePath(PORTAL_PATHS.forgotPassword)
+    path === normalizePath(PORTAL_PATHS.forgotPassword) ||
+    path === normalizePath(PORTAL_PATHS.join)
   );
 }
 
@@ -49,6 +50,19 @@ export function portalSignupPath(email?: string): string {
 
 export function portalLoginPath(email?: string): string {
   return pathWithEmail(PORTAL_PATHS.login, email);
+}
+
+export function portalJoinPath(email?: string): string {
+  return pathWithEmail(PORTAL_PATHS.join, email);
+}
+
+export function isUsernameExistsError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const name = "name" in error ? String(error.name) : "";
+  const message = error instanceof Error ? error.message : "";
+  return (
+    name === "UsernameExistsException" || /user already exists/i.test(message)
+  );
 }
 
 export function setPendingSignupPassword(

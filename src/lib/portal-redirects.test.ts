@@ -10,6 +10,7 @@ describe("portalSignedOutRedirect", () => {
     expect(portalSignedOutRedirect("/portal/signup")).toBe(null);
     expect(portalSignedOutRedirect("/portal/confirm/")).toBe(null);
     expect(portalSignedOutRedirect("/portal/forgot-password/")).toBe(null);
+    expect(portalSignedOutRedirect("/portal/join/")).toBe(null);
   });
 
   it("sends product routes to login", () => {
