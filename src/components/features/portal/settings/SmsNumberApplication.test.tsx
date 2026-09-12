@@ -53,7 +53,12 @@ function setup(
   return { onApply, onWithdraw, user: userEvent.setup() };
 }
 
+async function openForm(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: /get a number/i }));
+}
+
 async function fillForm(user: ReturnType<typeof userEvent.setup>) {
+  await openForm(user);
   await user.type(screen.getByLabelText(/legal business name/i), "Austin Dumpsters LLC");
   await user.type(screen.getByLabelText(/website/i), "https://austindumpsters.com");
   await user.type(screen.getByLabelText(/ein/i), "12-3456789");
@@ -79,6 +84,27 @@ async function fillForm(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("SmsNumberApplication", () => {
+  it("keeps the application form behind the offer until they ask for a number", () => {
+    setup();
+
+    expect(screen.getByRole("heading", { name: /how it works/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /the plan/i })).toBeInTheDocument();
+    expect(screen.getByText(/\$10/)).toBeInTheDocument();
+    expect(screen.getByText(/extra/i)).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/legal business name/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the form from the offer", async () => {
+    const { user } = setup();
+
+    await openForm(user);
+
+    expect(screen.getByLabelText(/legal business name/i)).toBeInTheDocument();
+    expect(screen.queryByText(/\$10\/month once the carriers/i)).not.toBeInTheDocument();
+  });
+
   it("submits the details the client entered", async () => {
     const { onApply, user } = setup();
 
@@ -98,6 +124,7 @@ describe("SmsNumberApplication", () => {
   it("will not submit until the required details are filled in", async () => {
     const { onApply, user } = setup();
 
+    await openForm(user);
     await user.click(screen.getByRole("button", { name: /apply/i }));
 
     expect(onApply).not.toHaveBeenCalled();
@@ -118,6 +145,8 @@ describe("SmsNumberApplication", () => {
     expect(
       screen.queryByRole("button", { name: /apply/i }),
     ).not.toBeInTheDocument();
+    expect(screen.getByText(/we look it over/i)).toBeInTheDocument();
+    expect(screen.getByText(/networks verify/i)).toBeInTheDocument();
   });
 
   it("shows the live number once the carriers approve", () => {

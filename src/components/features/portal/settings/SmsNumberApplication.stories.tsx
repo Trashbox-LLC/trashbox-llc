@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { fn } from "storybook/test";
+import { expect, fn, userEvent, within } from "storybook/test";
 import type { SmsApplicationBusiness } from "@/lib/api";
 import { SmsNumberApplication } from "./SmsNumberApplication";
 
@@ -30,7 +30,7 @@ const meta = {
   tags: ["autodocs"],
   decorators: [
     (Story) => (
-      <div className="bg-background max-w-3xl p-8">
+      <div className="bg-background max-w-5xl p-8">
         <Story />
       </div>
     ),
@@ -47,7 +47,17 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const ApplyForm: Story = {};
+export const Offer: Story = {};
+
+export const ApplyForm: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: /get a number/i }));
+    await expect(
+      canvas.getByLabelText(/legal business name/i),
+    ).toBeInTheDocument();
+  },
+};
 
 export const InReview: Story = {
   args: {

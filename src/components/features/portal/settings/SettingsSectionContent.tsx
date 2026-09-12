@@ -111,7 +111,9 @@ export function SettingsSectionContent({
     return (
       <div className="space-y-6">
         <SmsNumberApplicationSection />
-        <SmsSettingsSection initialState={smsInitialState} />
+        {portal.sms?.phoneNumber ? (
+          <SmsSettingsSection initialState={smsInitialState} />
+        ) : null}
       </div>
     );
   }

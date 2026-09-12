@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { SmsApplicationProgress } from "@/components/features/portal/settings/SmsApplicationProgress";
+import { SmsTextingOffer } from "@/components/features/portal/settings/SmsTextingOffer";
 import {
   SMS_MONTHLY_VOLUMES,
   type SmsApplication,
@@ -13,7 +15,6 @@ import {
   type SmsApplicationStatus,
   type SmsOptInType,
 } from "@/lib/api";
-import { settingsSectionPath } from "@/lib/portal-settings";
 
 const STATUS_LABELS: Record<SmsApplicationStatus, string> = {
   pending_review: "In review",
@@ -111,7 +112,7 @@ export function SmsNumberApplication({
   onApply,
   onWithdraw,
 }: SmsNumberApplicationProps) {
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(fieldErrors.length > 0);
   const [draft, setDraft] = useState<Draft>(() =>
     draftFrom(application?.business),
   );
@@ -126,12 +127,12 @@ export function SmsNumberApplication({
     setMissing((current) => current.filter((entry) => entry !== name));
   }
 
+  const showOffer = !application || application.status === "closed";
   const showForm =
     canManage &&
     availableOnPlan &&
-    (application === null ||
-      application.status === "closed" ||
-      (application.status === "changes_requested" && editing));
+    editing &&
+    (showOffer || application?.status === "changes_requested");
 
   async function submit() {
     const blank = REQUIRED_FIELDS.filter((name) => !draft[name].trim());
@@ -152,20 +153,19 @@ export function SmsNumberApplication({
     setEditing(false);
   }
 
-  if (!availableOnPlan) {
+  if (showOffer && !showForm) {
     return (
       <div className="border-outline-variant/10 bg-surface-container-low border p-6 md:p-8">
-        <Label>Your Own Texting Number</Label>
-        <p className="text-on-surface-variant mt-4 text-sm">
-          Texting is included on paid plans.{" "}
-          <a
-            href={settingsSectionPath("current-plan", "org")}
-            className="text-white underline"
-          >
-            Compare plans
-          </a>
-          .
-        </p>
+        {error && (
+          <p className="border-error/40 bg-error/10 text-error mb-8 border p-4 text-sm">
+            {error}
+          </p>
+        )}
+        <SmsTextingOffer
+          availableOnPlan={availableOnPlan}
+          canManage={canManage}
+          onStart={() => setEditing(true)}
+        />
       </div>
     );
   }
@@ -194,6 +194,8 @@ export function SmsNumberApplication({
               {application.phoneNumberDisplay}
             </p>
           )}
+
+          <SmsApplicationProgress application={application} />
 
           {STATUS_DETAIL[application.status] && (
             <p className="text-on-surface-variant text-sm">
@@ -236,19 +238,8 @@ export function SmsNumberApplication({
         </div>
       )}
 
-      {!canManage && !application && (
-        <p className="text-on-surface-variant text-sm">
-          No texting number on this project.
-        </p>
-      )}
-
       {showForm && (
         <div className="space-y-8">
-          <p className="text-on-surface-variant text-sm">
-            $10/month once the carriers approve, including 250 texts. Nothing is
-            charged if they turn it down.
-          </p>
-
           <div className="grid gap-6 md:grid-cols-2">
             <div className="md:col-span-2">
               <Label htmlFor={field("companyName")}>
@@ -462,7 +453,7 @@ export function SmsNumberApplication({
                 disabled={busy}
                 onClick={() => setEditing(false)}
               >
-                Cancel
+                {application?.status === "changes_requested" ? "Cancel" : "Back"}
               </Button>
             )}
           </div>
