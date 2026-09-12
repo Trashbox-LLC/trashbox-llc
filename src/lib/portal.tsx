@@ -21,6 +21,7 @@ import {
   disconnectMailbox,
   getAccount,
   getMailbox,
+  getSmsStatus,
   getTeam,
   leadStatusOf,
   listForms,
@@ -40,10 +41,12 @@ import {
   type LeadTag,
   type MailboxProvider,
   type MailboxStatusResponse,
+  type MessageChannel,
   type OrgSummary,
   type PatchMailboxInput,
   type Permission,
   type ProjectForm,
+  type SmsStatusResponse,
   type Submission,
   type TeamMember,
   type TeamRole,
@@ -163,6 +166,11 @@ export interface PortalContextValue {
   /** Messages for the currently selected lead (convenience over messagesById). */
   leadMessages: LeadMessage[];
   messageError: string | null;
+  /** Sendable channels per submission, as reported by the messages endpoint. */
+  channelsById: Record<string, MessageChannel[]>;
+  /** Project text messaging status; null until loaded or when unavailable. */
+  sms: SmsStatusResponse | null;
+  refreshSms: () => Promise<void>;
   loadMore: () => Promise<void>;
   onLeadUpdate: (
     patch: {
@@ -179,6 +187,7 @@ export interface PortalContextValue {
     bodyHtml?: string,
     from?: { fromIdentityId?: string },
   ) => Promise<void>;
+  onSendLeadSms: (body: string) => Promise<void>;
   onMailboxConnect: (provider: MailboxProvider) => Promise<void>;
   onMailboxDisconnect: () => Promise<void>;
   onMailboxSync: () => Promise<void>;
@@ -241,10 +250,14 @@ export function StubPortalProvider({
     messagesById: {},
     leadMessages: [],
     messageError: null,
+    channelsById: {},
+    sms: null,
+    refreshSms: portalNoop,
     loadMore: portalNoop,
     onLeadUpdate: portalNoop,
     onLeadNote: portalNoop,
     onSendLeadMessage: portalNoop,
+    onSendLeadSms: portalNoop,
     onMailboxConnect: portalNoop,
     onMailboxDisconnect: portalNoop,
     onMailboxSync: portalNoop,
@@ -307,6 +320,10 @@ export function PortalProvider({
     Record<string, LeadMessage[]>
   >({});
   const [messageError, setMessageError] = useState<string | null>(null);
+  const [channelsById, setChannelsById] = useState<
+    Record<string, MessageChannel[]>
+  >({});
+  const [sms, setSms] = useState<SmsStatusResponse | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -492,6 +509,14 @@ export function PortalProvider({
         }
 
         try {
+          const smsStatus = await getSmsStatus();
+          if (cancelled) return;
+          setSms(smsStatus);
+        } catch {
+          if (!cancelled) setSms(null);
+        }
+
+        try {
           const subs = await listSubmissions({
             limit: 50,
             ...(appliedFilters.status ? { status: appliedFilters.status } : {}),
@@ -654,6 +679,10 @@ export function PortalProvider({
             ...prev,
             [selectedId!]: res.items,
           }));
+          setChannelsById((prev) => ({
+            ...prev,
+            [selectedId!]: res.availableChannels ?? ["email"],
+          }));
           setItems((prev) =>
             prev.map((item) =>
               item.submissionId === selectedId
@@ -717,6 +746,51 @@ export function PortalProvider({
     },
     [selectedId],
   );
+
+  const onSendLeadSms = useCallback(
+    async (body: string) => {
+      if (!selectedId) return;
+      setCrmBusy(true);
+      setMessageError(null);
+      try {
+        const message = await sendLeadMessage(selectedId, {
+          body,
+          channel: "sms",
+        });
+        setMessagesById((prev) => ({
+          ...prev,
+          [selectedId]: [...(prev[selectedId] ?? []), message],
+        }));
+        setItems((items) =>
+          items.map((item) => {
+            if (item.submissionId !== selectedId) return item;
+            return {
+              ...item,
+              status: leadStatusOf(item) === "new" ? "contacted" : item.status,
+              messageCount: (item.messageCount ?? 0) + 1,
+            };
+          }),
+        );
+      } catch (err) {
+        const message =
+          err instanceof ApiError ? err.message : "Failed to send text";
+        setMessageError(message);
+        // Rethrown so the composer keeps the draft for a retry.
+        throw err;
+      } finally {
+        setCrmBusy(false);
+      }
+    },
+    [selectedId],
+  );
+
+  const refreshSms = useCallback(async () => {
+    try {
+      setSms(await getSmsStatus());
+    } catch {
+      setSms(null);
+    }
+  }, []);
 
   const onMailboxConnect = useCallback(async (provider: MailboxProvider) => {
     setMailboxBusy(true);
@@ -993,10 +1067,14 @@ export function PortalProvider({
       messagesById,
       leadMessages,
       messageError,
+      channelsById,
+      sms,
+      refreshSms,
       loadMore,
       onLeadUpdate,
       onLeadNote,
       onSendLeadMessage,
+      onSendLeadSms,
       onMailboxConnect,
       onMailboxDisconnect,
       onMailboxSync,
@@ -1040,10 +1118,14 @@ export function PortalProvider({
       messagesById,
       leadMessages,
       messageError,
+      channelsById,
+      sms,
+      refreshSms,
       loadMore,
       onLeadUpdate,
       onLeadNote,
       onSendLeadMessage,
+      onSendLeadSms,
       onMailboxConnect,
       onMailboxDisconnect,
       onMailboxSync,

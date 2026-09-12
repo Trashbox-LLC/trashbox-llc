@@ -20,6 +20,7 @@ import {
   type Submission,
   type TeamMember,
 } from "@/lib/api";
+import { leadContactLabel } from "@/lib/lead-messages";
 import { cn } from "@/lib/utils";
 
 export const INBOX_SIDEBAR_DEFAULT_WIDTH = 320;
@@ -406,7 +407,7 @@ export function LeadInboxSidebar({
                   <li key={item.submissionId}>
                     <LeadInboxCard
                       senderName={item.senderName}
-                      senderEmail={item.senderEmail}
+                      senderEmail={leadContactLabel(item) ?? ""}
                       message={item.message}
                       formName={item.formName}
                       submittedAt={item.submittedAt}

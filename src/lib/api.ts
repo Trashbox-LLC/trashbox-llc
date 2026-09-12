@@ -49,6 +49,7 @@ export const PERMISSIONS = [
   "manage_team_members",
   "manage_roles_and_permissions",
   "manage_api_keys",
+  "manage_sms_number",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -60,6 +61,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   manage_team_members: "Manage Team Members",
   manage_roles_and_permissions: "Manage Roles And Permissions",
   manage_api_keys: "Manage API Keys",
+  manage_sms_number: "Manage Text Messaging Number",
 };
 
 export interface ClientRole {
@@ -108,7 +110,12 @@ export interface Submission {
   clientId: string;
   submissionId: string;
   senderName: string;
+  /** Empty for leads that arrived by text rather than a form post. */
   senderEmail: string;
+  /** E.164 contact phone, when known. */
+  senderPhone?: string;
+  /** Lead agreed to be contacted by text. */
+  smsConsent?: boolean;
   message: string;
   metadata?: Record<string, string>;
   formId?: string;
@@ -773,13 +780,19 @@ export interface MailboxStatusResponse {
 
 export type LeadMessageDirection = "outbound" | "inbound";
 
+export type MessageChannel = "email" | "sms";
+
 export interface LeadMessage {
   clientId: string;
   submissionId: string;
   messageId: string;
   direction: LeadMessageDirection;
+  /** Absent on messages stored before SMS existed; treat as email. */
+  channel?: MessageChannel;
+  /** Email address, or E.164 phone number on the SMS channel. */
   from: string;
   to: string;
+  /** Always empty on the SMS channel. */
   subject: string;
   bodyText: string;
   bodyHtml?: string;
@@ -795,6 +808,14 @@ export interface LeadMessage {
 export interface LeadMessagesResponse {
   submissionId: string;
   items: LeadMessage[];
+  /** Channels the portal may compose on for this lead right now. */
+  availableChannels?: MessageChannel[];
+  /** Contact replied STOP; further texts are blocked. */
+  smsOptedOut?: boolean;
+}
+
+export function messageChannelOf(message: LeadMessage): MessageChannel {
+  return message.channel === "sms" ? "sms" : "email";
 }
 
 export async function getMailbox(): Promise<MailboxStatusResponse> {
@@ -858,6 +879,8 @@ export async function sendLeadMessage(
   submissionId: string,
   input: {
     body: string;
+    /** Defaults to email. SMS ignores subject, bodyHtml and fromIdentityId. */
+    channel?: MessageChannel;
     bodyHtml?: string;
     subject?: string;
     fromIdentityId?: string;
@@ -870,6 +893,92 @@ export async function sendLeadMessage(
       body: JSON.stringify(input),
     },
   )) as unknown as LeadMessage;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Text messaging                                                             */
+/* -------------------------------------------------------------------------- */
+
+export type SmsNumberType = "toll-free" | "10dlc" | "long-code" | "simulator";
+
+export type SmsRegistrationStatus = "pending" | "verified" | "rejected";
+
+export type SmsNumberStatus = "active" | "disabled";
+
+export interface SmsStatusResponse {
+  /** True when the project can send texts right now. */
+  enabled: boolean;
+  availableOnPlan: boolean;
+  canManage: boolean;
+  phoneNumber?: string;
+  phoneNumberDisplay?: string;
+  numberType?: SmsNumberType;
+  registrationStatus?: SmsRegistrationStatus;
+  twoWayEnabled?: boolean;
+  status?: SmsNumberStatus;
+  provisionedAt?: string;
+  lastError?: string;
+  smsUsed?: number;
+  smsLimit?: number;
+  usageMonth?: string;
+}
+
+export interface AvailableSmsNumber {
+  phoneNumber: string;
+  phoneNumberDisplay: string;
+  numberType: SmsNumberType;
+  twoWayEnabled: boolean;
+  active: boolean;
+}
+
+export interface SmsOptOutEntry {
+  phoneNumber: string;
+  phoneNumberDisplay: string;
+  optedOutAt: string;
+  keyword?: string;
+}
+
+export async function getSmsStatus(): Promise<SmsStatusResponse> {
+  return (await authFetch("/sms")) as unknown as SmsStatusResponse;
+}
+
+export async function listAvailableSmsNumbers(): Promise<{
+  items: AvailableSmsNumber[];
+}> {
+  return (await authFetch("/sms/available-numbers")) as unknown as {
+    items: AvailableSmsNumber[];
+  };
+}
+
+export async function assignSmsNumber(
+  phoneNumber: string,
+): Promise<SmsStatusResponse> {
+  return (await authFetch("/sms/number", {
+    method: "POST",
+    body: JSON.stringify({ phoneNumber }),
+  })) as unknown as SmsStatusResponse;
+}
+
+export async function updateSmsNumber(input: {
+  registrationStatus?: SmsRegistrationStatus;
+  disabled?: boolean;
+}): Promise<SmsStatusResponse> {
+  return (await authFetch("/sms/number", {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  })) as unknown as SmsStatusResponse;
+}
+
+export async function releaseSmsNumber(): Promise<SmsStatusResponse> {
+  return (await authFetch("/sms/number", {
+    method: "DELETE",
+  })) as unknown as SmsStatusResponse;
+}
+
+export async function listSmsOptOuts(): Promise<{ items: SmsOptOutEntry[] }> {
+  return (await authFetch("/sms/opt-outs")) as unknown as {
+    items: SmsOptOutEntry[];
+  };
 }
 
 /* -------------------------------------------------------------------------- */

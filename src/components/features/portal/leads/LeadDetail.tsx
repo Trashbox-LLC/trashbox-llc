@@ -21,9 +21,11 @@ import {
   type LeadMessage,
   type LeadStatus,
   type LeadTag,
+  type MessageChannel,
   type Submission,
   type TeamMember,
 } from "@/lib/api";
+import { leadContactLabel } from "@/lib/lead-messages";
 import { cn } from "@/lib/utils";
 
 const labelClass =
@@ -83,6 +85,10 @@ interface LeadDetailProps {
   businessName?: string;
   messages?: LeadMessage[];
   messageError?: string | null;
+  /** Channels the API says are sendable for this lead. Defaults to email. */
+  availableChannels?: MessageChannel[];
+  /** Project's sending number in E.164, shown as the text sender. */
+  smsFromPhone?: string;
   /** Storybook/tests: seed the composer library without hitting the API. */
   composerLibrary?: LeadComposerLibrary;
   onUpdate: (patch: {
@@ -96,6 +102,7 @@ interface LeadDetailProps {
     bodyHtml?: string,
     from?: { fromIdentityId?: string },
   ) => Promise<void>;
+  onSendSms?: (body: string) => Promise<void>;
 }
 
 export function LeadDetail({
@@ -108,10 +115,13 @@ export function LeadDetail({
   businessName,
   messages = [],
   messageError = null,
+  availableChannels = ["email"],
+  smsFromPhone,
   composerLibrary,
   onUpdate,
   onAddNote,
   onSendMessage,
+  onSendSms,
 }: LeadDetailProps) {
   const [noteDraft, setNoteDraft] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -119,6 +129,7 @@ export function LeadDetail({
   const status = leadStatusOf(submission);
   const tags = leadTagsOf(submission);
   const notes = leadNotesOf(submission);
+  const contactLabel = leadContactLabel(submission);
   const orderedMessages = sortLeadMessages(messages);
   const latestMessage =
     orderedMessages.length > 0
@@ -160,20 +171,22 @@ export function LeadDetail({
             </div>
 
             <div className="space-y-3 pt-1">
-              <MetaRow
-                label="From"
-                value={
-                  <span className="flex items-center gap-2">
-                    <span
-                      aria-hidden="true"
-                      className="bg-surface-container-highest flex size-6 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                    >
-                      {initialsOf(submission.senderName)}
+              {contactLabel && (
+                <MetaRow
+                  label="From"
+                  value={
+                    <span className="flex items-center gap-2">
+                      <span
+                        aria-hidden="true"
+                        className="bg-surface-container-highest flex size-6 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                      >
+                        {initialsOf(submission.senderName)}
+                      </span>
+                      <span className="text-white">{contactLabel}</span>
                     </span>
-                    <span className="text-white">{submission.senderEmail}</span>
-                  </span>
-                }
-              />
+                  }
+                />
+              )}
               {fromAddress && <MetaRow label="To" value={fromAddress} />}
               {submission.formName ? (
                 <MetaRow label="Form" value={submission.formName} />
@@ -298,7 +311,7 @@ export function LeadDetail({
 
       <LeadEmailThreadSection
         formMessage={submission.message}
-        formFrom={submission.senderEmail}
+        formFrom={contactLabel ?? submission.senderName}
         formAt={submission.submittedAt}
         messages={orderedMessages}
         showHistory={historyOpen}
@@ -309,6 +322,9 @@ export function LeadDetail({
         mailboxConnected={mailboxConnected}
         fromAddress={fromAddress}
         fromOptions={fromOptions}
+        availableChannels={availableChannels}
+        leadPhone={submission.senderPhone}
+        smsFromPhone={smsFromPhone}
         busy={busy}
         error={messageError}
         variableContext={{
@@ -321,6 +337,7 @@ export function LeadDetail({
         }}
         initialLibrary={composerLibrary}
         onSend={onSendMessage}
+        onSendSms={onSendSms}
       />
 
       <div className={cn("pt-2", hasHistory ? "mt-6" : "mt-10")}>

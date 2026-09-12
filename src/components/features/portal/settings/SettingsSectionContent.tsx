@@ -7,6 +7,10 @@ import {
 import type { EmailContentKind } from "@/components/features/portal/settings/EmailContentSettings";
 import { MailboxSettings } from "@/components/features/portal/settings/MailboxSettings";
 import { SendingPreferencesSettings } from "@/components/features/portal/settings/SendingPreferencesSettings";
+import {
+  SmsSettingsSection,
+  type SmsSettingsInitialState,
+} from "@/components/features/portal/settings/SmsSettingsSection";
 import { SettingsPlaceholder } from "@/components/features/portal/settings/SettingsPlaceholder";
 import { ApiDocsSettings } from "@/components/features/portal/settings/ApiDocsSettings";
 import {
@@ -35,12 +39,14 @@ interface SettingsSectionContentProps {
   /** Storybook/demo seed for nested API-backed sections. */
   apiKeysInitialState?: ApiKeysSettingsInitialState;
   emailContentInitialState?: EmailContentSectionInitialState;
+  smsInitialState?: SmsSettingsInitialState;
 }
 
 export function SettingsSectionContent({
   sectionId,
   apiKeysInitialState,
   emailContentInitialState,
+  smsInitialState,
 }: SettingsSectionContentProps) {
   const auth = useAuth();
   const portal = usePortal();
@@ -98,6 +104,10 @@ export function SettingsSectionContent({
         onSync={portal.onMailboxSync}
       />
     );
+  }
+
+  if (sectionId === "text-messaging") {
+    return <SmsSettingsSection initialState={smsInitialState} />;
   }
 
   if (sectionId === "sending-preferences") {

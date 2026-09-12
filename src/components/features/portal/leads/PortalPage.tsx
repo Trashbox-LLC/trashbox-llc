@@ -331,9 +331,16 @@ export function PortalApp({ tab }: PortalAppProps) {
                                 []
                               }
                               messageError={active ? portal.messageError : null}
+                              availableChannels={
+                                portal.channelsById[
+                                  submission.submissionId
+                                ] ?? ["email"]
+                              }
+                              smsFromPhone={portal.sms?.phoneNumber}
                               onUpdate={portal.onLeadUpdate}
                               onAddNote={portal.onLeadNote}
                               onSendMessage={portal.onSendLeadMessage}
+                              onSendSms={portal.onSendLeadSms}
                             />
                           </div>
                         );

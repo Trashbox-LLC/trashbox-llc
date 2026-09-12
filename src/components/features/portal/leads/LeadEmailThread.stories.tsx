@@ -89,6 +89,33 @@ const followUpReply: LeadMessage = {
   sentBy: "owner@example.com",
 };
 
+const inboundText: LeadMessage = {
+  clientId: "c1",
+  submissionId: "s1",
+  messageId: "m4",
+  direction: "inbound",
+  channel: "sms",
+  from: "+14255550182",
+  to: "+18005550100",
+  subject: "",
+  bodyText: "Can you do Thursday instead?",
+  createdAt: "2026-07-17T14:10:00.000Z",
+};
+
+const outboundText: LeadMessage = {
+  clientId: "c1",
+  submissionId: "s1",
+  messageId: "m5",
+  direction: "outbound",
+  channel: "sms",
+  from: "+18005550100",
+  to: "+14255550182",
+  subject: "",
+  bodyText: "Perfect, see you then.",
+  createdAt: "2026-07-17T14:12:00.000Z",
+  sentBy: "owner@example.com",
+};
+
 const fromOptions: FromIdentityOption[] = [
   {
     id: "s1",
@@ -177,5 +204,41 @@ export const NoAssignedNames: Story = {
     mailboxConnected: true,
     fromAddress: "sales@example.com",
     fromOptions: [],
+  },
+};
+
+export const EmailAndText: Story = {
+  args: {
+    mailboxConnected: true,
+    fromAddress: "sales@example.com",
+    availableChannels: ["email", "sms"],
+    leadPhone: "+14255550182",
+    smsFromPhone: "+18005550100",
+    library: { templates, signatures, snippets },
+    onSendSms: fn().mockResolvedValue(undefined),
+  },
+};
+
+export const TextOnly: Story = {
+  args: {
+    mailboxConnected: false,
+    availableChannels: ["sms"],
+    leadPhone: "+14255550182",
+    smsFromPhone: "+18005550100",
+    onSendSms: fn().mockResolvedValue(undefined),
+  },
+};
+
+export const TextThread: Story = {
+  args: {
+    mailboxConnected: true,
+    fromAddress: "sales@example.com",
+    availableChannels: ["email", "sms"],
+    leadPhone: "+14255550182",
+    smsFromPhone: "+18005550100",
+    messages: [inboundText, outboundText],
+    featuredBody: "Perfect, see you then.",
+    library: { templates, signatures, snippets },
+    onSendSms: fn().mockResolvedValue(undefined),
   },
 };

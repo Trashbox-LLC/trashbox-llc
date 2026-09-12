@@ -37,6 +37,7 @@ export type SettingsSectionId =
   | "roles-permissions"
   | "activity-log"
   | "email-accounts"
+  | "text-messaging"
   | "templates"
   | "signatures"
   | "snippets"
@@ -149,6 +150,7 @@ export const PORTAL_PROJECT_SETTINGS_NAV: SettingsNavGroup[] = [
     icon: "mail",
     items: [
       { id: "email-accounts", label: "Email Accounts", icon: "inbox" },
+      { id: "text-messaging", label: "Text Messaging", icon: "sms" },
       { id: "templates", label: "Templates", icon: "description" },
       { id: "signatures", label: "Signatures", icon: "draw" },
       { id: "snippets", label: "Snippets", icon: "data_object" },

@@ -731,3 +731,102 @@ describe("LeadEmailThread", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("LeadEmailThread channels", () => {
+  const smsProps = {
+    availableChannels: ["email", "sms"] as const,
+    leadPhone: "+14255550182",
+    smsFromPhone: "+18005550100",
+  };
+
+  it("composes on email until another channel is picked", () => {
+    renderConnected({ ...smsProps, onSendSms: vi.fn() });
+
+    expect(screen.getByRole("textbox", { name: /reply/i })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("textbox", { name: /text message/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("swaps in the text composer when the text channel is picked", async () => {
+    const user = userEvent.setup();
+    renderConnected({ ...smsProps, onSendSms: vi.fn() });
+
+    await user.click(screen.getByRole("tab", { name: /text/i }));
+
+    expect(
+      screen.getByRole("textbox", { name: /text message/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("textbox", { name: /reply/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("sends through the text handler, not the email one", async () => {
+    const user = userEvent.setup();
+    const onSend = vi.fn().mockResolvedValue(undefined);
+    const onSendSms = vi.fn().mockResolvedValue(undefined);
+    renderConnected({ ...smsProps, onSend, onSendSms });
+
+    await user.click(screen.getByRole("tab", { name: /text/i }));
+    await user.type(
+      screen.getByRole("textbox", { name: /text message/i }),
+      "On my way",
+    );
+    await user.click(screen.getByRole("button", { name: /send text/i }));
+
+    expect(onSendSms).toHaveBeenCalledWith("On my way");
+    expect(onSend).not.toHaveBeenCalled();
+  });
+
+  it("offers no channel switch when only email is available", () => {
+    renderConnected({ onSendSms: vi.fn() });
+
+    expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+  });
+
+  it("goes straight to the text composer for a lead with no mailbox", () => {
+    renderConnected({
+      ...smsProps,
+      availableChannels: ["sms"],
+      mailboxConnected: false,
+      onSendSms: vi.fn(),
+    });
+
+    expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: /text message/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the text channel for a lead with no phone number", () => {
+    renderConnected({
+      ...smsProps,
+      leadPhone: undefined,
+      onSendSms: vi.fn(),
+    });
+
+    expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /reply/i })).toBeInTheDocument();
+  });
+
+  it("labels a texted history entry by phone number", () => {
+    renderConnected({
+      messages: [
+        {
+          ...sampleReply,
+          messageId: "m-sms",
+          channel: "sms",
+          direction: "inbound",
+          subject: "",
+          from: "+14255550182",
+          to: "+18005550100",
+          bodyText: "Still interested",
+        },
+        featuredLatest,
+      ],
+    });
+
+    expect(screen.getByText(/\(425\) 555-0182/)).toBeInTheDocument();
+  });
+});

@@ -1,0 +1,108 @@
+"use client";
+
+import { useState, type KeyboardEvent } from "react";
+import { MaterialIcon } from "@/components/atoms/MaterialIcon";
+import { Button } from "@/components/ui/button";
+import { formatPhoneDisplay } from "@/lib/phone";
+import { MAX_SMS_BODY_LENGTH, smsSegmentCount } from "@/lib/sms";
+
+export interface LeadSmsComposerProps {
+  /** Lead's phone in E.164. */
+  toPhone: string;
+  /** Project's sending number in E.164. */
+  fromPhone?: string;
+  busy?: boolean;
+  onSend: (text: string) => Promise<void>;
+}
+
+export function LeadSmsComposer({
+  toPhone,
+  fromPhone,
+  busy = false,
+  onSend,
+}: LeadSmsComposerProps) {
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const body = draft.trim();
+  const segments = smsSegmentCount(body);
+  const disabled = busy || sending || body.length === 0;
+
+  async function submit() {
+    if (disabled) return;
+    setSending(true);
+    try {
+      await onSend(body);
+      setDraft("");
+    } catch {
+      // Parent surfaces the failure; keep the draft so it can be retried.
+    } finally {
+      setSending(false);
+    }
+  }
+
+  function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+      event.preventDefault();
+      void submit();
+    }
+  }
+
+  return (
+    <div className="border-outline-variant/10 bg-surface-container-low mt-8 overflow-hidden rounded-lg border shadow-md">
+      <div className="bg-surface-container-lowest/50 flex flex-wrap items-center gap-4 p-4">
+        <span className="font-label text-outline w-8 shrink-0 text-[10px] uppercase">
+          To
+        </span>
+        <span className="bg-surface-container inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs text-white shadow-sm">
+          {formatPhoneDisplay(toPhone)}
+        </span>
+        {fromPhone && (
+          <>
+            <span className="font-label text-outline w-10 shrink-0 text-[10px] uppercase">
+              From
+            </span>
+            <span className="bg-surface-container inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs text-white shadow-sm">
+              {formatPhoneDisplay(fromPhone)}
+            </span>
+          </>
+        )}
+      </div>
+
+      <textarea
+        aria-label="Text message"
+        value={draft}
+        maxLength={MAX_SMS_BODY_LENGTH}
+        disabled={busy || sending}
+        rows={4}
+        onChange={(event) => setDraft(event.target.value)}
+        onKeyDown={onKeyDown}
+        className="text-on-surface placeholder:text-outline w-full resize-y bg-transparent px-4 py-3 text-sm leading-relaxed outline-none disabled:opacity-60"
+      />
+
+      <div className="bg-surface-container/80 flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <div className="flex items-center gap-3">
+          <span className="font-label text-outline text-[10px] uppercase">
+            {body.length} / {MAX_SMS_BODY_LENGTH} ·{" "}
+            <span className="text-on-surface font-medium">
+              {segments} {segments === 1 ? "segment" : "segments"}
+            </span>
+          </span>
+          <span className="text-outline font-mono text-[10px]">
+            Cmd + Enter to send
+          </span>
+        </div>
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={disabled}
+          onClick={() => void submit()}
+          className="font-label text-background hover:text-background rounded bg-white font-medium shadow-sm hover:bg-white/90"
+        >
+          Send text
+          <MaterialIcon name="sms" className="text-sm" />
+        </Button>
+      </div>
+    </div>
+  );
+}
