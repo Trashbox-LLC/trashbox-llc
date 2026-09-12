@@ -55,9 +55,10 @@ export function SettingsSectionContent({
 
   if (!auth.configured) {
     return (
-      <p className="border border-outline-variant/20 bg-surface-container-low p-6 text-on-surface-variant">
-        Portal auth is not configured. Set `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_COGNITO_USER_POOL_ID`,
-        and `NEXT_PUBLIC_COGNITO_CLIENT_ID` then rebuild.
+      <p className="border-outline-variant/20 bg-surface-container-low text-on-surface-variant border p-6">
+        Portal auth is not configured. Set `NEXT_PUBLIC_API_URL`,
+        `NEXT_PUBLIC_COGNITO_USER_POOL_ID`, and `NEXT_PUBLIC_COGNITO_CLIENT_ID`
+        then rebuild.
       </p>
     );
   }
