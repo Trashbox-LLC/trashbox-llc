@@ -7,6 +7,7 @@ import {
 import type { EmailContentKind } from "@/components/features/portal/settings/EmailContentSettings";
 import { MailboxSettings } from "@/components/features/portal/settings/MailboxSettings";
 import { SendingPreferencesSettings } from "@/components/features/portal/settings/SendingPreferencesSettings";
+import { SmsNumberApplicationSection } from "@/components/features/portal/settings/SmsNumberApplicationSection";
 import {
   SmsSettingsSection,
   type SmsSettingsInitialState,
@@ -107,7 +108,12 @@ export function SettingsSectionContent({
   }
 
   if (sectionId === "text-messaging") {
-    return <SmsSettingsSection initialState={smsInitialState} />;
+    return (
+      <div className="space-y-6">
+        <SmsNumberApplicationSection />
+        <SmsSettingsSection initialState={smsInitialState} />
+      </div>
+    );
   }
 
   if (sectionId === "sending-preferences") {

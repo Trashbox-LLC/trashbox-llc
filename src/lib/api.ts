@@ -981,6 +981,96 @@ export async function listSmsOptOuts(): Promise<{ items: SmsOptOutEntry[] }> {
   };
 }
 
+export type SmsApplicationStatus =
+  | "pending_review"
+  | "submitted"
+  | "approved"
+  | "changes_requested"
+  | "closed";
+
+export type SmsOptInType =
+  | "digital-form"
+  | "verbal"
+  | "paper-form"
+  | "text"
+  | "qr-code";
+
+/** Volumes the carriers accept. */
+export const SMS_MONTHLY_VOLUMES = [
+  "10",
+  "100",
+  "1,000",
+  "10,000",
+  "100,000",
+  "250,000",
+  "500,000",
+  "750,000",
+  "1,000,000",
+  "5,000,000",
+  "10,000,000+",
+] as const;
+
+export interface SmsApplicationBusiness {
+  companyName: string;
+  companyWebsite: string;
+  taxId: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  useCaseCategory: string;
+  useCaseDescription: string;
+  optInType: SmsOptInType;
+  optInDescription: string;
+  sampleMessages: string[];
+  monthlyMessageVolume: string;
+  optInProof?: { contentType: string; base64: string };
+}
+
+export interface SmsApplication {
+  status: SmsApplicationStatus;
+  business: SmsApplicationBusiness;
+  submittedAt: string;
+  updatedAt: string;
+  carrierAttempts: number;
+  canResubmit: boolean;
+  statusReason?: string;
+  phoneNumber?: string;
+  phoneNumberDisplay?: string;
+}
+
+export interface SmsApplicationStatusResponse {
+  availableOnPlan: boolean;
+  application: SmsApplication | null;
+}
+
+export async function getSmsApplication(): Promise<SmsApplicationStatusResponse> {
+  return (await authFetch(
+    "/sms/application",
+  )) as unknown as SmsApplicationStatusResponse;
+}
+
+export async function applyForSmsNumber(
+  business: SmsApplicationBusiness,
+): Promise<{ application: SmsApplication }> {
+  return (await authFetch("/sms/application", {
+    method: "POST",
+    body: JSON.stringify(business),
+  })) as unknown as { application: SmsApplication };
+}
+
+export async function withdrawSmsApplication(): Promise<{
+  application: SmsApplication | null;
+}> {
+  return (await authFetch("/sms/application", {
+    method: "DELETE",
+  })) as unknown as { application: SmsApplication | null };
+}
+
 /* -------------------------------------------------------------------------- */
 /* Email content library                                                      */
 /* -------------------------------------------------------------------------- */
