@@ -153,6 +153,15 @@ export function PortalHeader() {
         href: portalWorkspacePath({
           orgSlug,
           projectSlug,
+          surface: "contacts",
+        }),
+        label: "Contacts",
+        icon: "contacts" as const,
+      },
+      {
+        href: portalWorkspacePath({
+          orgSlug,
+          projectSlug,
           surface: "forms",
         }),
         label: "Forms",

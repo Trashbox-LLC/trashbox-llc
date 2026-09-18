@@ -23,6 +23,7 @@ export type PortalWorkspaceSurface =
   | "orgSettings"
   | "projectHome"
   | "inbox"
+  | "contacts"
   | "forms"
   | "settings"
   | "membership";
@@ -33,6 +34,8 @@ export type ParsedPortalWorkspacePath = {
   surface: PortalWorkspaceSurface;
   /** Path under settings/ without leading/trailing slashes (e.g. `api-keys`). */
   settingsRest?: string;
+  /** Present on a contact detail path (`contacts/{contactId}`). */
+  contactId?: string;
 };
 
 const PORTAL_NAVIGATE_EVENT = "portal:navigate";
@@ -110,6 +113,15 @@ export function parsePortalWorkspacePath(
   if (surfaceSeg === "forms" && rest.length === 0) {
     return { orgSlug, projectSlug, surface: "forms" };
   }
+  if (surfaceSeg === "contacts" && rest.length <= 1) {
+    const contactId = rest[0];
+    return {
+      orgSlug,
+      projectSlug,
+      surface: "contacts",
+      ...(contactId ? { contactId } : {}),
+    };
+  }
   if (surfaceSeg === "membership" && rest.length === 0) {
     return { orgSlug, projectSlug, surface: "membership" };
   }
@@ -130,6 +142,7 @@ export function portalWorkspacePath(input: {
   projectSlug?: string;
   surface: PortalWorkspaceSurface;
   settingsRest?: string;
+  contactId?: string;
 }): string {
   const org = encodeURIComponent(input.orgSlug);
   const base = `${PORTAL_BASE}/${org}`;
@@ -152,6 +165,10 @@ export function portalWorkspacePath(input: {
       return `${projectBase}/inbox/`;
     case "forms":
       return `${projectBase}/forms/`;
+    case "contacts":
+      return input.contactId
+        ? `${projectBase}/contacts/${encodeURIComponent(input.contactId)}/`
+        : `${projectBase}/contacts/`;
     case "membership":
       return `${projectBase}/membership/`;
     case "settings": {

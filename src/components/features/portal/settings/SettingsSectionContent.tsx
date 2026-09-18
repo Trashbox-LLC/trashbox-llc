@@ -6,6 +6,7 @@ import {
 } from "@/components/features/portal/settings/EmailContentSettingsSection";
 import type { EmailContentKind } from "@/components/features/portal/settings/EmailContentSettings";
 import { MailboxSettings } from "@/components/features/portal/settings/MailboxSettings";
+import { NotificationSettingsSection } from "@/components/features/portal/settings/NotificationSettingsSection";
 import { SendingPreferencesSettings } from "@/components/features/portal/settings/SendingPreferencesSettings";
 import { SmsNumberApplicationSection } from "@/components/features/portal/settings/SmsNumberApplicationSection";
 import {
@@ -117,6 +118,10 @@ export function SettingsSectionContent({
         ) : null}
       </div>
     );
+  }
+
+  if (sectionId === "notifications") {
+    return <NotificationSettingsSection />;
   }
 
   if (sectionId === "sending-preferences") {

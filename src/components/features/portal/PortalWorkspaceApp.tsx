@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import { ContactsPage } from "@/components/features/portal/contacts/ContactsPage";
 import { FormsPage } from "@/components/features/portal/forms/FormsPage";
 import { PortalHome } from "@/components/features/portal/home/PortalHome";
 import { PortalApp } from "@/components/features/portal/leads/PortalPage";
@@ -218,6 +219,16 @@ export function PortalWorkspaceApp({ pathname }: PortalWorkspaceAppProps) {
   }
   if (parsed.surface === "inbox") {
     return <PortalApp tab="inbox" />;
+  }
+
+  if (parsed.surface === "contacts") {
+    return (
+      <ContactsPage
+        orgSlug={org.orgSlug}
+        projectSlug={project.projectSlug}
+        contactId={parsed.contactId}
+      />
+    );
   }
 
   if (parsed.surface === "forms") {

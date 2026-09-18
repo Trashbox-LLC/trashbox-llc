@@ -38,6 +38,7 @@ export type SettingsSectionId =
   | "activity-log"
   | "email-accounts"
   | "text-messaging"
+  | "notifications"
   | "templates"
   | "signatures"
   | "snippets"
@@ -151,6 +152,7 @@ export const PORTAL_PROJECT_SETTINGS_NAV: SettingsNavGroup[] = [
     items: [
       { id: "email-accounts", label: "Email Accounts", icon: "inbox" },
       { id: "text-messaging", label: "Text Messaging", icon: "sms" },
+      { id: "notifications", label: "Notifications", icon: "notifications" },
       { id: "templates", label: "Templates", icon: "description" },
       { id: "signatures", label: "Signatures", icon: "draw" },
       { id: "snippets", label: "Snippets", icon: "data_object" },

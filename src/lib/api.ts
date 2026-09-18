@@ -1072,6 +1072,223 @@ export async function withdrawSmsApplication(): Promise<{
 }
 
 /* -------------------------------------------------------------------------- */
+/* Contacts                                                                   */
+/* -------------------------------------------------------------------------- */
+
+export type ContactSource = "manual" | "form" | "sms" | "email";
+
+export interface ContactNote {
+  id: string;
+  body: string;
+  authorEmail: string;
+  createdAt: string;
+}
+
+/** Editable contact fields, shared by create and update. */
+export interface ContactInput {
+  firstName?: string;
+  lastName?: string;
+  company?: string;
+  jobTitle?: string;
+  address?: string;
+  website?: string;
+  emails: string[];
+  phones: string[];
+  tags: string[];
+  ownerEmail: string | null;
+  customFields?: Record<string, string>;
+}
+
+export interface Contact extends ContactInput {
+  clientId: string;
+  contactId: string;
+  displayName: string;
+  source: ContactSource;
+  notes: ContactNote[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  searchText: string;
+  leadCount: number;
+  lastActivityAt?: string;
+}
+
+export type ContactSort = "name" | "recent" | "created";
+
+export interface ListContactsOptions {
+  q?: string;
+  tag?: string;
+  ownerEmail?: string;
+  source?: ContactSource;
+  sort?: ContactSort;
+  limit?: number;
+  cursor?: string;
+}
+
+export interface ContactsListResponse {
+  clientId: string;
+  items: Contact[];
+  total: number;
+  nextCursor?: string;
+}
+
+export interface ContactLeadRef {
+  submissionId: string;
+  senderName: string;
+  status: LeadStatus;
+  submittedAt: string;
+  updatedAt: string;
+}
+
+export interface ContactDetailResponse {
+  contact: Contact;
+  leads: ContactLeadRef[];
+  /** Channels this project can reach the contact on right now. */
+  availableChannels?: MessageChannel[];
+  smsOptedOut?: boolean;
+}
+
+export interface SendContactMessageInput {
+  body: string;
+  channel: MessageChannel;
+  subject?: string;
+  bodyHtml?: string;
+  fromIdentityId?: string;
+}
+
+export interface OrgContactMatch {
+  contact: Contact;
+  projectId: string;
+  projectName: string;
+}
+
+export async function listContacts(
+  options?: ListContactsOptions,
+): Promise<ContactsListResponse> {
+  const params = new URLSearchParams();
+  if (options?.q) params.set("q", options.q);
+  if (options?.tag) params.set("tag", options.tag);
+  if (options?.ownerEmail) params.set("ownerEmail", options.ownerEmail);
+  if (options?.source) params.set("source", options.source);
+  if (options?.sort) params.set("sort", options.sort);
+  if (options?.limit) params.set("limit", String(options.limit));
+  if (options?.cursor) params.set("cursor", options.cursor);
+  const qs = params.toString();
+  return (await authFetch(
+    `/contacts${qs ? `?${qs}` : ""}`,
+  )) as unknown as ContactsListResponse;
+}
+
+export async function getContact(
+  contactId: string,
+): Promise<ContactDetailResponse> {
+  return (await authFetch(
+    `/contacts/${encodeURIComponent(contactId)}`,
+  )) as unknown as ContactDetailResponse;
+}
+
+export async function createContact(
+  input: Partial<ContactInput>,
+): Promise<{ contact: Contact }> {
+  return (await authFetch("/contacts", {
+    method: "POST",
+    body: JSON.stringify(input),
+  })) as unknown as { contact: Contact };
+}
+
+export async function updateContact(
+  contactId: string,
+  input: Partial<ContactInput>,
+): Promise<{ contact: Contact }> {
+  return (await authFetch(`/contacts/${encodeURIComponent(contactId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  })) as unknown as { contact: Contact };
+}
+
+export async function deleteContact(contactId: string): Promise<void> {
+  await authFetch(`/contacts/${encodeURIComponent(contactId)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function addContactNote(
+  contactId: string,
+  body: string,
+): Promise<{ contact: Contact }> {
+  return (await authFetch(
+    `/contacts/${encodeURIComponent(contactId)}/notes`,
+    { method: "POST", body: JSON.stringify({ body }) },
+  )) as unknown as { contact: Contact };
+}
+
+/** Emails or texts a contact, opening a thread when they have none. */
+export async function sendContactMessage(
+  contactId: string,
+  input: SendContactMessageInput,
+): Promise<{ message: LeadMessage; submissionId: string }> {
+  return (await authFetch(
+    `/contacts/${encodeURIComponent(contactId)}/messages`,
+    { method: "POST", body: JSON.stringify(input) },
+  )) as unknown as { message: LeadMessage; submissionId: string };
+}
+
+export async function searchOrgContacts(
+  q: string,
+): Promise<{ orgId: string; items: OrgContactMatch[] }> {
+  return (await authFetch(
+    `/contacts/search?q=${encodeURIComponent(q)}`,
+  )) as unknown as { orgId: string; items: OrgContactMatch[] };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Notification settings                                                      */
+/* -------------------------------------------------------------------------- */
+
+export const NOTIFICATION_EVENTS = [
+  "lead_created",
+  "sms_inbound",
+  "email_inbound",
+  "lead_assigned",
+  "lead_note_added",
+  "lead_status_changed",
+  "contact_created",
+] as const;
+
+export type NotificationEvent = (typeof NOTIFICATION_EVENTS)[number];
+
+export interface EventToggles {
+  push: boolean;
+  email: boolean;
+}
+
+export type NotificationSettings = Record<NotificationEvent, EventToggles>;
+
+export interface NotificationSettingsResponse {
+  clientId: string;
+  email: string;
+  emailNotifications: boolean;
+  events: NotificationEvent[];
+  settings: NotificationSettings;
+}
+
+export async function getNotificationSettings(): Promise<NotificationSettingsResponse> {
+  return (await authFetch(
+    "/notifications/settings",
+  )) as unknown as NotificationSettingsResponse;
+}
+
+export async function updateNotificationSettings(patch: {
+  emailNotifications?: boolean;
+  settings?: Partial<Record<NotificationEvent, Partial<EventToggles>>>;
+}): Promise<NotificationSettingsResponse> {
+  return (await authFetch("/notifications/settings", {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  })) as unknown as NotificationSettingsResponse;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Email content library                                                      */
 /* -------------------------------------------------------------------------- */
 
