@@ -22,6 +22,7 @@ import {
   getTeamRoles,
   hasPermission,
   listSubmissions,
+  PERMISSIONS,
   PERMISSION_LABELS,
   updateSubmission,
   updateTeamRole,
@@ -226,6 +227,11 @@ describe("permissions helpers", () => {
     expect(PERMISSION_LABELS.manage_roles_and_permissions).toBe(
       "Manage Roles And Permissions",
     );
+  });
+
+  it("includes delete_contacts from the Form API", () => {
+    expect(PERMISSIONS).toContain("delete_contacts");
+    expect(PERMISSION_LABELS.delete_contacts).toBe("Delete Contacts");
   });
 });
 

@@ -57,7 +57,7 @@ const leads: ContactLeadRef[] = [
   {
     submissionId: "s1",
     senderName: "Ada Lovelace",
-    status: "quoted",
+    status: "qualified",
     submittedAt: "2026-01-04T14:00:00.000Z",
     updatedAt: "2026-01-05T10:00:00.000Z",
   },

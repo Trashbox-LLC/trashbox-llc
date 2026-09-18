@@ -50,6 +50,7 @@ export const PERMISSIONS = [
   "manage_roles_and_permissions",
   "manage_api_keys",
   "manage_sms_number",
+  "delete_contacts",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -62,6 +63,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   manage_roles_and_permissions: "Manage Roles And Permissions",
   manage_api_keys: "Manage API Keys",
   manage_sms_number: "Manage Text Messaging Number",
+  delete_contacts: "Delete Contacts",
 };
 
 export interface ClientRole {

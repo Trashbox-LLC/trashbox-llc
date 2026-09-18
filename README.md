@@ -11,7 +11,7 @@ The Trashbox LLC marketing site, built on the business template stack.
 - **Component Dev:** [Storybook](https://storybook.js.org/)
 - **Unit Testing:** [Vitest](https://vitest.dev/) + [React Testing Library](https://testing-library.com/react)
 - **E2E Testing:** [Playwright](https://playwright.dev/)
-- **Deployment:** [GitHub Pages](https://pages.github.com/) (static export)
+- **Deployment:** [Vercel](https://vercel.com/) (static export from `main`)
 - **Package Manager:** [pnpm](https://pnpm.io/)
 
 ## Getting Started
@@ -31,7 +31,7 @@ Copy `.env.example` to `.env.local` and set:
 - `NEXT_PUBLIC_FORM_API_KEY` — public site key for the contact form
 - `NEXT_PUBLIC_COGNITO_USER_POOL_ID` / `NEXT_PUBLIC_COGNITO_CLIENT_ID` — Platform portal auth
 
-For GitHub Pages, set the same names as repository **Secrets** (used by `.github/workflows/deploy-pages.yml`). In repo settings, set Pages source to **GitHub Actions**.
+Set the same names as Vercel **Environment Variables** on the project (Production, Preview, and Development). Pushes to `main` deploy on the Trashbox Vercel team.
 
 ## Commands
 

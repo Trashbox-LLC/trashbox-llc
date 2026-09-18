@@ -12,7 +12,7 @@ import {
 } from "@/lib/portal-routes";
 
 /**
- * GitHub Pages serves 404.html for unknown slug paths. When the location is a
+ * Static hosting serves 404.html for unknown slug paths. When the location is a
  * portal workspace URL, bootstrap the same SPA shell as /portal/*.
  */
 export function PortalDeepLinkOrNotFound() {
