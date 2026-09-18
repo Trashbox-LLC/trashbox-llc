@@ -16,12 +16,12 @@ import {
  */
 export function PortalRouteOutlet({ children }: { children: ReactNode }) {
   const nextPath = usePathname() ?? "";
-  const [path, setPath] = useState(() =>
-    typeof window !== "undefined" ? window.location.pathname : "",
-  );
+  const [path, setPath] = useState(nextPath);
 
   useEffect(() => {
-    setPath(window.location.pathname);
+    const win = window.location.pathname;
+    if (win.startsWith("/portal/")) setPath(win);
+    else setPath(nextPath || win);
     return subscribePortalNavigate(setPath);
   }, [nextPath]);
 
