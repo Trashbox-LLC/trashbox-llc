@@ -21,7 +21,7 @@ export interface SelectOption {
   indicatorClassName?: string;
 }
 
-export type SelectVariant = "underline" | "soft" | "field";
+export type SelectVariant = "underline" | "soft" | "field" | "inline";
 
 interface SelectProps {
   id?: string;
@@ -34,6 +34,10 @@ interface SelectProps {
   variant?: SelectVariant;
   /** Horizontal anchor for the listbox. Defaults to `start`. */
   listboxAlign?: "start" | "end";
+  /** Show the expand icon. Defaults to true. */
+  caret?: boolean;
+  /** Secondary text inside the trigger, after the selected label. */
+  hint?: string;
   "aria-label"?: string;
 }
 
@@ -43,6 +47,8 @@ const triggerVariantClass: Record<SelectVariant, string> = {
   soft: "h-auto w-full justify-between gap-2 rounded-full border border-outline-variant/25 bg-surface-container-highest/70 px-3 py-1.5 font-body text-sm font-normal tracking-normal text-white normal-case shadow-none hover:bg-surface-container-highest hover:text-white focus-visible:border-outline-variant/50 focus-visible:ring-0",
   field:
     "h-auto w-full justify-between gap-2 rounded-md border border-outline-variant/30 bg-transparent px-3 py-2.5 font-body text-sm font-normal tracking-normal text-white normal-case shadow-none hover:bg-white/5 hover:text-white focus-visible:border-outline-variant/60 focus-visible:ring-0",
+  inline:
+    "h-auto min-h-0 w-auto shrink-0 justify-start gap-1.5 rounded-none border-0 bg-transparent p-0 font-body text-sm leading-5 font-normal tracking-normal text-white normal-case shadow-none hover:bg-transparent hover:text-white focus-visible:ring-0",
 };
 
 const listboxVariantClass: Record<SelectVariant, string> = {
@@ -51,6 +57,8 @@ const listboxVariantClass: Record<SelectVariant, string> = {
   soft: "absolute z-50 mt-1.5 max-h-60 overflow-auto rounded-2xl border border-outline-variant/30 bg-surface-container-high py-1.5 shadow-lg focus:outline-none",
   field:
     "absolute z-50 mt-1.5 max-h-60 w-full overflow-auto rounded-md border border-outline-variant/30 bg-surface-container-high py-1.5 shadow-lg focus:outline-none",
+  inline:
+    "absolute z-50 mt-1.5 max-h-60 w-max min-w-full overflow-auto rounded-md border border-outline-variant/30 bg-surface-container-high py-1.5 shadow-lg focus:outline-none",
 };
 
 export function Select({
@@ -62,6 +70,8 @@ export function Select({
   className,
   variant = "underline",
   listboxAlign = "start",
+  caret = true,
+  hint,
   "aria-label": ariaLabel,
 }: SelectProps) {
   const [open, setOpen] = useState(false);
@@ -168,10 +178,16 @@ export function Select({
         onKeyDown={onTriggerKeyDown}
         className={cn(
           triggerVariantClass[variant],
+          hint && "max-w-full",
           disabled && "cursor-not-allowed opacity-40",
         )}
       >
-        <span className="flex min-w-0 items-center gap-2">
+        <span
+          className={cn(
+            "flex min-w-0 items-baseline",
+            hint ? "gap-3" : "gap-2",
+          )}
+        >
           {selected?.indicatorClassName && (
             <span
               aria-hidden="true"
@@ -181,15 +197,24 @@ export function Select({
               )}
             />
           )}
-          <span className="truncate">{selected?.label ?? ""}</span>
+          <span className={hint ? "shrink-0" : "truncate"}>
+            {selected?.label ?? ""}
+          </span>
+          {hint ? (
+            <span className="text-outline min-w-0 truncate font-normal">
+              {hint}
+            </span>
+          ) : null}
         </span>
-        <MaterialIcon
-          name="expand_more"
-          className={cn(
-            "text-outline shrink-0 transition-transform",
-            open && "rotate-180",
-          )}
-        />
+        {caret ? (
+          <MaterialIcon
+            name="expand_more"
+            className={cn(
+              "text-outline shrink-0 transition-transform",
+              open && "rotate-180",
+            )}
+          />
+        ) : null}
       </Button>
 
       {open && (
@@ -206,6 +231,9 @@ export function Select({
               (listboxAlign === "end"
                 ? "right-0 left-auto min-w-full w-max max-w-[14rem]"
                 : "w-full"),
+            variant === "inline" &&
+              listboxAlign === "end" &&
+              "right-0 left-auto max-w-[min(18rem,calc(100vw-1.5rem))]",
             variant === "underline" &&
               listboxAlign === "end" &&
               "right-0 left-auto",

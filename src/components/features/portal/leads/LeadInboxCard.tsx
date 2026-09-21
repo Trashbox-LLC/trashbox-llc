@@ -5,6 +5,7 @@ import { Select } from "@/components/atoms/Select";
 import { LeadStatusBadge } from "@/components/features/portal/leads/LeadStatusBadge";
 import { Button } from "@/components/ui/button";
 import {
+  assigneeIdentity,
   teamMemberDisplayName,
   type LeadStatus,
   type TeamMember,
@@ -31,15 +32,34 @@ function formatWhen(iso: string): string {
   }
 }
 
-function assigneeDisplayName(
-  assignedTo: string | null | undefined,
-  members: TeamMember[],
-): string {
-  if (!assignedTo) return "Unassigned";
-  const member = members.find((entry) => entry.email === assignedTo);
-  if (member) return teamMemberDisplayName(member);
-  const local = assignedTo.split("@")[0]?.trim();
-  return local || assignedTo;
+function AssigneeEmail({
+  assignedTo,
+  members,
+}: {
+  assignedTo: string;
+  members: TeamMember[];
+}) {
+  const email = assigneeIdentity(assignedTo, members).email;
+  if (!email) return null;
+  return <span className="text-outline min-w-0 truncate">{email}</span>;
+}
+
+function AssigneeName({
+  assignedTo,
+  members,
+}: {
+  assignedTo: string;
+  members: TeamMember[];
+}) {
+  const assignee = assigneeIdentity(assignedTo, members);
+  return (
+    <span className="inline-flex min-w-0 items-baseline gap-2">
+      <span className="truncate text-white">{assignee.name}</span>
+      {assignee.email ? (
+        <span className="text-outline truncate">{assignee.email}</span>
+      ) : null}
+    </span>
+  );
 }
 
 export interface LeadInboxCardProps {
@@ -88,8 +108,6 @@ export function LeadInboxCard({
   stacked = false,
   onSelect,
 }: LeadInboxCardProps): JSX.Element {
-  const assigneeLabel = assigneeDisplayName(assignedTo, members);
-
   if (variant === "activity") {
     return (
       <Button
@@ -117,8 +135,8 @@ export function LeadInboxCard({
         </div>
         <p className="text-on-surface mt-2 line-clamp-2 text-sm">{message}</p>
         {assignedTo && (
-          <p className="font-label text-outline-variant mt-2 truncate text-[10px] tracking-widest uppercase">
-            {assigneeLabel}
+          <p className="mt-2 truncate text-sm">
+            <AssigneeName assignedTo={assignedTo} members={members} />
           </p>
         )}
         <p className="text-outline-variant mt-3 font-mono text-[10px] uppercase">
@@ -196,33 +214,38 @@ export function LeadInboxCard({
             </p>
           )}
           {showAssigneeSelect && (
-            <Select
-              aria-label="Assigned to"
-              variant="soft"
-              listboxAlign="end"
-              value={assignedTo ?? ""}
-              disabled={assignBusy}
-              className="min-w-0 max-w-[8.5rem] shrink"
-              onChange={(next) => onAssign?.(next ? next : null)}
-              options={[
-                { value: "", label: "Unassigned" },
-                ...members.map((member) => {
-                  const name = teamMemberDisplayName(member);
-                  return {
-                    value: member.email,
-                    label: name,
-                    menuLabel:
-                      name === member.email
-                        ? member.email
-                        : `${name} (${member.email})`,
-                  };
-                }),
-              ]}
-            />
+            <div className="flex min-w-0 items-baseline justify-end gap-2 text-sm">
+              <Select
+                aria-label="Assigned to"
+                variant="soft"
+                listboxAlign="end"
+                value={assignedTo ?? ""}
+                disabled={assignBusy}
+                className="min-w-0 max-w-[8.5rem] shrink"
+                onChange={(next) => onAssign?.(next ? next : null)}
+                options={[
+                  { value: "", label: "Unassigned" },
+                  ...members.map((member) => {
+                    const name = teamMemberDisplayName(member);
+                    return {
+                      value: member.email,
+                      label: name,
+                      menuLabel:
+                        name === member.email
+                          ? member.email
+                          : `${name} (${member.email})`,
+                    };
+                  }),
+                ]}
+              />
+              {assignedTo ? (
+                <AssigneeEmail assignedTo={assignedTo} members={members} />
+              ) : null}
+            </div>
           )}
           {!showAssigneeSelect && assignedTo && (
-            <p className="text-on-surface min-w-0 truncate text-sm font-semibold">
-              {assigneeLabel}
+            <p className="min-w-0 truncate text-sm">
+              <AssigneeName assignedTo={assignedTo} members={members} />
             </p>
           )}
         </div>

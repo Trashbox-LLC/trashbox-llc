@@ -287,6 +287,51 @@ export function teamMemberDisplayName(member: {
   return member.email;
 }
 
+/** Name for an assignee, and the email when it is a separate label. */
+export function assigneeIdentity(
+  assignedTo: string | null | undefined,
+  members: {
+    firstName?: string;
+    lastName?: string;
+    name?: string;
+    email: string;
+  }[],
+): { name: string; email: string | null } {
+  if (!assignedTo) return { name: "Unassigned", email: null };
+  const member = members.find(
+    (entry) => entry.email.toLowerCase() === assignedTo.toLowerCase(),
+  );
+  if (!member) return { name: assignedTo, email: null };
+  const name = teamMemberDisplayName(member);
+  if (name === member.email) return { name: member.email, email: null };
+  return { name, email: member.email };
+}
+
+/** Use the account profile name when this membership has none. */
+export function teamMemberWithAccountName<
+  T extends {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    name?: string;
+  },
+>(
+  member: T,
+  profile: {
+    email: string;
+    firstName?: string | null;
+    lastName?: string | null;
+  } | null | undefined,
+): T {
+  if (!profile) return member;
+  if (member.email.toLowerCase() !== profile.email.toLowerCase()) return member;
+  if (teamMemberDisplayName(member) !== member.email) return member;
+  const firstName = profile.firstName?.trim() || undefined;
+  const lastName = profile.lastName?.trim() || undefined;
+  if (!firstName && !lastName) return member;
+  return { ...member, firstName, lastName };
+}
+
 export class ApiError extends Error {
   status: number;
   data?: Record<string, unknown>;

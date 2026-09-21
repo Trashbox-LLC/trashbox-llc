@@ -20,6 +20,7 @@ import {
   createProject,
   disconnectMailbox,
   getAccount,
+  getAccountProfile,
   getMailbox,
   getSmsStatus,
   getTeam,
@@ -48,8 +49,10 @@ import {
   type ProjectForm,
   type SmsStatusResponse,
   type Submission,
+  teamMemberWithAccountName,
   type TeamMember,
   type TeamRole,
+  type UserProfile,
   hasPermission as permissionsInclude,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -312,6 +315,9 @@ export function PortalProvider({
     () => filtersFromWindowFormId() ?? emptyFilters,
   );
   const [members, setMembers] = useState<TeamMember[]>([]);
+  const [accountProfile, setAccountProfile] = useState<UserProfile | null>(
+    null,
+  );
   const [forms, setForms] = useState<ProjectForm[]>([]);
   const [teamRole, setTeamRole] = useState<TeamRole>("member");
   const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -398,6 +404,7 @@ export function PortalProvider({
       setBillingError(null);
       setSelectedId(null);
       setMembers([]);
+      setAccountProfile(null);
       setForms([]);
       setPermissions([]);
       setRoles([]);
@@ -507,6 +514,13 @@ export function PortalProvider({
               setMembers([]);
               setPermissions([]);
               setRoles([]);
+            }),
+          getAccountProfile()
+            .then((profile) => {
+              if (!cancelled) setAccountProfile(profile.profile);
+            })
+            .catch(() => {
+              if (!cancelled) setAccountProfile(null);
             }),
           listForms()
             .then((formList) => {
@@ -1041,6 +1055,14 @@ export function PortalProvider({
     [isOwner, permissions],
   );
 
+  const displayMembers = useMemo(
+    () =>
+      members.map((member) =>
+        teamMemberWithAccountName(member, accountProfile),
+      ),
+    [members, accountProfile],
+  );
+
   const value = useMemo<PortalContextValue>(
     () => ({
       ready,
@@ -1064,7 +1086,7 @@ export function PortalProvider({
       filters,
       setFilters,
       applyFilters,
-      members,
+      members: displayMembers,
       forms,
       teamRole,
       permissions,
@@ -1115,7 +1137,7 @@ export function PortalProvider({
       selected,
       filters,
       applyFilters,
-      members,
+      displayMembers,
       forms,
       teamRole,
       permissions,

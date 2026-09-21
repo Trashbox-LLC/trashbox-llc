@@ -79,6 +79,15 @@ export const Soft: Story = {
   },
 };
 
+export const Inline: Story = {
+  ...Default,
+  args: {
+    variant: "inline",
+    value: "contacted",
+    caret: false,
+  },
+};
+
 export const Field: Story = {
   ...Default,
   args: {

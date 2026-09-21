@@ -163,8 +163,117 @@ describe("LeadDetail", () => {
     expect(
       screen.getByText(/Your mom as a website/i, { selector: "p" }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/^service$/i)).toBeInTheDocument();
-    expect(screen.getByText("Full-Stack Development")).toBeInTheDocument();
+    expect(screen.queryByText("[Full-Stack Development]")).not.toBeInTheDocument();
+
+    const details = screen.getByRole("complementary", { name: /^details$/i });
+    expect(within(details).getByText("Metadata")).toBeInTheDocument();
+    expect(within(details).getByText("Service")).toBeInTheDocument();
+    expect(within(details).getByText("Full-Stack Development")).toBeInTheDocument();
+  });
+
+  it("keeps metadata in the details panel after replies arrive", () => {
+    render(
+      <LeadDetail
+        submission={baseSubmission}
+        members={[]}
+        messages={[outboundReply]}
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    const details = screen.getByRole("complementary", { name: /^details$/i });
+    expect(within(details).getByText("Service")).toBeInTheDocument();
+    expect(within(details).getByText("Full-Stack Development")).toBeInTheDocument();
+  });
+
+  it("shows only tags on the lead, with an add control that does not change them", async () => {
+    const user = userEvent.setup();
+    const onUpdate = vi.fn();
+
+    render(
+      <LeadDetail
+        submission={{
+          ...baseSubmission,
+          tags: ["website_quote", "sales"],
+        }}
+        members={[]}
+        onUpdate={onUpdate}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    const details = screen.getByRole("complementary", { name: /^details$/i });
+    expect(within(details).getByText("Website Quote")).toBeInTheDocument();
+    expect(within(details).getByText("Sales")).toBeInTheDocument();
+    expect(within(details).queryByRole("button", { name: /^support$/i })).not.toBeInTheDocument();
+
+    await user.click(within(details).getByRole("button", { name: /add tag/i }));
+    expect(onUpdate).not.toHaveBeenCalled();
+  });
+
+  it("opens the assignee menu from the name or the email", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <LeadDetail
+        submission={{
+          ...baseSubmission,
+          status: "contacted",
+          assignedTo: "owner@example.com",
+        }}
+        members={[
+          {
+            email: "owner@example.com",
+            role: "owner",
+            joinedAt: "2026-01-01T00:00:00.000Z",
+            firstName: "Ezekiel",
+            lastName: "Mohr",
+            emailNotifications: true,
+          },
+        ]}
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    const details = screen.getByRole("complementary", { name: /^details$/i });
+    const status = within(details).getByRole("button", { name: /^status$/i });
+    const assignee = within(details).getByRole("button", { name: "Assigned to" });
+    expect(status).toHaveTextContent("Contacted");
+    expect(status).not.toHaveTextContent("expand_more");
+    expect(assignee).toHaveTextContent("Ezekiel Mohr");
+    expect(assignee).toHaveTextContent("owner@example.com");
+    expect(assignee).not.toHaveTextContent("expand_more");
+
+    await user.click(within(assignee).getByText("owner@example.com"));
+    const listbox = screen.getByRole("listbox");
+    expect(listbox.className).toMatch(/\bright-0\b/);
+    expect(listbox.className).toMatch(/\bleft-auto\b/);
+  });
+
+  it("shows an email-only assignee once", () => {
+    render(
+      <LeadDetail
+        submission={{
+          ...baseSubmission,
+          assignedTo: "owner@example.com",
+        }}
+        members={[
+          {
+            email: "owner@example.com",
+            role: "owner",
+            joinedAt: "2026-01-01T00:00:00.000Z",
+            emailNotifications: true,
+          },
+        ]}
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    const details = screen.getByRole("complementary", { name: /^details$/i });
+    expect(within(details).getAllByText("owner@example.com")).toHaveLength(1);
   });
 
   it("shows the latest message as a history card instead of below the timeline", async () => {
@@ -235,7 +344,7 @@ describe("LeadDetail", () => {
       within(details).getByRole("button", { name: /^status$/i }),
     ).toBeInTheDocument();
     expect(
-      within(details).getByRole("button", { name: /assigned to/i }),
+      within(details).getByRole("button", { name: "Assigned to" }),
     ).toBeInTheDocument();
     expect(within(details).getByText("ada@example.com")).toBeInTheDocument();
     expect(within(details).getByText("contact@trashbox.io")).toBeInTheDocument();

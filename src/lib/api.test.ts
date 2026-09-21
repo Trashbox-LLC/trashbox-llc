@@ -12,6 +12,8 @@ import { fetchAuthSession } from "aws-amplify/auth";
 import {
   acceptTeamInvite,
   addSubmissionNote,
+  assigneeIdentity,
+  teamMemberWithAccountName,
   createApiKey,
   createTeamInvite,
   createTeamRole,
@@ -488,5 +490,44 @@ describe("team API", () => {
         body: JSON.stringify({ token: "abc123" }),
       }),
     );
+  });
+});
+
+describe("assigneeIdentity", () => {
+  const members = [
+    {
+      email: "owner@example.com",
+      firstName: "Ezekiel",
+      lastName: "Mohr",
+    },
+    { email: "nameless@example.com" },
+  ];
+
+  it("pairs a member name with their email", () => {
+    expect(assigneeIdentity("owner@example.com", members)).toEqual({
+      name: "Ezekiel Mohr",
+      email: "owner@example.com",
+    });
+  });
+
+  it("returns the email once when the member has no name", () => {
+    expect(assigneeIdentity("nameless@example.com", members)).toEqual({
+      name: "nameless@example.com",
+      email: null,
+    });
+  });
+
+  it("fills a missing membership name from the signed-in profile", () => {
+    const [member] = members;
+    expect(
+      teamMemberWithAccountName(
+        { ...member, firstName: undefined, lastName: undefined },
+        {
+          email: "owner@example.com",
+          firstName: "Ezekiel",
+          lastName: "Mohr",
+        },
+      ),
+    ).toMatchObject({ firstName: "Ezekiel", lastName: "Mohr" });
   });
 });

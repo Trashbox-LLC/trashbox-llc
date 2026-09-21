@@ -54,6 +54,20 @@ export interface LeadMessageTimelineLabels {
 const QUOTE_HEADER =
   /^(?:On [^\n]*\bwrote:\s*|-{5,}\s*Original Message\s*-{5,}|From:\s[^\n]+\nSent:\s)/im;
 
+/**
+ * Form text without a leading `[value]` line that duplicates metadata.
+ * Older contact submissions stored the chosen service that way.
+ */
+export function formSubmissionMessage(
+  message: string,
+  metadata?: Record<string, string>,
+): string {
+  const match = message.match(/^\[([^\]]+)\]\n\n([\s\S]*)$/);
+  if (!match) return message;
+  const copied = Object.values(metadata ?? {}).some((value) => value === match[1]);
+  return copied ? match[2] : message;
+}
+
 /** Reply text without the quoted copy of the earlier email. */
 export function visibleReplyText(body: string): string {
   const normalized = body.replace(/\r\n/g, "\n");

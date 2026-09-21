@@ -35,7 +35,9 @@ const SERVICE_OPTIONS = [
 ] as const;
 
 export function ContactForm() {
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
+    "idle",
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [service, setService] = useState(SERVICE_NONE);
 
@@ -83,12 +85,15 @@ export function ContactForm() {
   }
 
   return (
-    <section className="mx-auto max-w-4xl border-t border-outline-variant/10 pt-24" id="contact">
+    <section
+      className="border-outline-variant/10 mx-auto max-w-4xl border-t pt-24"
+      id="contact"
+    >
       <Reveal className="mb-20 text-center">
-        <h2 className="mb-4 font-headline text-5xl font-bold tracking-tighter text-white">
+        <h2 className="font-headline mb-4 text-5xl font-bold tracking-tighter text-white">
           Start a project
         </h2>
-        <p className="text-base text-on-surface-variant">
+        <p className="text-on-surface-variant text-base">
           Tell us what you need—we&apos;ll get back to you soon.
         </p>
       </Reveal>
@@ -159,7 +164,7 @@ export function ContactForm() {
             />
           </div>
           {status === "sent" && (
-            <p className="text-sm text-on-surface-variant">
+            <p className="text-on-surface-variant text-sm">
               Thanks—we got your message and will be in touch.
             </p>
           )}

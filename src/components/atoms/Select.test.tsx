@@ -191,6 +191,22 @@ describe("Select", () => {
     ).toBeInTheDocument();
   });
 
+  it("hides the dropdown icon when caret is off", () => {
+    render(
+      <Select
+        aria-label="Status"
+        value="contacted"
+        options={options}
+        onChange={vi.fn()}
+        caret={false}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: /status/i });
+    expect(trigger).toHaveTextContent("Contacted");
+    expect(trigger).not.toHaveTextContent("expand_more");
+  });
+
   it("right-aligns the listbox when listboxAlign is end", async () => {
     const user = userEvent.setup();
 

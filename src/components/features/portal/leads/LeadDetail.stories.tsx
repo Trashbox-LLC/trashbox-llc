@@ -8,12 +8,16 @@ const members: TeamMember[] = [
     email: "owner@example.com",
     role: "owner",
     joinedAt: "2026-01-01",
+    firstName: "Ezekiel",
+    lastName: "Mohr",
     emailNotifications: true,
   },
   {
     email: "sarah@example.com",
     role: "member",
     joinedAt: "2026-01-01",
+    firstName: "Sarah",
+    lastName: "Chen",
     emailNotifications: false,
   },
 ];
@@ -192,7 +196,9 @@ export const WithMetadata: Story = {
   args: {
     submission: {
       ...baseSubmission,
+      message: "Need a quote for a new site",
       metadata: {
+        service: "Web application",
         company: "Analytical Engines",
         source: "homepage",
       },

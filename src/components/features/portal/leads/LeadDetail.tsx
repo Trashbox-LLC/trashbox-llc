@@ -10,10 +10,10 @@ import {
   LEAD_STATUSES,
   LEAD_STATUS_DOT_CLASS,
   LEAD_STATUS_LABELS,
-  LEAD_TAGS,
   LEAD_TAG_LABELS,
   leadNotesOf,
   leadStatusOf,
+  assigneeIdentity,
   leadTagsOf,
   teamMemberDisplayName,
   type FromIdentityOption,
@@ -24,11 +24,25 @@ import {
   type Submission,
   type TeamMember,
 } from "@/lib/api";
-import { leadContactLabel, visibleReplyText } from "@/lib/lead-messages";
+import {
+  formSubmissionMessage,
+  leadContactLabel,
+  visibleReplyText,
+} from "@/lib/lead-messages";
 import { cn } from "@/lib/utils";
 
 const labelClass =
   "mb-2 block font-label text-[10px] uppercase tracking-widest text-outline";
+
+function titleCase(value: string): string {
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
 
 function formatWhen(iso: string) {
   try {
@@ -111,29 +125,44 @@ export function LeadDetail({
     orderedMessages.length > 0
       ? orderedMessages[orderedMessages.length - 1]
       : null;
+  const formMessage = formSubmissionMessage(
+    submission.message,
+    submission.metadata,
+  );
   const featuredBody = latestMessage
     ? visibleReplyText(latestMessage.bodyText)
-    : submission.message;
+    : formMessage;
   const featuredAuthor = latestMessage
     ? latestMessage.direction === "inbound"
       ? submission.senderName
       : latestMessage.from
     : submission.senderName;
   const featuredAt = latestMessage?.createdAt ?? submission.submittedAt;
-  const showFormMetadata =
-    !latestMessage &&
-    Boolean(submission.metadata && Object.keys(submission.metadata).length > 0);
+  const metadataEntries = Object.entries(submission.metadata ?? {}).filter(
+    ([, value]) => value.trim().length > 0,
+  );
+  const assignee = assigneeIdentity(submission.assignedTo, members);
+  const assigneeKnown = members.some(
+    (member) => member.email === submission.assignedTo,
+  );
+  const assigneeOptions = [
+    { value: "", label: "Unassigned" },
+    ...(!assigneeKnown && submission.assignedTo
+      ? [{ value: submission.assignedTo, label: submission.assignedTo }]
+      : []),
+    ...members.map((member) => {
+      const label = teamMemberDisplayName(member);
+      return {
+        value: member.email,
+        label,
+        menuLabel: label === member.email ? member.email : `${label} (${member.email})`,
+      };
+    }),
+  ];
   const hasHistory = orderedMessages.length > 0;
 
   function selectPanel(next: Exclude<ConversationPanel, "thread">) {
     setPanel((current) => (current === next ? "thread" : next));
-  }
-
-  async function toggleTag(tag: LeadTag) {
-    const next = tags.includes(tag)
-      ? tags.filter((t) => t !== tag)
-      : [...tags, tag];
-    await onUpdate({ tags: next });
   }
 
   const notesPanel = (
@@ -246,7 +275,7 @@ export function LeadDetail({
               </p>
             </>
           }
-          formMessage={submission.message}
+          formMessage={formMessage}
           formFrom={contactLabel ?? submission.senderName}
           formAt={submission.submittedAt}
           messages={orderedMessages}
@@ -257,9 +286,6 @@ export function LeadDetail({
           leadName={submission.senderName}
           showFeatured={panel !== "notes"}
           conversationExtra={panel === "notes" ? notesPanel : undefined}
-          featuredMetadata={
-            showFormMetadata ? submission.metadata : undefined
-          }
           mailboxConnected={mailboxConnected}
           fromAddress={fromAddress}
           fromOptions={fromOptions}
@@ -284,16 +310,18 @@ export function LeadDetail({
 
       <aside
         aria-label="Details"
-        className="border-outline-variant/20 bg-surface-container-low w-full shrink-0 space-y-6 rounded-xl border p-5 lg:w-72"
+        className="border-outline-variant/20 bg-surface-container-low w-full shrink-0 rounded-xl border px-5 py-4 lg:w-80"
       >
-        <h2 className="text-sm font-medium text-white">Details</h2>
-        <div>
-          <label className={labelClass} htmlFor="detail-status">
-            Status
-          </label>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base leading-5 font-semibold text-white">
+            Details
+          </h2>
           <Select
             id="detail-status"
-            variant="field"
+            aria-label="Status"
+            variant="inline"
+            caret={false}
+            listboxAlign="end"
             value={status}
             disabled={busy}
             onChange={(next) => void onUpdate({ status: next as LeadStatus })}
@@ -304,81 +332,84 @@ export function LeadDetail({
             }))}
           />
         </div>
-        <div>
-          <label className={labelClass} htmlFor="detail-assignee">
-            Assigned to
-          </label>
+        <div className="mt-5 grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3 text-sm leading-5">
+          <span className="text-outline">Assigned to</span>
           <Select
             id="detail-assignee"
-            variant="field"
+            aria-label="Assigned to"
+            variant="inline"
+            caret={false}
+            listboxAlign="end"
+            hint={assignee.email ?? undefined}
+            className="min-w-0"
             value={submission.assignedTo ?? ""}
             disabled={busy}
             onChange={(next) =>
               void onUpdate({ assignedTo: next ? next : null })
             }
-            options={[
-              { value: "", label: "Unassigned" },
-              ...members.map((member) => {
-                const label = teamMemberDisplayName(member);
-                return {
-                  value: member.email,
-                  label:
-                    label === member.email
-                      ? member.email
-                      : `${label} (${member.email})`,
-                };
-              }),
-            ]}
+            options={assigneeOptions}
           />
         </div>
-        <div>
-          <p className={labelClass}>Tags</p>
-          <div className="flex flex-wrap gap-1.5">
-            {LEAD_TAGS.map((tag) => {
-              const active = tags.includes(tag);
-              return (
-                <Button
-                  key={tag}
-                  type="button"
-                  variant="outline"
-                  size="xs"
-                  disabled={busy}
-                  onClick={() => void toggleTag(tag)}
-                  className={cn(
-                    "font-label rounded-md text-[9px] font-medium tracking-wider",
-                    active
-                      ? "border-white/70 bg-white/10 text-white hover:bg-white/15 hover:text-white"
-                      : "border-outline-variant/40 text-outline hover:border-white hover:text-white",
-                  )}
-                >
-                  {LEAD_TAG_LABELS[tag]}
-                </Button>
-              );
-            })}
-          </div>
+        <div className="mt-4 flex flex-wrap gap-x-3 gap-y-2">
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex h-7 items-center rounded-lg border border-white/20 px-2.5 text-sm leading-none text-white"
+            >
+              {LEAD_TAG_LABELS[tag]}
+            </span>
+          ))}
+          <button
+            type="button"
+            aria-label="Add tag"
+            className="text-outline inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-white/20 px-2 text-sm leading-none"
+          >
+            +
+          </button>
         </div>
-        <dl className="space-y-5">
+        <dl className="mt-4 space-y-2 border-t border-white/10 pt-4 text-sm leading-5">
           {contactLabel ? (
-            <div>
-              <dt className={labelClass}>From</dt>
-              <dd className="text-sm break-all text-white">{contactLabel}</dd>
+            <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3">
+              <dt className="text-outline">From</dt>
+              <dd className="min-w-0 break-all text-white">{contactLabel}</dd>
             </div>
           ) : null}
           {fromAddress ? (
-            <div>
-              <dt className={labelClass}>To</dt>
-              <dd className="text-sm break-all text-white">{fromAddress}</dd>
+            <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3">
+              <dt className="text-outline">To</dt>
+              <dd className="min-w-0 break-all text-white">{fromAddress}</dd>
             </div>
           ) : null}
-          <div>
-            <dt className={labelClass}>Date</dt>
-            <dd className="text-sm text-white">
+          <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3">
+            <dt className="text-outline">Date</dt>
+            <dd className="text-white">
               <time dateTime={submission.submittedAt}>
                 {formatWhen(submission.submittedAt)}
               </time>
             </dd>
           </div>
         </dl>
+        {metadataEntries.length > 0 ? (
+          <div className="mt-4 border-t border-white/10 pt-4">
+            <p id="detail-metadata" className="text-outline text-sm leading-5">
+              Metadata
+            </p>
+            <dl
+              aria-labelledby="detail-metadata"
+              className="mt-2 space-y-2 text-sm leading-5"
+            >
+              {metadataEntries.map(([key, value]) => (
+                <div
+                  key={key}
+                  className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3"
+                >
+                  <dt className="text-outline">{titleCase(key)}</dt>
+                  <dd className="min-w-0 break-all text-white">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ) : null}
       </aside>
     </div>
   );

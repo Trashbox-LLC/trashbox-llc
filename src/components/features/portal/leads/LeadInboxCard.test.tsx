@@ -127,6 +127,7 @@ describe("LeadInboxCard", () => {
     const assignee = screen.getByRole("button", { name: /assigned to/i });
     expect(assignee).toHaveTextContent("Olivia Owner");
     expect(assignee).not.toHaveTextContent("owner@example.com");
+    expect(screen.getByText("owner@example.com")).toBeInTheDocument();
     expect(assignee.querySelector(".truncate")).toBeTruthy();
 
     await user.click(assignee);

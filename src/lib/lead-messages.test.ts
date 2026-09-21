@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   designedEmailHtml,
+  formSubmissionMessage,
   leadContactLabel,
   leadMessageTimelineLabels,
   resolveComposerChannel,
@@ -146,6 +147,24 @@ describe("resolveComposerChannel", () => {
         canSms: false,
       }),
     ).toBeNull();
+  });
+});
+
+describe("formSubmissionMessage", () => {
+  it("drops a leading bracket line that copies a metadata value", () => {
+    expect(
+      formSubmissionMessage("[Web application]\n\nHello. Test 123", {
+        service: "Web application",
+      }),
+    ).toBe("Hello. Test 123");
+  });
+
+  it("keeps a bracket line that is not metadata", () => {
+    expect(
+      formSubmissionMessage("[Urgent]\n\nHello. Test 123", {
+        service: "Web application",
+      }),
+    ).toBe("[Urgent]\n\nHello. Test 123");
   });
 });
 
