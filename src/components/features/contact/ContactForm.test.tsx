@@ -31,6 +31,33 @@ describe("ContactForm", () => {
     ).toBeInTheDocument();
   });
 
+  it("sends the chosen service as metadata and leaves the message as typed", async () => {
+    vi.mocked(submitContactForm).mockResolvedValue({
+      success: true,
+      message: "Thanks—we got your message.",
+    });
+
+    const user = userEvent.setup();
+    render(<ContactForm />);
+
+    await user.type(screen.getByPlaceholderText("Your name"), "Ada Lovelace");
+    await user.type(screen.getByPlaceholderText("you@company.com"), "ada@example.com");
+    await user.click(screen.getByRole("combobox", { name: /what do you need/i }));
+    await user.click(screen.getByRole("option", { name: "Web application" }));
+    await user.type(
+      screen.getByPlaceholderText("Share a short brief, timeline, or goals…"),
+      "Hello. Test 123",
+    );
+    await user.click(screen.getByRole("button", { name: /send message/i }));
+
+    expect(submitContactForm).toHaveBeenCalledWith({
+      name: "Ada Lovelace",
+      email: "ada@example.com",
+      message: "Hello. Test 123",
+      metadata: { service: "Web application" },
+    });
+  });
+
   it("exposes email and phone contact links", () => {
     render(<ContactForm />);
 

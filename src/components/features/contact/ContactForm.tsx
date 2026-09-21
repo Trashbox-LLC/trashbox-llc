@@ -68,7 +68,7 @@ export function ContactForm() {
     const result = await submitContactForm({
       name,
       email,
-      message: selectedService ? `[${selectedService}]\n\n${message}` : message,
+      message,
       metadata: selectedService ? { service: selectedService } : undefined,
     });
 
