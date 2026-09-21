@@ -374,9 +374,10 @@ export function LeadDetail({
           <button
             type="button"
             aria-label="Add tag"
-            className="text-outline inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-white/20 px-2 text-sm leading-none"
+            className="text-outline inline-flex h-7 min-w-7 items-center justify-center gap-1.5 rounded-lg border border-white/20 px-2.5 text-sm leading-none"
           >
-            +
+            <span aria-hidden="true">+</span>
+            {tags.length === 0 ? "Tags" : null}
           </button>
         </div>
         <dl className="mt-4 space-y-2 border-t border-white/10 pt-4 text-sm leading-5">
