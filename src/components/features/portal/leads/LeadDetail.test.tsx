@@ -163,12 +163,16 @@ describe("LeadDetail", () => {
     expect(
       screen.getByText(/Your mom as a website/i, { selector: "p" }),
     ).toBeInTheDocument();
-    expect(screen.queryByText("[Full-Stack Development]")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("[Full-Stack Development]"),
+    ).not.toBeInTheDocument();
 
     const details = screen.getByRole("complementary", { name: /^details$/i });
     expect(within(details).getByText("Metadata")).toBeInTheDocument();
     expect(within(details).getByText("Service")).toBeInTheDocument();
-    expect(within(details).getByText("Full-Stack Development")).toBeInTheDocument();
+    expect(
+      within(details).getByText("Full-Stack Development"),
+    ).toBeInTheDocument();
   });
 
   it("keeps metadata in the details panel after replies arrive", () => {
@@ -184,7 +188,9 @@ describe("LeadDetail", () => {
 
     const details = screen.getByRole("complementary", { name: /^details$/i });
     expect(within(details).getByText("Service")).toBeInTheDocument();
-    expect(within(details).getByText("Full-Stack Development")).toBeInTheDocument();
+    expect(
+      within(details).getByText("Full-Stack Development"),
+    ).toBeInTheDocument();
   });
 
   it("shows only tags on the lead, with an add control that does not change them", async () => {
@@ -206,7 +212,9 @@ describe("LeadDetail", () => {
     const details = screen.getByRole("complementary", { name: /^details$/i });
     expect(within(details).getByText("Website Quote")).toBeInTheDocument();
     expect(within(details).getByText("Sales")).toBeInTheDocument();
-    expect(within(details).queryByRole("button", { name: /^support$/i })).not.toBeInTheDocument();
+    expect(
+      within(details).queryByRole("button", { name: /^support$/i }),
+    ).not.toBeInTheDocument();
 
     await user.click(within(details).getByRole("button", { name: /add tag/i }));
     expect(onUpdate).not.toHaveBeenCalled();
@@ -239,7 +247,9 @@ describe("LeadDetail", () => {
 
     const details = screen.getByRole("complementary", { name: /^details$/i });
     const status = within(details).getByRole("button", { name: /^status$/i });
-    const assignee = within(details).getByRole("button", { name: "Assigned to" });
+    const assignee = within(details).getByRole("button", {
+      name: "Assigned to",
+    });
     expect(status).toHaveTextContent("Contacted");
     expect(status).not.toHaveTextContent("expand_more");
     expect(assignee).toHaveTextContent("Ezekiel Mohr");
@@ -296,7 +306,9 @@ describe("LeadDetail", () => {
       selector: "p",
     });
     expect(
-      screen.queryByRole("region", { name: /message history/i })?.contains(featured),
+      screen
+        .queryByRole("region", { name: /message history/i })
+        ?.contains(featured),
     ).not.toBe(true);
 
     await user.click(historyTab);
@@ -310,9 +322,9 @@ describe("LeadDetail", () => {
     expect(
       within(history).getByLabelText(/received message event/i),
     ).toBeInTheDocument();
-    expect(screen.getAllByText(/Sounds good, when can we start\?/i)).toHaveLength(
-      1,
-    );
+    expect(
+      screen.getAllByText(/Sounds good, when can we start\?/i),
+    ).toHaveLength(1);
 
     await user.click(historyTab);
     expect(
@@ -347,7 +359,9 @@ describe("LeadDetail", () => {
       within(details).getByRole("button", { name: "Assigned to" }),
     ).toBeInTheDocument();
     expect(within(details).getByText("ada@example.com")).toBeInTheDocument();
-    expect(within(details).getByText("contact@trashbox.io")).toBeInTheDocument();
+    expect(
+      within(details).getByText("contact@trashbox.io"),
+    ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /^Ada$/i })).toBeInTheDocument();
     expect(screen.getByText(/\[Web application\]/)).toBeInTheDocument();
   });
@@ -416,8 +430,8 @@ describe("LeadDetail", () => {
     expect(
       reply.contains(screen.getByRole("button", { name: /send message/i })),
     ).toBe(true);
-    expect(messages.contains(screen.getByRole("heading", { name: /^Ada$/i }))).toBe(
-      true,
-    );
+    expect(
+      messages.contains(screen.getByRole("heading", { name: /^Ada$/i })),
+    ).toBe(true);
   });
 });

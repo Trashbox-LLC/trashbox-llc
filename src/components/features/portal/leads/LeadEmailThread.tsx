@@ -1072,7 +1072,7 @@ export function LeadEmailThread({
 
         {activeChannel === "email" && onSend && (
           <div>
-            <div className="border-b border-white/20 px-6 py-3">
+            <div className="px-6 py-3">
               <div className="flex flex-wrap items-center gap-4">
                 <span className="text-outline shrink-0 text-sm">To</span>
                 <span className="bg-surface-container inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs text-white shadow-sm">

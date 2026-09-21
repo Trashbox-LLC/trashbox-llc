@@ -372,7 +372,7 @@ export function LeadInboxSidebar({
       style={{ width: open ? width : 0 }}
     >
       <div style={{ width }} className="pr-1">
-        <aside className="flex flex-col gap-6">
+        <aside className="flex flex-col gap-3">
           <LeadInboxFilters
             value={filters}
             members={members}

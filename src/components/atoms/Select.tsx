@@ -30,6 +30,7 @@ interface SelectProps {
   onChange: (value: string) => void;
   disabled?: boolean;
   className?: string;
+  triggerClassName?: string;
   /** `underline` for filter fields; `soft` for pills; `field` for boxed dropdowns. */
   variant?: SelectVariant;
   /** Horizontal anchor for the listbox. Defaults to `start`. */
@@ -38,6 +39,8 @@ interface SelectProps {
   caret?: boolean;
   /** Secondary text inside the trigger, after the selected label. */
   hint?: string;
+  /** Open the listbox on mount. */
+  initialOpen?: boolean;
   "aria-label"?: string;
 }
 
@@ -68,13 +71,15 @@ export function Select({
   onChange,
   disabled = false,
   className,
+  triggerClassName,
   variant = "underline",
   listboxAlign = "start",
   caret = true,
   hint,
+  initialOpen = false,
   "aria-label": ariaLabel,
 }: SelectProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen);
   const rootRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
   const selected = options.find((option) => option.value === value);
@@ -178,6 +183,7 @@ export function Select({
         onKeyDown={onTriggerKeyDown}
         className={cn(
           triggerVariantClass[variant],
+          triggerClassName,
           hint && "max-w-full",
           disabled && "cursor-not-allowed opacity-40",
         )}

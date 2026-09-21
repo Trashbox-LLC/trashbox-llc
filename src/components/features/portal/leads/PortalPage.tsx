@@ -230,10 +230,19 @@ export function PortalApp({ tab }: PortalAppProps) {
             )}
 
           {tab === "inbox" && portal.account?.linked && (
-            <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+            <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:items-start lg:gap-x-8 lg:gap-y-0">
+              {visibleTabIds.length > 0 && (
+                <div
+                  className="hidden lg:col-start-1 lg:row-start-1 lg:block"
+                  aria-hidden
+                />
+              )}
               <div
                 className={cn(
-                  "shrink-0 lg:self-start",
+                  "order-1 shrink-0 lg:col-start-1 lg:self-start",
+                  visibleTabIds.length > 0
+                    ? "lg:row-start-2"
+                    : "lg:row-start-1",
                   inboxSidebarOpen &&
                     "lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)]",
                 )}
@@ -269,7 +278,31 @@ export function PortalApp({ tab }: PortalAppProps) {
                 </div>
               </div>
 
-              <div className="relative min-w-0 flex-1">
+              {visibleTabIds.length > 0 && (
+                <div className="order-2 pb-2 lg:col-start-2 lg:row-start-1">
+                  <LeadThreadTabs
+                    tabs={visibleTabIds.flatMap((id) => {
+                      const item = portal.items.find(
+                        (entry) => entry.submissionId === id,
+                      );
+                      if (!item) return [];
+                      return [{ id, label: item.senderName }];
+                    })}
+                    activeId={portal.selectedId}
+                    onSelect={openLead}
+                    onClose={closeLead}
+                  />
+                </div>
+              )}
+
+              <div
+                className={cn(
+                  "relative order-3 min-w-0 lg:col-start-2",
+                  visibleTabIds.length > 0
+                    ? "lg:row-start-2"
+                    : "lg:row-start-1",
+                )}
+              >
                 {inboxSidebarOpen && (
                   <LeadInboxResizeHandle
                     width={inboxSidebarWidth}
@@ -288,20 +321,7 @@ export function PortalApp({ tab }: PortalAppProps) {
                 )}
                 {visibleTabIds.length > 0 ? (
                   <div>
-                    <LeadThreadTabs
-                      tabs={visibleTabIds.flatMap((id) => {
-                        const item = portal.items.find(
-                          (entry) => entry.submissionId === id,
-                        );
-                        if (!item) return [];
-                        return [{ id, label: item.senderName }];
-                      })}
-                      activeId={portal.selectedId}
-                      onSelect={openLead}
-                      onClose={closeLead}
-                    />
-                    <div className="pt-2">
-                      {visibleTabIds.map((id) => {
+                    {visibleTabIds.map((id) => {
                         const submission = portal.items.find(
                           (entry) => entry.submissionId === id,
                         );
@@ -342,7 +362,6 @@ export function PortalApp({ tab }: PortalAppProps) {
                           </div>
                         );
                       })}
-                    </div>
                   </div>
                 ) : portal.items.length === 0 && !portal.listBusy ? (
                   <LeadInboxEmptyDetail

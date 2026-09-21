@@ -155,7 +155,8 @@ export function LeadDetail({
       return {
         value: member.email,
         label,
-        menuLabel: label === member.email ? member.email : `${label} (${member.email})`,
+        menuLabel:
+          label === member.email ? member.email : `${label} (${member.email})`,
       };
     }),
   ];
@@ -229,9 +230,9 @@ export function LeadDetail({
                       onClick={() => selectPanel("history")}
                       className={cn(
                         "text-sm transition-colors",
-                  panel === "history"
-                    ? "border-b border-white text-white"
-                    : "text-outline hover:text-white",
+                        panel === "history"
+                          ? "border-b border-white text-white"
+                          : "text-outline hover:text-white",
                       )}
                     >
                       History

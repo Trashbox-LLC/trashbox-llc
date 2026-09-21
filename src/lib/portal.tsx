@@ -156,7 +156,7 @@ export interface PortalContextValue {
   selected: Submission | null;
   filters: LeadInboxFiltersValue;
   setFilters: (value: LeadInboxFiltersValue) => void;
-  applyFilters: () => void;
+  applyFilters: (next?: LeadInboxFiltersValue) => void;
   members: TeamMember[];
   forms: ProjectForm[];
   teamRole: TeamRole;
@@ -1042,8 +1042,8 @@ export function PortalProvider({
     }
   }, []);
 
-  const applyFilters = useCallback(() => {
-    setAppliedFilters(filters);
+  const applyFilters = useCallback((next?: LeadInboxFiltersValue) => {
+    setAppliedFilters(next ?? filters);
   }, [filters]);
 
   const selected = items.find((s) => s.submissionId === selectedId) ?? null;
