@@ -5,7 +5,7 @@ import { setSelectedWorkspace } from "@/lib/portal-selection";
 import { PortalHeader } from "./PortalHeader";
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/portal/inbox/",
+  usePathname: vi.fn(() => "/portal/inbox/"),
 }));
 
 vi.mock("next/image", () => ({
@@ -23,6 +23,7 @@ vi.mock("@/lib/portal", () => ({
   usePortal: vi.fn(),
 }));
 
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { usePortal } from "@/lib/portal";
 
@@ -40,6 +41,7 @@ describe("PortalHeader", () => {
     localStorage.clear();
     sessionStorage.clear();
     setSelectedWorkspace("o1", "p1");
+    vi.mocked(usePathname).mockReturnValue("/portal/inbox/");
     vi.mocked(useAuth).mockReturnValue({
       configured: true,
       status: "signedIn",
@@ -57,19 +59,25 @@ describe("PortalHeader", () => {
         {
           orgId: "o1",
           orgName: "Acme Co",
-              orgSlug: "acme-co",
+          orgSlug: "acme-co",
           role: "owner",
           tier: "free",
           active: true,
           hasBilling: false,
-          projects: [{ projectId: "p1", projectName: "Marketing site", projectSlug: "marketing-site" }],
+          projects: [
+            {
+              projectId: "p1",
+              projectName: "Marketing site",
+              projectSlug: "marketing-site",
+            },
+          ],
         },
       ],
       account: {
         linked: true,
         orgId: "o1",
         orgName: "Acme Co",
-              orgSlug: "acme-co",
+        orgSlug: "acme-co",
         projectId: "p1",
         projectName: "Marketing site",
         clientId: "p1",
@@ -201,7 +209,9 @@ describe("PortalHeader", () => {
 
   it("does not show a Platform link", () => {
     render(<PortalHeader />);
-    expect(screen.queryByRole("link", { name: /^platform$/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /^platform$/i }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/back to platform/i)).not.toBeInTheDocument();
   });
 
@@ -232,5 +242,23 @@ describe("PortalHeader", () => {
     expect(within(panel).queryByText("Acme Co")).not.toBeInTheDocument();
     await user.click(screen.getByRole("menuitem", { name: /sign out/i }));
     expect(signOutUser).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not render workspace nav on login while auth is loading even with a stored org", () => {
+    vi.mocked(usePathname).mockReturnValue("/portal/login/");
+    vi.mocked(useAuth).mockReturnValue({
+      configured: true,
+      status: "loading",
+      email: null,
+      signInWithPassword: vi.fn(),
+      signUpWithPassword: vi.fn(),
+      confirmSignUpCode: vi.fn(),
+      resendCode: vi.fn(),
+      signOutUser: vi.fn(),
+    } as ReturnType<typeof useAuth>);
+
+    render(<PortalHeader />);
+
+    expect(document.querySelector('nav[aria-label="Portal"]')).toBeNull();
   });
 });

@@ -53,7 +53,10 @@ import {
   hasPermission as permissionsInclude,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { portalOrgGateRedirect } from "@/lib/portal-org-gate";
+import {
+  isPortalProductPath,
+  portalOrgGateRedirect,
+} from "@/lib/portal-org-gate";
 import { portalSignedOutRedirect } from "@/lib/portal-redirects";
 import {
   portalNavigate,
@@ -324,6 +327,9 @@ export function PortalProvider({
     Record<string, MessageChannel[]>
   >({});
   const [sms, setSms] = useState<SmsStatusResponse | null>(null);
+  const [portalPath, setPortalPath] = useState(() =>
+    typeof window === "undefined" ? "" : window.location.pathname,
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -359,15 +365,16 @@ export function PortalProvider({
   }, []);
 
   useEffect(() => {
-    function applyFormIdFromUrl() {
+    function syncPathAndFormId() {
+      setPortalPath(window.location.pathname);
       const nextFilters = filtersFromWindowFormId();
       if (!nextFilters) return;
       setFilters(nextFilters);
       setAppliedFilters(nextFilters);
     }
 
-    applyFormIdFromUrl();
-    return subscribePortalNavigate(applyFormIdFromUrl);
+    syncPathAndFormId();
+    return subscribePortalNavigate(syncPathAndFormId);
   }, []);
 
   useEffect(() => {
@@ -403,7 +410,6 @@ export function PortalProvider({
     async function load() {
       setListBusy(true);
       setListError(null);
-      setReady(false);
       try {
         const params = new URLSearchParams(window.location.search);
         const inviteToken =
@@ -436,32 +442,30 @@ export function PortalProvider({
           }
         }
 
-        try {
-          const orgList = await listOrgs();
-          if (!cancelled) {
-            setOrgs(orgList.orgs);
-            const selectedId = getSelectedOrgId();
-            const selected = orgList.orgs.find(
-              (entry) => entry.orgId === selectedId,
-            );
-            if (selected?.orgName) {
-              setSelectedWorkspace(
-                selected.orgId,
-                getSelectedProjectId(),
-                selected.orgName,
-              );
-            }
-          }
-        } catch {
-          if (!cancelled) setOrgs([]);
+        const [orgList, acct] = await Promise.all([
+          listOrgs().catch(() => ({ orgs: [] as OrgSummary[] })),
+          getAccount(),
+        ]);
+        if (cancelled) return;
+
+        setOrgs(orgList.orgs);
+        const selectedOrg = orgList.orgs.find(
+          (entry) => entry.orgId === getSelectedOrgId(),
+        );
+        if (selectedOrg?.orgName) {
+          setSelectedWorkspace(
+            selectedOrg.orgId,
+            getSelectedProjectId(),
+            selectedOrg.orgName,
+          );
         }
 
-        const acct = await getAccount();
-        if (cancelled) return;
         setAccount(acct);
         const projectLabel = acct.projectName || acct.clientName || null;
         setClientName(projectLabel);
         if (acct.role) setTeamRole(acct.role);
+        setReady(true);
+
         if (!acct.linked) {
           setItems([]);
           setClientName(null);
@@ -474,84 +478,83 @@ export function PortalProvider({
           return;
         }
 
-        setClientName(projectLabel);
-        if (acct.role) setTeamRole(acct.role);
-
-        try {
-          const team = await getTeam();
-          if (cancelled) return;
-          setMembers(team.members);
-          setTeamRole(team.role);
-          setPermissions(team.permissions ?? []);
-          setRoles(team.roles ?? []);
-        } catch {
-          if (!cancelled) {
-            setMembers([]);
-            setPermissions([]);
-            setRoles([]);
-          }
+        if (!isPortalProductPath(portalPath)) {
+          return;
         }
 
-        try {
-          const formList = await listForms();
-          if (cancelled) return;
-          setForms(formList.forms);
-        } catch {
-          if (!cancelled) setForms([]);
-        }
+        const submissionQuery = {
+          limit: 50,
+          ...(appliedFilters.status ? { status: appliedFilters.status } : {}),
+          ...(appliedFilters.tag ? { tag: appliedFilters.tag } : {}),
+          ...(appliedFilters.assignedTo
+            ? { assignedTo: appliedFilters.assignedTo }
+            : {}),
+          ...(appliedFilters.formId ? { formId: appliedFilters.formId } : {}),
+          ...(appliedFilters.q.trim() ? { q: appliedFilters.q.trim() } : {}),
+        };
 
-        try {
-          const box = await getMailbox();
-          if (cancelled) return;
-          setMailbox(box);
-        } catch {
-          if (!cancelled) setMailbox({ connected: false });
-        }
-
-        try {
-          const smsStatus = await getSmsStatus();
-          if (cancelled) return;
-          setSms(smsStatus);
-        } catch {
-          if (!cancelled) setSms(null);
-        }
-
-        try {
-          const subs = await listSubmissions({
-            limit: 50,
-            ...(appliedFilters.status ? { status: appliedFilters.status } : {}),
-            ...(appliedFilters.tag ? { tag: appliedFilters.tag } : {}),
-            ...(appliedFilters.assignedTo
-              ? { assignedTo: appliedFilters.assignedTo }
-              : {}),
-            ...(appliedFilters.formId ? { formId: appliedFilters.formId } : {}),
-            ...(appliedFilters.q.trim() ? { q: appliedFilters.q.trim() } : {}),
-          });
-          if (cancelled) return;
-          setItems(subs.items);
-          setNextCursor(subs.nextCursor);
-          setSelectedId(subs.items[0]?.submissionId ?? null);
-
-          // Older threads may lack stored messageCount; hydrate so stacks show
-          // before a lead is opened. Safe no-op when the list API already
-          // returns live counts.
-          const counts = await fetchMessageCounts(subs.items);
-          if (!cancelled) {
-            setItems((prev) => mergeMessageCounts(prev, counts));
-          }
-        } catch (err) {
-          if (cancelled) return;
-          if (err instanceof ApiError && err.status === 403) {
-            setItems([]);
-            setListError(null);
-          } else {
-            setListError(
-              err instanceof ApiError
-                ? err.message
-                : "Failed to load submissions",
-            );
-          }
-        }
+        await Promise.all([
+          getTeam()
+            .then((team) => {
+              if (cancelled) return;
+              setMembers(team.members);
+              setTeamRole(team.role);
+              setPermissions(team.permissions ?? []);
+              setRoles(team.roles ?? []);
+            })
+            .catch(() => {
+              if (cancelled) return;
+              setMembers([]);
+              setPermissions([]);
+              setRoles([]);
+            }),
+          listForms()
+            .then((formList) => {
+              if (!cancelled) setForms(formList.forms);
+            })
+            .catch(() => {
+              if (!cancelled) setForms([]);
+            }),
+          getMailbox()
+            .then((box) => {
+              if (!cancelled) setMailbox(box);
+            })
+            .catch(() => {
+              if (!cancelled) setMailbox({ connected: false });
+            }),
+          getSmsStatus()
+            .then((smsStatus) => {
+              if (!cancelled) setSms(smsStatus);
+            })
+            .catch(() => {
+              if (!cancelled) setSms(null);
+            }),
+          listSubmissions(submissionQuery)
+            .then((subs) => {
+              if (cancelled) return;
+              setItems(subs.items);
+              setNextCursor(subs.nextCursor);
+              setSelectedId(subs.items[0]?.submissionId ?? null);
+              void fetchMessageCounts(subs.items).then((counts) => {
+                if (!cancelled) {
+                  setItems((prev) => mergeMessageCounts(prev, counts));
+                }
+              });
+            })
+            .catch((err: unknown) => {
+              if (cancelled) return;
+              if (err instanceof ApiError && err.status === 403) {
+                setItems([]);
+                setListError(null);
+              } else {
+                setListError(
+                  err instanceof ApiError
+                    ? err.message
+                    : "Failed to load submissions",
+                );
+              }
+            }),
+        ]);
       } catch (err) {
         if (cancelled) return;
         const message =
@@ -568,7 +571,13 @@ export function PortalProvider({
     return () => {
       cancelled = true;
     };
-  }, [auth.status, appliedFilters, disableAuthRedirect, workspaceEpoch]);
+  }, [
+    auth.status,
+    appliedFilters,
+    disableAuthRedirect,
+    workspaceEpoch,
+    portalPath,
+  ]);
 
   useEffect(() => {
     if (disableAuthRedirect) return;
@@ -960,8 +969,9 @@ export function PortalProvider({
             "Project created. Open Settings → Developers → API Keys to copy your new key (shown once).",
           );
         }
-        const orgName = orgs.find((entry) => entry.orgId === result.orgId)
-          ?.orgName;
+        const orgName = orgs.find(
+          (entry) => entry.orgId === result.orgId,
+        )?.orgName;
         setSelectedWorkspace(result.orgId, result.projectId, orgName);
         setProjectNameDraft("");
         setWorkspaceEpoch((n) => n + 1);

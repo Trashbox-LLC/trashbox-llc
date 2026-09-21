@@ -136,7 +136,10 @@ export function PortalApp({ tab }: PortalAppProps) {
         };
 
   const contentPending =
-    auth.status === "loading" || auth.status === "signedOut" || !portal.ready;
+    auth.status === "loading" ||
+    auth.status === "signedOut" ||
+    !portal.ready ||
+    (tab === "inbox" && portal.listBusy && portal.items.length === 0);
 
   return (
     <div className="space-y-10">
@@ -183,9 +186,7 @@ export function PortalApp({ tab }: PortalAppProps) {
                         disabled={portal.billingBusy}
                         onClick={() => void portal.onUpgrade("team")}
                       >
-                        {portal.billingBusy
-                          ? "Redirecting…"
-                          : "Add Team plan"}
+                        {portal.billingBusy ? "Redirecting…" : "Add Team plan"}
                       </Button>
                       <Button
                         type="button"
@@ -206,9 +207,7 @@ export function PortalApp({ tab }: PortalAppProps) {
                       disabled={portal.billingBusy}
                       onClick={() => void portal.onUpgrade("team")}
                     >
-                      {portal.billingBusy
-                        ? "Redirecting…"
-                        : "Upgrade to Team"}
+                      {portal.billingBusy ? "Redirecting…" : "Upgrade to Team"}
                     </Button>
                   )}
                   {showManageBilling(Boolean(portal.account.hasBilling)) && (
@@ -218,9 +217,7 @@ export function PortalApp({ tab }: PortalAppProps) {
                       disabled={portal.billingBusy}
                       onClick={() => void portal.onManageBilling()}
                     >
-                      {portal.billingBusy
-                        ? "Redirecting…"
-                        : "Manage billing"}
+                      {portal.billingBusy ? "Redirecting…" : "Manage billing"}
                     </Button>
                   )}
                 </div>
@@ -351,10 +348,10 @@ export function PortalApp({ tab }: PortalAppProps) {
                   <LeadInboxEmptyDetail
                     filtered={Boolean(
                       portal.filters.q.trim() ||
-                        portal.filters.status ||
-                        portal.filters.tag ||
-                        portal.filters.assignedTo ||
-                        portal.filters.formId,
+                      portal.filters.status ||
+                      portal.filters.tag ||
+                      portal.filters.assignedTo ||
+                      portal.filters.formId,
                     )}
                   />
                 ) : (

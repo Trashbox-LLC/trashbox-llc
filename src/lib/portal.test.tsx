@@ -1,7 +1,7 @@
-import { render, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "@/components/ui/sonner";
-import { PortalProvider } from "@/lib/portal";
+import { PortalProvider, usePortal } from "@/lib/portal";
 
 vi.mock("@/components/ui/sonner", () => ({
   Toaster: () => null,
@@ -52,11 +52,33 @@ vi.mock("@/lib/api", async (importOriginal) => {
     listLeadMessages: vi
       .fn()
       .mockResolvedValue({ submissionId: "", items: [] }),
+    getSmsStatus: vi.fn().mockResolvedValue(null),
     acceptTeamInvite: vi.fn(),
   };
 });
 
+import {
+  getAccount,
+  getMailbox,
+  getSmsStatus,
+  getTeam,
+  listForms,
+  listLeadMessages,
+  listOrgs,
+  listSubmissions,
+} from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+
+function PortalReadyProbe() {
+  const portal = usePortal();
+  return (
+    <div>
+      <span>{portal.ready ? "orgs-ready" : "orgs-pending"}</span>
+      <span>{portal.listBusy ? "inbox-busy" : "inbox-idle"}</span>
+      <span>{`org-count:${portal.orgs.length}`}</span>
+    </div>
+  );
+}
 
 describe("PortalProvider notice toasts", () => {
   beforeEach(() => {
@@ -123,6 +145,108 @@ describe("PortalProvider notice toasts", () => {
       expect(toast.success).toHaveBeenCalledWith(
         "Billing updated. Plan status refreshes after Stripe confirms payment.",
       );
+    });
+  });
+});
+
+describe("PortalProvider bootstrap", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.history.replaceState({}, "", "/portal/orgs/");
+    vi.mocked(useAuth).mockReturnValue({
+      configured: true,
+      status: "signedIn",
+      email: "owner@example.com",
+      signInWithPassword: vi.fn(),
+      signUpWithPassword: vi.fn(),
+      confirmSignUpCode: vi.fn(),
+      resendCode: vi.fn(),
+      requestPasswordReset: vi.fn(),
+      confirmForgotPassword: vi.fn(),
+      signOutUser: vi.fn(),
+      refresh: vi.fn(),
+    } as ReturnType<typeof useAuth>);
+    vi.mocked(listOrgs).mockResolvedValue({
+      orgs: [
+        {
+          orgId: "o1",
+          orgName: "Acme Co",
+          orgSlug: "acme-co",
+          role: "owner",
+          tier: "free",
+          active: true,
+          hasBilling: false,
+          projects: [],
+        },
+      ],
+    });
+    vi.mocked(getAccount).mockResolvedValue({
+      linked: true,
+      email: "owner@example.com",
+      clientName: "Acme",
+      tier: "free",
+      active: true,
+      hasBilling: false,
+      hasApiKey: true,
+      role: "owner",
+    });
+    vi.mocked(getMailbox).mockResolvedValue({ connected: false });
+    vi.mocked(listForms).mockResolvedValue({ forms: [], canManage: false });
+    vi.mocked(getTeam).mockResolvedValue({
+      clientId: "c1",
+      clientName: "Test",
+      role: "owner",
+      permissions: [],
+      roles: [],
+      members: [],
+      invites: [],
+      memberLimit: 1,
+      memberCount: 1,
+    });
+    vi.mocked(getSmsStatus).mockResolvedValue({
+      enabled: false,
+      availableOnPlan: false,
+      canManage: false,
+    });
+    vi.mocked(listLeadMessages).mockResolvedValue({
+      submissionId: "",
+      items: [],
+    });
+    vi.mocked(listSubmissions).mockResolvedValue({
+      clientId: "c1",
+      clientName: "Acme",
+      items: [],
+    });
+  });
+
+  it("marks orgs ready on the picker without loading inbox or per-lead threads", async () => {
+    render(
+      <PortalProvider disableAuthRedirect>
+        <PortalReadyProbe />
+      </PortalProvider>,
+    );
+
+    expect(await screen.findByText("orgs-ready")).toBeInTheDocument();
+    expect(screen.getByText("org-count:1")).toBeInTheDocument();
+    expect(listSubmissions).not.toHaveBeenCalled();
+    expect(listLeadMessages).not.toHaveBeenCalled();
+    expect(getTeam).not.toHaveBeenCalled();
+    expect(getMailbox).not.toHaveBeenCalled();
+    expect(listForms).not.toHaveBeenCalled();
+  });
+
+  it("loads the inbox after entering a workspace route", async () => {
+    window.history.replaceState({}, "", "/portal/acme-co/site/inbox/");
+
+    render(
+      <PortalProvider disableAuthRedirect>
+        <PortalReadyProbe />
+      </PortalProvider>,
+    );
+
+    expect(await screen.findByText("orgs-ready")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(listSubmissions).toHaveBeenCalledTimes(1);
     });
   });
 });

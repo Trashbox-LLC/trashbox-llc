@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { getAccountProfile, teamMemberDisplayName } from "@/lib/api";
 import { usePortal } from "@/lib/portal";
-import { isPortalOrgPickerPath } from "@/lib/portal-org-gate";
+import { isPortalProductPath } from "@/lib/portal-org-gate";
 import {
   isOrgScopedPortalPath,
   parsePortalWorkspacePath,
@@ -56,6 +56,8 @@ export function PortalHeader() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [storedOrgId, setStoredOrgId] = useState<string | null>(null);
+  const [storedProjectId, setStoredProjectId] = useState<string | null>(null);
 
   useEffect(() => {
     const win = window.location.pathname;
@@ -63,6 +65,11 @@ export function PortalHeader() {
     else setPathname(nextPath || win);
     return subscribePortalNavigate(setPathname);
   }, [nextPath]);
+
+  useEffect(() => {
+    setStoredOrgId(getSelectedOrgId());
+    setStoredProjectId(getSelectedProjectId());
+  }, [pathname, portal.orgs, portal.account]);
 
   useEffect(() => {
     let lastY = window.scrollY;
@@ -96,7 +103,7 @@ export function PortalHeader() {
     };
   }, [open]);
 
-  const selectedOrgId = getSelectedOrgId() || portal.account?.orgId || null;
+  const selectedOrgId = storedOrgId || portal.account?.orgId || null;
   const selectedOrg = portal.orgs.find((org) => org.orgId === selectedOrgId);
   const orgScoped = isOrgScopedPortalPath(pathname);
   const parsedPath = parsePortalWorkspacePath(pathname);
@@ -107,7 +114,7 @@ export function PortalHeader() {
             (p) => p.projectSlug === parsedPath.projectSlug,
           )?.projectId
         : null) ||
-      getSelectedProjectId() ||
+      storedProjectId ||
       null;
   const selectedProject =
     selectedOrg?.projects.find((p) => p.projectId === selectedProjectId) ||
@@ -183,8 +190,8 @@ export function PortalHeader() {
   const signedIn = auth.status === "signedIn";
   const authLoading = auth.status === "loading";
   const headerHidden = hidden && !open;
-  const onOrgPicker = isPortalOrgPickerPath(pathname);
-  const inWorkspace = Boolean(selectedOrgId) && !onOrgPicker;
+  const inWorkspace =
+    signedIn && Boolean(selectedOrgId) && isPortalProductPath(pathname);
   const signedInLinks = inWorkspace ? workspaceLinks : [];
   const showBreadcrumb = signedIn && !authLoading;
   const [profileName, setProfileName] = useState<string | null>(null);
@@ -232,7 +239,7 @@ export function PortalHeader() {
         className={cn(
           "border-b backdrop-blur-xl transition-colors duration-300",
           scrolled
-            ? "border-white/10 bg-background/90"
+            ? "bg-background/90 border-white/10"
             : "border-outline-variant/10 bg-background/80",
         )}
       >
@@ -285,9 +292,7 @@ export function PortalHeader() {
                   key={item.href}
                   href={item.href}
                   aria-label={item.label}
-                  className={linkClass(
-                    isPortalNavActive(pathname, item.href),
-                  )}
+                  className={linkClass(isPortalNavActive(pathname, item.href))}
                 >
                   <MaterialIcon name={item.icon} className="text-[1.15rem]!" />
                 </PortalLink>
@@ -331,7 +336,7 @@ export function PortalHeader() {
       </div>
 
       {open && signedIn && inWorkspace && (
-        <div className="fixed inset-0 top-11 z-40 bg-background/95 px-6 pb-10 pt-6 md:hidden">
+        <div className="bg-background/95 fixed inset-0 top-11 z-40 px-6 pt-6 pb-10 md:hidden">
           <div className="flex flex-col gap-6">
             {signedInLinks.map((item) => (
               <PortalLink
@@ -340,7 +345,7 @@ export function PortalHeader() {
                 aria-label={item.label}
                 className={cn(
                   linkClass(isPortalNavActive(pathname, item.href)),
-                  "gap-3 font-label text-[10px] uppercase tracking-widest",
+                  "font-label gap-3 text-[10px] tracking-widest uppercase",
                 )}
                 onClick={() => setOpen(false)}
               >
