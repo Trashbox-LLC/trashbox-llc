@@ -24,7 +24,7 @@ import {
   type Submission,
   type TeamMember,
 } from "@/lib/api";
-import { leadContactLabel } from "@/lib/lead-messages";
+import { leadContactLabel, visibleReplyText } from "@/lib/lead-messages";
 import { cn } from "@/lib/utils";
 
 const labelClass =
@@ -111,7 +111,9 @@ export function LeadDetail({
     orderedMessages.length > 0
       ? orderedMessages[orderedMessages.length - 1]
       : null;
-  const featuredBody = latestMessage?.bodyText ?? submission.message;
+  const featuredBody = latestMessage
+    ? visibleReplyText(latestMessage.bodyText)
+    : submission.message;
   const featuredAuthor = latestMessage
     ? latestMessage.direction === "inbound"
       ? submission.senderName

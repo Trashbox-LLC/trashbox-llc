@@ -51,6 +51,21 @@ export interface LeadMessageTimelineLabels {
   accent: "primary" | "muted";
 }
 
+const QUOTE_HEADER =
+  /^(?:On [^\n]*\bwrote:\s*|-{5,}\s*Original Message\s*-{5,}|From:\s[^\n]+\nSent:\s)/im;
+
+/** Reply text without the quoted copy of the earlier email. */
+export function visibleReplyText(body: string): string {
+  const normalized = body.replace(/\r\n/g, "\n");
+  const header = QUOTE_HEADER.exec(normalized);
+  const cut = header ? header.index : normalized.length;
+  const visible = normalized
+    .slice(0, cut)
+    .replace(/\n(?:> ?.*(?:\n|$))+$/g, "")
+    .trim();
+  return visible.length > 0 ? visible : body.trim();
+}
+
 /** Layout-builder HTML. A plain rich-text reply has no document marker. */
 export function designedEmailHtml(bodyHtml: string | undefined): string | null {
   const html = bodyHtml?.trim();

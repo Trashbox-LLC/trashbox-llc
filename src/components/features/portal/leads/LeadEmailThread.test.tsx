@@ -331,6 +331,32 @@ describe("LeadEmailThread", () => {
     ).toBeInTheDocument();
   });
 
+  it("hides the quoted earlier email inside a reply", () => {
+    renderConnected({
+      messages: [
+        {
+          ...sampleReply,
+          direction: "inbound",
+          from: "ada@example.com",
+          to: "sales@acme.test",
+          bodyText: [
+            "awesome",
+            "",
+            "On Mon, Sep 21, 2026 at 1:23 PM Ezekiel Mohr <contact@trashbox.io> wrote:",
+            "",
+            "> Yourmother",
+          ].join("\n"),
+        },
+      ],
+      library: { templates: [], signatures: [], snippets: [] },
+    });
+
+    const history = screen.getByRole("region", { name: /message history/i });
+    expect(within(history).getByText("awesome")).toBeInTheDocument();
+    expect(within(history).queryByText(/Yourmother/)).not.toBeInTheDocument();
+    expect(within(history).queryByText(/wrote:/)).not.toBeInTheDocument();
+  });
+
   it("includes the latest reply in the history timeline", () => {
     renderConnected({
       messages: [sampleReply],

@@ -49,6 +49,7 @@ import {
   designedEmailHtml,
   leadMessageTimelineLabels,
   resolveComposerChannel,
+  visibleReplyText,
 } from "@/lib/lead-messages";
 import { formatPhoneDisplay } from "@/lib/phone";
 import { LeadSmsComposer } from "@/components/features/portal/leads/LeadSmsComposer";
@@ -858,12 +859,13 @@ export function LeadEmailThread({
           sms ? formatPhoneDisplay(value) : value;
         const branch = labels.accent === "muted";
         const previewHtml = designedEmailHtml(message.bodyHtml);
+        const replyText = visibleReplyText(message.bodyText);
         return {
           id: message.messageId,
           at: message.createdAt,
           eyebrow: labels.eyebrow,
           title: labels.title,
-          preview: message.bodyText.replace(/\s+/g, " ").trim(),
+          preview: replyText.replace(/\s+/g, " ").trim(),
           accent: labels.accent,
           kind: sms ? "Text" : branch ? "Received" : "Sent",
           branch,
@@ -880,7 +882,7 @@ export function LeadEmailThread({
             <HtmlEmailPreview title={labels.title} html={previewHtml} />
           ) : (
             <p className="text-on-surface leading-relaxed whitespace-pre-wrap">
-              {message.bodyText}
+              {replyText}
             </p>
           ),
         };

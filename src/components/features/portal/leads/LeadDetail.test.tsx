@@ -123,6 +123,33 @@ describe("LeadDetail", () => {
     expect(screen.queryByText("Followed up by email.")).not.toBeInTheDocument();
   });
 
+  it("hides the quoted earlier email on the latest reply", () => {
+    render(
+      <LeadDetail
+        submission={baseSubmission}
+        members={[]}
+        messages={[
+          {
+            ...laterReply,
+            bodyText: [
+              "awesome",
+              "",
+              "On Mon, Sep 21, 2026 at 1:23 PM Ezekiel Mohr <contact@trashbox.io> wrote:",
+              "",
+              "> Yourmother",
+            ].join("\n"),
+          },
+        ]}
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("awesome")).toBeInTheDocument();
+    expect(screen.queryByText(/Yourmother/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/wrote:/)).not.toBeInTheDocument();
+  });
+
   it("shows the form message and metadata when there are no thread replies", () => {
     render(
       <LeadDetail

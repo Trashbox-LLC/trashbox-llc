@@ -4,6 +4,7 @@ import {
   leadContactLabel,
   leadMessageTimelineLabels,
   resolveComposerChannel,
+  visibleReplyText,
 } from "@/lib/lead-messages";
 import type { LeadMessage } from "@/lib/api";
 
@@ -145,6 +146,39 @@ describe("resolveComposerChannel", () => {
         canSms: false,
       }),
     ).toBeNull();
+  });
+});
+
+describe("visibleReplyText", () => {
+  it("drops the quoted earlier email from a reply", () => {
+    const body = [
+      "awesome",
+      "",
+      "On Mon, Sep 21, 2026 at 1:23 PM Ezekiel Mohr <contact@trashbox.io> wrote:",
+      "",
+      "> Yourmother",
+      "> [image: Image]",
+    ].join("\n");
+
+    expect(visibleReplyText(body)).toBe("awesome");
+  });
+
+  it("keeps a reply that does not quote an earlier email", () => {
+    expect(visibleReplyText("On my way, see you then.")).toBe(
+      "On my way, see you then.",
+    );
+  });
+
+  it("drops an Outlook original-message block", () => {
+    const body = [
+      "Sounds good.",
+      "",
+      "-----Original Message-----",
+      "From: Ezekiel Mohr",
+      "Sent: Monday, September 21, 2026 1:23 PM",
+    ].join("\n");
+
+    expect(visibleReplyText(body)).toBe("Sounds good.");
   });
 });
 
