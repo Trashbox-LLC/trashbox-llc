@@ -2,4 +2,4 @@
 alwaysApply: true
 ---
 
-always use test drive development
+Test first for real behavior: logic, branching, state, interactions, transforms, errors, edges. Don't assert copy, headings, class names, styling, prop passthrough, or TypeScript guarantees. One test per behavior. No tests for presentational components.
