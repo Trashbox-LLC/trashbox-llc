@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+Use next/image. Public sources as webp/avif, max 2× rendered size. remotePatterns for external hosts. Hero: loading="eager" fetchPriority="high". Blur placeholder on large images.

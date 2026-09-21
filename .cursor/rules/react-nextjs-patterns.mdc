@@ -15,7 +15,7 @@ alwaysApply: false
 
 - Use functional components only.
 - Use named exports for components (not default exports), except for Next.js pages/layouts which require default exports.
-- Follow the atomic component structure and shadcn/ui conventions in `atomic-components.mdc`.
+- Follow the feature-based component structure and shadcn/ui conventions in `feature-components.mdc`.
 
 ## Styling
 
@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 
 ## Next.js Conventions
 
-- Set page metadata via the `metadata` export, not `<Head>`:
+- Set page metadata via the `metadata` export, not `<Head>`. Follow `seo.mdc` for title, description, `metadataBase`, Open Graph, sitemap, and JSON-LD.
 
 ```tsx
 export const metadata: Metadata = {

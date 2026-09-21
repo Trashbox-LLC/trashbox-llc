@@ -1,0 +1,4 @@
+---
+alwaysApply: true
+---
+UI by feature. shadcn → `src/components/ui/`, cross-feature → `src/components/shared/`, domain → `src/features/<name>/` with a public `index.ts`. Pages import feature barrels and shared layout, never internals. Features import `ui`/`shared` only; shared UI goes in `shared/`. Prefer existing shadcn — don't fork `ui/`.

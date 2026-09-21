@@ -1,0 +1,5 @@
+---
+description: Keep SEO a high priority on every page and content change
+alwaysApply: true
+---
+Keep SEO a first-class requirement. Every public page needs unique title, description, canonical, and Open Graph. Root layout must set metadataBase, html lang, viewport, and default social cards. Keep sitemap.ts and robots.ts current when adding routes. Add JSON-LD that matches the page type. Use next/link, next/image with alt, and one h1. Titles and copy should name the offering and location when honest. Pull business details from the site's shared constants. Do not invent reviews, credentials, or locations, and do not hide primary copy behind client-only rendering.

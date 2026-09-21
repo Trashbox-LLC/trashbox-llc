@@ -1,0 +1,6 @@
+---
+description: GSAP start-state, scoping, and visibility fallback
+globs: src/features/**/*.tsx, src/components/shared/**/*.tsx
+alwaysApply: false
+---
+Never paint animated elements in their end state. Start state in markup/CSS, or gsap.set in useGSAP — never useEffect. Scope to a ref. Keep visible if animation never runs.
