@@ -89,6 +89,30 @@ describe("LeadDetail", () => {
     );
   });
 
+  it("shows earlier messages as text from history 2", async () => {
+    const user = userEvent.setup();
+    render(
+      <LeadDetail
+        submission={baseSubmission}
+        members={[]}
+        messages={[outboundReply, laterReply]}
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("region", { name: /message transcript/i }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /history 2/i }));
+    const transcript = screen.getByRole("region", { name: /message transcript/i });
+    expect(within(transcript).getByText("Thanks for reaching out")).toBeInTheDocument();
+    expect(
+      within(transcript).getByText("Sounds good, when can we start?"),
+    ).toBeInTheDocument();
+    expect(within(transcript).getByText("Your mom as a website")).toBeInTheDocument();
+  });
+
   it("keeps notes collapsed until show notes is clicked", async () => {
     const user = userEvent.setup();
 

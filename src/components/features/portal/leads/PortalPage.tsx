@@ -239,7 +239,8 @@ export function PortalApp({ tab }: PortalAppProps) {
               )}
               <div
                 className={cn(
-                  "order-1 shrink-0 lg:col-start-1 lg:self-start",
+                  "shrink-0 lg:col-start-1 lg:self-start",
+                  inboxSidebarOpen ? "max-lg:contents" : "max-lg:hidden",
                   visibleTabIds.length > 0
                     ? "lg:row-start-2"
                     : "lg:row-start-1",
@@ -250,7 +251,7 @@ export function PortalApp({ tab }: PortalAppProps) {
                 <div
                   className={cn(
                     inboxSidebarOpen &&
-                      "lg:max-h-[calc(100vh-7rem)] lg:scrollbar-none lg:overflow-y-auto",
+                      "max-lg:contents lg:max-h-[calc(100vh-7rem)] lg:scrollbar-none lg:overflow-y-auto",
                   )}
                 >
                   <LeadInboxSidebar
@@ -279,7 +280,7 @@ export function PortalApp({ tab }: PortalAppProps) {
               </div>
 
               {visibleTabIds.length > 0 && (
-                <div className="order-2 pb-2 lg:col-start-2 lg:row-start-1">
+                <div className="order-3 pb-2 lg:col-start-2 lg:row-start-1 lg:order-none">
                   <LeadThreadTabs
                     tabs={visibleTabIds.flatMap((id) => {
                       const item = portal.items.find(
@@ -297,7 +298,7 @@ export function PortalApp({ tab }: PortalAppProps) {
 
               <div
                 className={cn(
-                  "relative order-3 min-w-0 lg:col-start-2",
+                  "relative order-4 min-w-0 lg:col-start-2 lg:order-none",
                   visibleTabIds.length > 0
                     ? "lg:row-start-2"
                     : "lg:row-start-1",

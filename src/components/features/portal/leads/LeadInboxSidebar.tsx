@@ -364,23 +364,26 @@ export function LeadInboxSidebar({
       data-state={open ? "open" : "closed"}
       aria-hidden={!open}
       className={cn(
-        "relative shrink-0 overflow-x-clip overflow-y-visible",
+        "relative shrink-0 max-lg:contents lg:overflow-x-clip lg:overflow-y-visible",
         !resizing &&
           "transition-[width,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-        open ? "opacity-100" : "pointer-events-none opacity-0",
+        open ? "lg:opacity-100" : "pointer-events-none lg:opacity-0",
       )}
       style={{ width: open ? width : 0 }}
     >
-      <div style={{ width }} className="pr-1">
-        <aside className="flex flex-col gap-3">
-          <LeadInboxFilters
-            value={filters}
-            members={members}
-            forms={forms}
-            onChange={onFiltersChange}
-            onApply={onApplyFilters}
-          />
+      <div style={{ width }} className="max-lg:contents lg:pr-1">
+        <aside className="max-lg:contents lg:flex lg:flex-col lg:gap-3">
+          <div className="order-2 min-w-0 lg:order-none">
+            <LeadInboxFilters
+              value={filters}
+              members={members}
+              forms={forms}
+              onChange={onFiltersChange}
+              onApply={onApplyFilters}
+            />
+          </div>
 
+          <div className="order-1 flex min-w-0 flex-col gap-3 lg:order-none">
           {showListError && (
             <p className="border-outline-variant/20 bg-surface-container-low text-on-surface-variant border p-4 text-sm">
               {listError}
@@ -400,11 +403,14 @@ export function LeadInboxSidebar({
           )}
 
           {items.length > 0 && (
-            <ul className="flex flex-col gap-2">
+            <ul className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 lg:snap-none lg:flex-col lg:overflow-visible lg:pb-0">
               {items.map((item) => {
                 const active = item.submissionId === selectedId;
                 return (
-                  <li key={item.submissionId}>
+                  <li
+                    key={item.submissionId}
+                    className="w-72 shrink-0 snap-start lg:w-auto lg:shrink"
+                  >
                     <LeadInboxCard
                       senderName={item.senderName}
                       senderEmail={leadContactLabel(item) ?? ""}
@@ -443,6 +449,7 @@ export function LeadInboxSidebar({
               {listBusy ? "Loading…" : "Load more"}
             </Button>
           )}
+          </div>
         </aside>
       </div>
     </div>

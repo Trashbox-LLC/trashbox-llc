@@ -326,6 +326,115 @@ describe("LeadEmailThread", () => {
     ).toBeInTheDocument();
   });
 
+  it("marks the form submission at the top of the conversation", () => {
+    renderConnected({
+      messages: [sampleReply],
+      showHistory: false,
+      showTranscript: true,
+      library: { templates: [], signatures: [], snippets: [] },
+    });
+
+    const transcript = screen.getByRole("region", { name: /message transcript/i });
+    const start = within(transcript).getByRole("separator");
+    expect(start).toHaveTextContent(/form submission/i);
+    expect(within(start).getByRole("time")).toHaveAttribute(
+      "dateTime",
+      "2026-07-15T12:00:00.000Z",
+    );
+    expect(within(transcript).getByText("Need a quote")).toBeInTheDocument();
+  });
+
+  it("shows the full thread as text when the transcript is open", () => {
+    renderConnected({
+      messages: [sampleReply, featuredLatest],
+      showHistory: false,
+      showTranscript: true,
+      featuredBody: "Featured above history.",
+      featuredAuthor: "Ada Lovelace",
+      library: { templates: [], signatures: [], snippets: [] },
+    });
+
+    const transcript = screen.getByRole("region", { name: /message transcript/i });
+    expect(within(transcript).getByText("Need a quote")).toBeInTheDocument();
+    expect(within(transcript).getByText("Happy to help.")).toBeInTheDocument();
+    expect(
+      within(transcript).getByText("Featured above history."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^re: need a quote$/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows a sent message on the sender's name and reveals the address on hover", async () => {
+    const user = userEvent.setup();
+    renderConnected({
+      messages: [
+        {
+          ...sampleReply,
+          sentBy: "ezekiel@example.com",
+        },
+      ],
+      members: [
+        {
+          email: "ezekiel@example.com",
+          role: "owner",
+          joinedAt: "2026-01-01",
+          firstName: "Ezekiel",
+          lastName: "Mohr",
+          emailNotifications: true,
+        },
+      ],
+      showHistory: false,
+      showTranscript: true,
+      library: { templates: [], signatures: [], snippets: [] },
+    });
+
+    const transcript = screen.getByRole("region", { name: /message transcript/i });
+    expect(within(transcript).getByText("Ezekiel Mohr")).toBeInTheDocument();
+    expect(
+      within(transcript).queryByText("sales@acme.test"),
+    ).not.toBeInTheDocument();
+
+    await user.hover(within(transcript).getByText("Ezekiel Mohr"));
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "sales@acme.test",
+    );
+  });
+
+  it("opens a designed HTML email from the transcript", async () => {
+    const user = userEvent.setup();
+    const html = '<div data-tb-doc="1"><h1>Your website proposal</h1></div>';
+    renderConnected({
+      messages: [
+        {
+          ...sampleReply,
+          messageId: "m-html",
+          subject: "Proposal",
+          bodyText: "Your website proposal",
+          bodyHtml: html,
+        },
+      ],
+      showHistory: false,
+      showTranscript: true,
+      library: { templates: [], signatures: [], snippets: [] },
+    });
+
+    const transcript = screen.getByRole("region", { name: /message transcript/i });
+    expect(
+      within(transcript).queryByText("Your website proposal"),
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      within(transcript).getByRole("button", { name: /preview proposal/i }),
+    );
+
+    const dialog = screen.getByRole("dialog", { name: /^proposal$/i });
+    expect(within(dialog).getByTitle("Proposal email")).toHaveAttribute(
+      "srcdoc",
+      expect.stringContaining("data-tb-doc"),
+    );
+  });
+
   it("hides the timeline when showHistory is false", () => {
     renderConnected({
       messages: [sampleReply],

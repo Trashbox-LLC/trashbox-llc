@@ -1,5 +1,6 @@
 import {
   messageChannelOf,
+  teamMemberDisplayName,
   type LeadMessage,
   type MessageChannel,
 } from "@/lib/api";
@@ -78,6 +79,47 @@ export function visibleReplyText(body: string): string {
     .replace(/\n(?:> ?.*(?:\n|$))+$/g, "")
     .trim();
   return visible.length > 0 ? visible : body.trim();
+}
+
+export function messageSenderPresentation(input: {
+  direction: "inbound" | "outbound";
+  from: string;
+  sentBy?: string;
+  leadName?: string;
+  members?: {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    name?: string;
+  }[];
+}): { name: string; email: string | null; side: "start" | "end" } {
+  if (input.direction === "inbound") {
+    const name = input.leadName?.trim() || input.from;
+    return {
+      name,
+      email: addressBeside(name, input.from),
+      side: "start",
+    };
+  }
+
+  const member =
+    input.members?.find(
+      (item) => input.sentBy && item.email === input.sentBy,
+    ) ?? input.members?.find((item) => item.email === input.from);
+  const memberName = member ? teamMemberDisplayName(member) : "";
+  const named = member && memberName !== member.email ? memberName : "";
+  const name = named || input.from;
+  return {
+    name,
+    email: addressBeside(name, input.from),
+    side: "end",
+  };
+}
+
+function addressBeside(name: string, address: string): string | null {
+  const value = address.trim();
+  if (!value || value === name) return null;
+  return value;
 }
 
 /** Layout-builder HTML. A plain rich-text reply has no document marker. */

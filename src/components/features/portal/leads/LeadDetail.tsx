@@ -61,7 +61,7 @@ function sortLeadMessages(messages: LeadMessage[]): LeadMessage[] {
   );
 }
 
-type ConversationPanel = "thread" | "history" | "notes";
+type ConversationPanel = "thread" | "history" | "historyText" | "notes";
 
 interface LeadDetailProps {
   submission: Submission;
@@ -238,6 +238,21 @@ export function LeadDetail({
                       History
                     </button>
                   )}
+                  {hasHistory && (
+                    <button
+                      type="button"
+                      aria-pressed={panel === "historyText"}
+                      onClick={() => selectPanel("historyText")}
+                      className={cn(
+                        "text-sm transition-colors",
+                        panel === "historyText"
+                          ? "border-b border-white text-white"
+                          : "text-outline hover:text-white",
+                      )}
+                    >
+                      History 2
+                    </button>
+                  )}
                   <button
                     type="button"
                     aria-pressed={panel === "notes"}
@@ -281,10 +296,12 @@ export function LeadDetail({
           formAt={submission.submittedAt}
           messages={orderedMessages}
           showHistory={panel === "history"}
+          showTranscript={panel === "historyText"}
           featuredBody={featuredBody}
           featuredAuthor={featuredAuthor}
           featuredAt={featuredAt}
           leadName={submission.senderName}
+          members={members}
           showFeatured={panel !== "notes"}
           conversationExtra={panel === "notes" ? notesPanel : undefined}
           mailboxConnected={mailboxConnected}

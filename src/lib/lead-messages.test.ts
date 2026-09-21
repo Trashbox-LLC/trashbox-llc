@@ -4,6 +4,7 @@ import {
   formSubmissionMessage,
   leadContactLabel,
   leadMessageTimelineLabels,
+  messageSenderPresentation,
   resolveComposerChannel,
   visibleReplyText,
 } from "@/lib/lead-messages";
@@ -23,6 +24,51 @@ function message(overrides: Partial<LeadMessage> = {}): LeadMessage {
     ...overrides,
   };
 }
+
+describe("messageSenderPresentation", () => {
+  it("uses a teammate's name for a sent message and keeps the address separate", () => {
+    const sender = messageSenderPresentation({
+      direction: "outbound",
+      from: "contact@trashbox.io",
+      sentBy: "ezekiel@example.com",
+      members: [
+        {
+          email: "ezekiel@example.com",
+          firstName: "Ezekiel",
+          lastName: "Mohr",
+        },
+      ],
+    });
+
+    expect(sender.name).toBe("Ezekiel Mohr");
+    expect(sender.email).toBe("contact@trashbox.io");
+    expect(sender.side).toBe("end");
+  });
+
+  it("uses the lead name for a received message", () => {
+    const sender = messageSenderPresentation({
+      direction: "inbound",
+      from: "ada@example.com",
+      leadName: "Ada Lovelace",
+    });
+
+    expect(sender.name).toBe("Ada Lovelace");
+    expect(sender.email).toBe("ada@example.com");
+    expect(sender.side).toBe("start");
+  });
+
+  it("shows the address when a sent message has no name", () => {
+    const sender = messageSenderPresentation({
+      direction: "outbound",
+      from: "contact@trashbox.io",
+      sentBy: "ezekiel@example.com",
+      members: [{ email: "ezekiel@example.com" }],
+    });
+
+    expect(sender.name).toBe("contact@trashbox.io");
+    expect(sender.email).toBeNull();
+  });
+});
 
 describe("leadMessageTimelineLabels", () => {
   it("treats a message with no channel as email", () => {

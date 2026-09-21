@@ -43,11 +43,13 @@ import type {
   FromIdentityOption,
   LeadMessage,
   MessageChannel,
+  TeamMember,
 } from "@/lib/api";
 import { messageChannelOf } from "@/lib/api";
 import {
   designedEmailHtml,
   leadMessageTimelineLabels,
+  messageSenderPresentation,
   resolveComposerChannel,
   visibleReplyText,
 } from "@/lib/lead-messages";
@@ -87,6 +89,54 @@ function formatWhen(iso: string) {
   }
 }
 
+function dayOrdinal(day: number): string {
+  const teen = day % 100;
+  if (teen >= 11 && teen <= 13) return "th";
+  switch (day % 10) {
+    case 1:
+      return "st";
+    case 2:
+      return "nd";
+    case 3:
+      return "rd";
+    default:
+      return "th";
+  }
+}
+
+function formatConversationStart(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  const month = new Intl.DateTimeFormat("en-US", { month: "short" }).format(
+    date,
+  );
+  const time = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })
+    .format(date)
+    .replace(/\s/g, "")
+    .toLowerCase();
+  return `${month} ${date.getDate()}${dayOrdinal(date.getDate())} ${time}`;
+}
+
+function ConversationStart({ at }: { at: string }) {
+  return (
+    <div
+      role="separator"
+      className="flex items-center gap-3 py-3"
+    >
+      <span aria-hidden="true" className="h-px flex-1 bg-white/15" />
+      <span className="text-outline shrink-0 text-xs">
+        Form Submission{" "}
+        <time dateTime={at}>{formatConversationStart(at)}</time>
+      </span>
+      <span aria-hidden="true" className="h-px flex-1 bg-white/15" />
+    </div>
+  );
+}
+
 function formatDayChip(iso: string): string {
   try {
     const date = new Date(iso);
@@ -108,6 +158,87 @@ function formatDay(iso: string) {
   } catch {
     return iso;
   }
+}
+
+function ThreadMessage({
+  author,
+  email,
+  at,
+  body,
+  html,
+  previewTitle,
+  side = "start",
+}: {
+  author?: string;
+  email?: string | null;
+  at?: string;
+  body: string;
+  html?: string | null;
+  previewTitle?: string;
+  side?: "start" | "end";
+}) {
+  const outbound = side === "end";
+  const name = author ? (
+    email ? (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="text-sm font-medium text-white">{author}</span>
+        </TooltipTrigger>
+        <TooltipContent side={outbound ? "left" : "right"} sideOffset={8}>
+          {email}
+        </TooltipContent>
+      </Tooltip>
+    ) : (
+      <span className="text-sm font-medium text-white">{author}</span>
+    )
+  ) : null;
+
+  return (
+    <div className={cn("flex", outbound ? "justify-end" : "justify-start")}>
+      <div
+        className={cn(
+          "flex max-w-[85%] items-start gap-3 py-4",
+          outbound && "flex-row-reverse",
+        )}
+      >
+        {author ? (
+          <span
+            aria-hidden="true"
+            className="bg-surface-container-highest mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
+          >
+            {initialsOf(author)}
+          </span>
+        ) : null}
+        <div className={cn("min-w-0", outbound && "text-right")}>
+          {(author || at) && (
+            <div
+              className={cn(
+                "mb-1 flex flex-wrap items-baseline gap-2",
+                outbound && "justify-end",
+              )}
+            >
+              {name}
+              {at ? (
+                <time dateTime={at} className="text-outline text-xs">
+                  {formatTime(at)}
+                </time>
+              ) : null}
+            </div>
+          )}
+          {html ? (
+            <HtmlEmailPreview
+              title={previewTitle || author || "Email"}
+              html={html}
+            />
+          ) : body.trim().length > 0 ? (
+            <p className="text-on-surface text-sm leading-relaxed whitespace-pre-wrap">
+              {body}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function initialsOf(name: string): string {
@@ -512,6 +643,8 @@ export interface LeadEmailThreadProps {
   messages: LeadMessage[];
   /** When true, render every message, including the latest, in the History timeline. */
   showHistory?: boolean;
+  /** When true, render the full thread in the featured text layout. */
+  showTranscript?: boolean;
   /** Latest message body shown when History is closed. */
   featuredBody: string;
   /** Name shown beside the featured message. */
@@ -528,6 +661,8 @@ export interface LeadEmailThreadProps {
   threadHeader?: ReactNode;
   /** Lead name used on branched inbound replies. */
   leadName?: string;
+  /** Teammates, used to show a name on sent messages. */
+  members?: TeamMember[];
   mailboxConnected: boolean;
   fromAddress?: string;
   fromOptions?: FromIdentityOption[];
@@ -557,6 +692,7 @@ export function LeadEmailThread({
   formAt,
   messages,
   showHistory = false,
+  showTranscript = false,
   featuredBody,
   featuredAuthor,
   featuredAt,
@@ -565,6 +701,7 @@ export function LeadEmailThread({
   conversationExtra,
   threadHeader,
   leadName,
+  members = [],
   mailboxConnected,
   fromAddress,
   fromOptions = [],
@@ -821,6 +958,34 @@ export function LeadEmailThread({
   const libraryButtonClass =
     "font-body h-8 gap-2 rounded px-0 text-sm font-normal tracking-normal text-outline normal-case hover:bg-transparent hover:text-white";
 
+  const orderedMessages = useMemo(
+    () =>
+      [...messages].sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      ),
+    [messages],
+  );
+  const latestMessage = orderedMessages.at(-1);
+  const formSender = messageSenderPresentation({
+    direction: "inbound",
+    from: formFrom,
+    leadName,
+  });
+  const featuredSender = latestMessage
+    ? messageSenderPresentation({
+        direction: latestMessage.direction,
+        from: latestMessage.from,
+        sentBy: latestMessage.sentBy,
+        leadName,
+        members,
+      })
+    : messageSenderPresentation({
+        direction: "inbound",
+        from: formFrom,
+        leadName: leadName || featuredAuthor,
+      });
+
   const timelineGroups = useMemo(() => {
     const ordered = [...messages].sort(
       (a, b) =>
@@ -967,40 +1132,56 @@ export function LeadEmailThread({
           </div>
         )}
 
-        {showFeatured && !showHistory && featuredBody.trim().length > 0 && (
-          <div className="py-4">
-            <div className="flex items-start gap-3">
-              {featuredAuthor ? (
-                <span
-                  aria-hidden="true"
-                  className="bg-surface-container-highest mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
-                >
-                  {initialsOf(featuredAuthor)}
-                </span>
-              ) : null}
-              <div className="min-w-0">
-                {(featuredAuthor || featuredAt) && (
-                  <div className="mb-1 flex flex-wrap items-baseline gap-2">
-                    {featuredAuthor ? (
-                      <span className="text-sm font-medium text-white">
-                        {featuredAuthor}
-                      </span>
-                    ) : null}
-                    {featuredAt ? (
-                      <time
-                        dateTime={featuredAt}
-                        className="text-outline text-xs"
-                      >
-                        {formatTime(featuredAt)}
-                      </time>
-                    ) : null}
-                  </div>
-                )}
-                <p className="text-on-surface text-sm leading-relaxed whitespace-pre-wrap">
-                  {featuredBody}
-                </p>
-              </div>
-            </div>
+        {showTranscript && (
+          <div role="region" aria-label="Message transcript">
+            <ConversationStart at={formAt} />
+            <ThreadMessage
+              author={formSender.name}
+              email={formSender.email}
+              side={formSender.side}
+              at={formAt}
+              body={formMessage}
+            />
+            {orderedMessages.map((message) => {
+              const sender = messageSenderPresentation({
+                direction: message.direction,
+                from: message.from,
+                sentBy: message.sentBy,
+                leadName,
+                members,
+              });
+              return (
+                <ThreadMessage
+                  key={message.messageId}
+                  author={sender.name}
+                  email={sender.email}
+                  side={sender.side}
+                  at={message.createdAt}
+                  body={visibleReplyText(message.bodyText)}
+                  html={designedEmailHtml(message.bodyHtml)}
+                  previewTitle={message.subject}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {showFeatured && !showHistory && !showTranscript && featuredBody.trim().length > 0 && (
+          <div>
+            <ConversationStart at={formAt} />
+            <ThreadMessage
+              author={featuredSender.name}
+              email={featuredSender.email}
+              side={featuredSender.side}
+              at={featuredAt}
+              body={featuredBody}
+              html={
+                latestMessage
+                  ? designedEmailHtml(latestMessage.bodyHtml)
+                  : null
+              }
+              previewTitle={latestMessage?.subject}
+            />
             {featuredMetadata && Object.keys(featuredMetadata).length > 0 && (
               <dl className="mt-6 space-y-2">
                 {Object.entries(featuredMetadata).map(([key, value]) => (

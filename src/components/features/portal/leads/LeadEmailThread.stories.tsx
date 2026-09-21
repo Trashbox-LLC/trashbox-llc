@@ -209,6 +209,21 @@ export const WithOutboundReply: Story = {
   },
 };
 
+export const Transcript: Story = {
+  args: {
+    mailboxConnected: true,
+    fromAddress: "sales@example.com",
+    showHistory: false,
+    showTranscript: true,
+    messages: [outboundReply, proposalReply],
+    library: { templates, signatures, snippets },
+    variableContext: {
+      lead: { name: "Ada Lovelace", email: "ada@example.com" },
+      business: { name: "Trashbox LLC" },
+    },
+  },
+};
+
 export const HtmlEmail: Story = {
   args: {
     mailboxConnected: true,
