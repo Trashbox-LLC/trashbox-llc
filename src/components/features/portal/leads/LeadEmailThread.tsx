@@ -818,6 +818,8 @@ export function LeadEmailThread({
   const sendDisabled = busy || !hasContent || !fromIdentityId;
   const libraryEmpty =
     templates.length === 0 && signatures.length === 0 && snippets.length === 0;
+  const libraryButtonClass =
+    "font-body h-8 gap-2 rounded px-0 text-sm font-normal tracking-normal text-outline normal-case hover:bg-transparent hover:text-white";
 
   const timelineGroups = useMemo(() => {
     const ordered = [...messages].sort(
@@ -1070,21 +1072,18 @@ export function LeadEmailThread({
 
         {activeChannel === "email" && onSend && (
           <div>
-            <div className="px-6 py-3">
+            <div className="border-b border-white/20 px-6 py-3">
               <div className="flex flex-wrap items-center gap-4">
-                <span className="font-label text-outline w-8 shrink-0 text-[10px] uppercase">
-                  To
-                </span>
+                <span className="text-outline shrink-0 text-sm">To</span>
                 <span className="bg-surface-container inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs text-white shadow-sm">
                   {formFrom}
                 </span>
-                <span className="font-label text-outline w-10 shrink-0 text-[10px] uppercase">
-                  From
-                </span>
+                <span className="text-outline shrink-0 text-sm">From</span>
                 <div className="min-w-[12rem] flex-1">
                   {hasFromOptions ? (
                     <Select
                       aria-label="Sender Display Name"
+                      variant="inline"
                       value={fromIdentityId}
                       onChange={setFromIdentityId}
                       disabled={busy}
@@ -1103,109 +1102,98 @@ export function LeadEmailThread({
               </div>
             </div>
 
-            {layoutActive ? (
-              <>
-                <div
-                  role="toolbar"
-                  aria-label="Formatting"
-                  className="border-outline-variant/15 bg-surface-container-high flex flex-wrap items-center gap-1 border-b px-3 py-2"
-                >
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-white/20 px-6 py-3">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-label="Template"
+                disabled={busy}
+                onClick={() => setTemplateGalleryOpen(true)}
+                className={libraryButtonClass}
+              >
+                <MaterialIcon name="description" className="text-lg" />
+                Template
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    aria-label="Template"
-                    title="Templates"
-                    disabled={busy}
-                    onClick={() => setTemplateGalleryOpen(true)}
-                    className="font-body text-outline hover:bg-surface-variant h-8 gap-0.5 rounded px-1.5 text-xs font-normal tracking-normal normal-case hover:text-white"
+                    aria-label="Snippet"
+                    disabled={busy || snippets.length === 0}
+                    className={libraryButtonClass}
                   >
-                    <MaterialIcon name="description" className="text-lg" />
-                    <MaterialIcon
-                      name="arrow_drop_down"
-                      className="text-base opacity-70"
-                    />
+                    <MaterialIcon name="data_object" className="text-lg" />
+                    Snippet
                   </Button>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        aria-label="Snippet"
-                        title="Snippets"
-                        disabled
-                        className="font-body text-outline hover:bg-surface-variant h-8 gap-0.5 rounded px-1.5 text-xs font-normal tracking-normal normal-case hover:text-white"
-                      >
-                        <MaterialIcon name="data_object" className="text-lg" />
-                        <MaterialIcon
-                          name="arrow_drop_down"
-                          className="text-base opacity-70"
-                        />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="start"
-                      className="border-outline-variant/20 bg-surface-container-high text-on-surface z-[100] max-h-64"
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="border-outline-variant/20 bg-surface-container-high text-on-surface z-[100] max-h-64"
+                >
+                  {snippets.map((snippet) => (
+                    <DropdownMenuItem
+                      key={snippet.id}
+                      onSelect={() => applySnippet(snippet.id)}
                     >
-                      {snippets.map((snippet) => (
-                        <DropdownMenuItem
-                          key={snippet.id}
-                          onSelect={() => applySnippet(snippet.id)}
-                        >
-                          {snippet.shortcut
-                            ? `${snippet.name} (/${snippet.shortcut})`
-                            : snippet.name}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        aria-label="Signature"
-                        title="Signatures"
-                        disabled={busy || signatures.length === 0}
-                        className="font-body text-outline hover:bg-surface-variant h-8 gap-0.5 rounded px-1.5 text-xs font-normal tracking-normal normal-case hover:text-white"
-                      >
-                        <MaterialIcon name="draw" className="text-lg" />
-                        <MaterialIcon
-                          name="arrow_drop_down"
-                          className="text-base opacity-70"
-                        />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="start"
-                      className="border-outline-variant/20 bg-surface-container-high text-on-surface z-[100] max-h-64"
+                      {snippet.shortcut
+                        ? `${snippet.name} (/${snippet.shortcut})`
+                        : snippet.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    aria-label="Signature"
+                    disabled={busy || signatures.length === 0}
+                    className={libraryButtonClass}
+                  >
+                    <MaterialIcon name="draw" className="text-lg" />
+                    Signature
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="border-outline-variant/20 bg-surface-container-high text-on-surface z-[100] max-h-64"
+                >
+                  {signatures.map((signature) => (
+                    <DropdownMenuItem
+                      key={signature.id}
+                      onSelect={() => applySignature(signature.id)}
                     >
-                      {signatures.map((signature) => (
-                        <DropdownMenuItem
-                          key={signature.id}
-                          onSelect={() => applySignature(signature.id)}
-                        >
-                          {signature.isDefault
-                            ? `${signature.name} (Default)`
-                            : signature.name}
-                          {signature.id === signatureId ? " ✓" : ""}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                <LeadComposeLayoutPreview
-                  html={layoutBodyHtml}
-                  signatureHtml={layoutSignatureHtml}
-                  disabled={busy}
-                  onEdit={openLayoutBuilder}
-                  onRemove={exitLayoutMode}
-                />
-              </>
+                      {signature.isDefault
+                        ? `${signature.name} (Default)`
+                        : signature.name}
+                      {signature.id === signatureId ? " ✓" : ""}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              {libraryEmpty ? (
+                <a
+                  href={settingsSectionPath("templates")}
+                  className="font-label text-[10px] tracking-widest text-white uppercase underline"
+                >
+                  Manage in Settings
+                </a>
+              ) : null}
+            </div>
+
+            {layoutActive ? (
+              <LeadComposeLayoutPreview
+                html={layoutBodyHtml}
+                signatureHtml={layoutSignatureHtml}
+                disabled={busy}
+                onEdit={openLayoutBuilder}
+                onRemove={exitLayoutMode}
+              />
             ) : (
               <RichTextEditor
                 key={editorKey}
@@ -1218,114 +1206,11 @@ export function LeadEmailThread({
                 onKeyDown={onEditorKeyDown}
                 className="rounded-none border-0 bg-transparent"
                 editorClassName="min-h-24"
-                toolbarStart={
-                  <>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      aria-label="Template"
-                      title="Templates"
-                      disabled={busy}
-                      onClick={() => setTemplateGalleryOpen(true)}
-                      className="font-body text-outline hover:bg-surface-variant h-8 gap-0.5 rounded px-1.5 text-xs font-normal tracking-normal normal-case hover:text-white"
-                    >
-                      <MaterialIcon name="description" className="text-lg" />
-                      <MaterialIcon
-                        name="arrow_drop_down"
-                        className="text-base opacity-70"
-                      />
-                    </Button>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          aria-label="Snippet"
-                          title="Snippets"
-                          disabled={busy || snippets.length === 0}
-                          className="font-body text-outline hover:bg-surface-variant h-8 gap-0.5 rounded px-1.5 text-xs font-normal tracking-normal normal-case hover:text-white"
-                        >
-                          <MaterialIcon
-                            name="data_object"
-                            className="text-lg"
-                          />
-                          <MaterialIcon
-                            name="arrow_drop_down"
-                            className="text-base opacity-70"
-                          />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="start"
-                        className="border-outline-variant/20 bg-surface-container-high text-on-surface z-[100] max-h-64"
-                      >
-                        {snippets.map((snippet) => (
-                          <DropdownMenuItem
-                            key={snippet.id}
-                            onSelect={() => applySnippet(snippet.id)}
-                          >
-                            {snippet.shortcut
-                              ? `${snippet.name} (/${snippet.shortcut})`
-                              : snippet.name}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          aria-label="Signature"
-                          title="Signatures"
-                          disabled={busy || signatures.length === 0}
-                          className="font-body text-outline hover:bg-surface-variant h-8 gap-0.5 rounded px-1.5 text-xs font-normal tracking-normal normal-case hover:text-white"
-                        >
-                          <MaterialIcon name="draw" className="text-lg" />
-                          <MaterialIcon
-                            name="arrow_drop_down"
-                            className="text-base opacity-70"
-                          />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="start"
-                        className="border-outline-variant/20 bg-surface-container-high text-on-surface z-[100] max-h-64"
-                      >
-                        {signatures.map((signature) => (
-                          <DropdownMenuItem
-                            key={signature.id}
-                            onSelect={() => applySignature(signature.id)}
-                          >
-                            {signature.isDefault
-                              ? `${signature.name} (Default)`
-                              : signature.name}
-                            {signature.id === signatureId ? " ✓" : ""}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </>
-                }
-                toolbarEnd={
-                  libraryEmpty ? (
-                    <a
-                      href={settingsSectionPath("templates")}
-                      className="font-label ml-1 text-[10px] tracking-widest text-white uppercase underline"
-                    >
-                      Manage in Settings
-                    </a>
-                  ) : null
-                }
+                compactToolbar
               />
             )}
 
-            <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3">
+            <div className="flex flex-wrap items-center justify-end gap-3 border-t border-white/20 px-6 py-3">
               <span className="text-outline font-mono text-[10px]">
                 Cmd + Enter
               </span>

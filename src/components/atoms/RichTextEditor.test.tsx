@@ -40,6 +40,35 @@ describe("RichTextEditor", () => {
     ).toBeInTheDocument();
   });
 
+  it("hides extra formatting until more is opened", async () => {
+    const user = userEvent.setup();
+    render(
+      <RichTextEditor ariaLabel="Reply" onChange={vi.fn()} compactToolbar />,
+    );
+
+    expect(screen.getByRole("button", { name: /^bold$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^link$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^underline$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /numbered list/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^font$/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /insert image/i }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /more formatting/i }));
+
+    expect(
+      screen.getByRole("button", { name: /insert image/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^font$/i })).toBeInTheDocument();
+  });
+
   it("can hide the formatting toolbar", () => {
     render(
       <RichTextEditor
@@ -206,12 +235,16 @@ describe("RichTextEditor", () => {
     await user.click(screen.getByRole("button", { name: /^text color$/i }));
     await screen.findByLabelText(/text color color picker/i);
 
-    await user.click(screen.getByRole("button", { name: /text color #e53935/i }));
+    await user.click(
+      screen.getByRole("button", { name: /text color #e53935/i }),
+    );
     const live = editor.querySelector("[data-tb-live-color='color']");
     expect(live).toBeTruthy();
     expect(live).toHaveStyle({ color: "rgb(229, 57, 53)" });
 
-    await user.click(screen.getByRole("button", { name: /text color #1e88e5/i }));
+    await user.click(
+      screen.getByRole("button", { name: /text color #1e88e5/i }),
+    );
     expect(editor.querySelector("[data-tb-live-color='color']")).toHaveStyle({
       color: "rgb(30, 136, 229)",
     });
@@ -240,12 +273,16 @@ describe("RichTextEditor", () => {
     await user.click(screen.getByRole("button", { name: /^highlight$/i }));
     await screen.findByLabelText(/highlight color picker/i);
 
-    await user.click(screen.getByRole("button", { name: /highlight #e53935/i }));
+    await user.click(
+      screen.getByRole("button", { name: /highlight #e53935/i }),
+    );
     expect(
       editor.querySelector("[data-tb-live-color='highlight']"),
     ).toHaveStyle({ backgroundColor: "rgb(229, 57, 53)" });
 
-    await user.click(screen.getByRole("button", { name: /highlight #1e88e5/i }));
+    await user.click(
+      screen.getByRole("button", { name: /highlight #1e88e5/i }),
+    );
     expect(
       editor.querySelector("[data-tb-live-color='highlight']"),
     ).toHaveStyle({ backgroundColor: "rgb(30, 136, 229)" });

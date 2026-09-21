@@ -93,6 +93,10 @@ interface RichTextEditorProps {
   /** Inserted at the end of the formatting toolbar. */
   toolbarEnd?: ReactNode;
   /**
+   * Show the reply formatting set until More formatting is opened.
+   */
+  compactToolbar?: boolean;
+  /**
    * When true, dropping a builder merge-field variant inserts a chip at the
    * caret (or at the end).
    */
@@ -661,6 +665,36 @@ const ToolbarMenuButton = forwardRef<
   );
 });
 
+function MoreFormattingButton({
+  expanded,
+  disabled,
+  onClick,
+}: {
+  expanded: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      aria-label="More formatting"
+      aria-expanded={expanded}
+      title="More formatting"
+      disabled={disabled}
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={onClick}
+      className={toolbarBtnClass}
+    >
+      <MaterialIcon
+        name={expanded ? "expand_less" : "more_horiz"}
+        className="text-lg"
+      />
+    </Button>
+  );
+}
+
 function ToolbarGroup({
   children,
   withDivider,
@@ -669,14 +703,15 @@ function ToolbarGroup({
   withDivider?: boolean;
 }) {
   return (
-    <div
-      className={cn(
-        "flex items-center gap-0.5",
-        withDivider && "border-outline-variant/10 mr-2 border-r pr-2",
-      )}
-    >
+    <>
       {children}
-    </div>
+      {withDivider ? (
+        <span
+          aria-hidden="true"
+          className="mx-1 h-4 w-px shrink-0 bg-white/20"
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -844,10 +879,13 @@ export const RichTextEditor = forwardRef<
     initialHtml,
     toolbarStart,
     toolbarEnd,
+    compactToolbar = false,
     acceptMergeFieldDrops = false,
   },
   ref,
 ) {
+  const [moreFormatting, setMoreFormatting] = useState(false);
+  const showExtraFormatting = !compactToolbar || moreFormatting;
   const rootRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const [overlayStyle, setOverlayStyle] = useState<CSSProperties>({
@@ -1223,10 +1261,10 @@ export const RichTextEditor = forwardRef<
             const toolbar = (
               <div
                 className={cn(
-                  "border-outline-variant/15 bg-surface-container-high flex flex-wrap items-center gap-1 px-3 py-2",
-                  toolbarOverlay &&
-                    "rounded-md border border-zinc-200 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)]",
-                  !toolbarPortal && !toolbarOverlay && "border-b",
+                  "flex flex-wrap items-center gap-1 px-3 py-2",
+                  toolbarOverlay
+                    ? "rounded-md border border-zinc-200 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+                    : "border-b border-white/20 bg-surface-container-high",
                 )}
                 role="toolbar"
                 aria-label="Formatting"
@@ -1235,6 +1273,49 @@ export const RichTextEditor = forwardRef<
                   <ToolbarGroup withDivider>{toolbarStart}</ToolbarGroup>
                 )}
 
+                {compactToolbar && !showExtraFormatting ? (
+                  <ToolbarGroup>
+                    {STYLE_BUTTONS.filter((button) =>
+                      ["bold", "italic", "underline", "strikeThrough"].includes(
+                        button.command,
+                      ),
+                    ).map((button) => (
+                      <ToolbarIconButton
+                        key={button.command}
+                        label={button.label}
+                        icon={button.icon}
+                        disabled={disabled}
+                        onClick={() => runToolbarButton(button)}
+                      />
+                    ))}
+                    {LIST_BUTTONS.map((button) => (
+                      <ToolbarIconButton
+                        key={button.command}
+                        label={button.label}
+                        icon={button.icon}
+                        disabled={disabled}
+                        onClick={() => runToolbarButton(button)}
+                      />
+                    ))}
+                    {INSERT_BUTTONS.filter(
+                      (button) => button.command === "createLink",
+                    ).map((button) => (
+                      <ToolbarIconButton
+                        key={button.command}
+                        label={button.label}
+                        icon={button.icon}
+                        disabled={disabled}
+                        onClick={() => runToolbarButton(button)}
+                      />
+                    ))}
+                    <MoreFormattingButton
+                      expanded={false}
+                      disabled={disabled}
+                      onClick={() => setMoreFormatting(true)}
+                    />
+                  </ToolbarGroup>
+                ) : (
+                  <>
                 <ToolbarGroup withDivider>
                   {STYLE_BUTTONS.map((button) => (
                     <ToolbarIconButton
@@ -1495,6 +1576,15 @@ export const RichTextEditor = forwardRef<
                     </PopoverContent>
                   </Popover>
                 </ToolbarGroup>
+                {compactToolbar ? (
+                  <MoreFormattingButton
+                    expanded
+                    disabled={disabled}
+                    onClick={() => setMoreFormatting(false)}
+                  />
+                ) : null}
+                  </>
+                )}
 
                 {toolbarEnd}
               </div>

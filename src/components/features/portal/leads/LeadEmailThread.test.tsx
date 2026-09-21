@@ -228,6 +228,33 @@ describe("LeadEmailThread", () => {
     );
   });
 
+  it("keeps extra formatting behind more formatting", async () => {
+    const user = userEvent.setup();
+    renderConnected({
+      library: { templates: [], signatures: [], snippets: [] },
+    });
+
+    expect(
+      screen.getByRole("button", { name: /^underline$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^font$/i }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /more formatting/i }));
+    expect(screen.getByRole("button", { name: /^font$/i })).toBeInTheDocument();
+  });
+
+  it("places templates, snippets, and signatures outside the formatting toolbar", () => {
+    renderConnected();
+
+    const formatting = screen.getByRole("toolbar", { name: /formatting/i });
+    for (const name of [/^template$/i, /^snippet$/i, /^signature$/i]) {
+      expect(formatting).not.toContainElement(
+        screen.getByRole("button", { name }),
+      );
+    }
+  });
+
   it("segments the timeline by date with labeled day headings", () => {
     const laterDayReply: LeadMessage = {
       clientId: "c1",
@@ -733,25 +760,14 @@ describe("LeadEmailThread", () => {
       library: { templates: [], signatures: [], snippets: [] },
     });
 
-    const toolbar = screen.getByRole("toolbar", { name: /formatting/i });
     expect(
-      within(toolbar).getByRole("link", { name: /manage in settings/i }),
+      screen.getByRole("link", { name: /manage in settings/i }),
     ).toHaveAttribute("href", expect.stringMatching(/templates/));
-  });
-
-  it("keeps library menus inside the formatting toolbar", () => {
-    renderConnected();
-
-    const toolbar = screen.getByRole("toolbar", { name: /formatting/i });
     expect(
-      within(toolbar).getByRole("button", { name: /^template$/i }),
-    ).toBeInTheDocument();
-    expect(
-      within(toolbar).getByRole("button", { name: /^snippet$/i }),
-    ).toBeInTheDocument();
-    expect(
-      within(toolbar).getByRole("button", { name: /^signature$/i }),
-    ).toBeInTheDocument();
+      screen.getByRole("toolbar", { name: /formatting/i }),
+    ).not.toContainElement(
+      screen.getByRole("link", { name: /manage in settings/i }),
+    );
   });
 
   it("opens a designed HTML email from its history thumbnail", async () => {
