@@ -173,11 +173,48 @@ export const WithContentLibrary: Story = {
   },
 };
 
+const proposalHtml = `<div data-tb-doc="1" style="background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#18181b;">
+  <div style="background:#111111;color:#ffffff;padding:16px 20px;font-weight:600;">Trashbox</div>
+  <div style="padding:24px 20px;">
+    <h1 style="margin:0 0 8px;font-size:22px;">Your website proposal</h1>
+    <p style="margin:0 0 16px;font-size:14px;line-height:1.5;">Home, services, and contact. Hoping for October.</p>
+    <span style="display:inline-block;background:#111111;color:#ffffff;padding:10px 16px;font-size:14px;">View proposal</span>
+  </div>
+</div>`;
+
+const proposalReply: LeadMessage = {
+  clientId: "c1",
+  submissionId: "s1",
+  messageId: "m-proposal",
+  direction: "outbound",
+  from: "sales@example.com",
+  to: "ada@example.com",
+  subject: "Proposal",
+  bodyText: "Your website proposal",
+  bodyHtml: proposalHtml,
+  createdAt: "2026-07-15T18:00:00.000Z",
+  sentBy: "owner@example.com",
+};
+
 export const WithOutboundReply: Story = {
   args: {
     mailboxConnected: true,
     fromAddress: "sales@example.com",
     messages: [outboundReply],
+    library: { templates, signatures, snippets },
+    variableContext: {
+      lead: { name: "Ada Lovelace", email: "ada@example.com" },
+      business: { name: "Trashbox LLC" },
+    },
+  },
+};
+
+export const HtmlEmail: Story = {
+  args: {
+    mailboxConnected: true,
+    fromAddress: "sales@example.com",
+    showHistory: true,
+    messages: [proposalReply],
     library: { templates, signatures, snippets },
     variableContext: {
       lead: { name: "Ada Lovelace", email: "ada@example.com" },

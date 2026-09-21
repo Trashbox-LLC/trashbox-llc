@@ -727,6 +727,67 @@ describe("LeadEmailThread", () => {
       within(toolbar).getByRole("button", { name: /^signature$/i }),
     ).toBeInTheDocument();
   });
+
+  it("opens a designed HTML email from its history thumbnail", async () => {
+    const user = userEvent.setup();
+    const html = '<div data-tb-doc="1"><h1>Your website proposal</h1></div>';
+    renderConnected({
+      messages: [
+        {
+          ...sampleReply,
+          messageId: "m-html",
+          subject: "Proposal",
+          bodyText: "Your website proposal",
+          bodyHtml: html,
+        },
+      ],
+      library: { templates: [], signatures: [], snippets: [] },
+    });
+
+    const history = screen.getByRole("region", { name: /message history/i });
+    const card = within(history).getByRole("button", { name: /^Proposal$/i });
+    expect(card).toHaveAttribute("aria-expanded", "true");
+    expect(
+      within(history).queryByText("Your website proposal", { selector: "p" }),
+    ).not.toBeInTheDocument();
+
+    const preview = within(history).getByTitle("Proposal preview");
+    expect(preview).toHaveAttribute("srcdoc", expect.stringContaining(html));
+
+    await user.click(
+      within(history).getByRole("button", { name: /preview proposal/i }),
+    );
+
+    expect(card).toHaveAttribute("aria-expanded", "true");
+    const dialog = screen.getByRole("dialog", { name: /^proposal$/i });
+    expect(within(dialog).getByTitle("Proposal email")).toHaveAttribute(
+      "srcdoc",
+      expect.stringContaining("data-tb-doc"),
+    );
+
+    await user.click(within(dialog).getByRole("button", { name: /^close$/i }));
+    expect(
+      screen.queryByRole("dialog", { name: /^proposal$/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps a plain rich-text reply as text", () => {
+    renderConnected({
+      messages: [
+        {
+          ...sampleReply,
+          bodyHtml: "<p>Happy to help.</p>",
+        },
+        featuredLatest,
+      ],
+      library: { templates: [], signatures: [], snippets: [] },
+    });
+
+    expect(screen.getByText("Happy to help.")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /preview/i }),
+    ).not.toBeInTheDocument();
+  });
 });
 
 describe("LeadEmailThread channels", () => {

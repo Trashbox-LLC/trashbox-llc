@@ -46,6 +46,7 @@ import type {
 } from "@/lib/api";
 import { messageChannelOf } from "@/lib/api";
 import {
+  designedEmailHtml,
   leadMessageTimelineLabels,
   resolveComposerChannel,
 } from "@/lib/lead-messages";
@@ -159,6 +160,79 @@ interface TimelineEntry {
   meta: TimelineMeta;
   defaultOpen?: boolean;
   body: ReactNode;
+}
+
+function emailPreviewSrcDoc(html: string): string {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:#fff;}</style></head><body>${html}</body></html>`;
+}
+
+function HtmlEmailPreview({ title, html }: { title: string; html: string }) {
+  const [open, setOpen] = useState(false);
+  const srcDoc = emailPreviewSrcDoc(html);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKey(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label={`Preview ${title}`}
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.stopPropagation();
+          setOpen(true);
+        }}
+        className="relative block h-36 w-full overflow-hidden rounded-md border border-white/10 bg-white text-left"
+      >
+        <iframe
+          title={`${title} preview`}
+          sandbox=""
+          srcDoc={srcDoc}
+          tabIndex={-1}
+          className="pointer-events-none absolute top-0 left-0 h-[280%] w-[280%] origin-top-left scale-[0.36] border-0"
+        />
+      </button>
+      {open ? (
+        <div
+          className="fixed inset-0 z-130 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+            className="border-outline-variant/20 bg-surface-container-low flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-xl border shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 px-4 py-3">
+              <h2 className="truncate text-sm font-medium text-white">{title}</h2>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => setOpen(false)}
+                className="text-outline inline-flex size-8 items-center justify-center rounded-sm hover:text-white"
+              >
+                <MaterialIcon name="close" className="text-base" />
+              </button>
+            </div>
+            <iframe
+              title={`${title} email`}
+              sandbox=""
+              srcDoc={srcDoc}
+              className="h-[70vh] w-full border-0 bg-white"
+            />
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
 }
 
 function groupTimelineByDay(entries: TimelineEntry[]): {
@@ -783,6 +857,7 @@ export function LeadEmailThread({
         const address = (value: string) =>
           sms ? formatPhoneDisplay(value) : value;
         const branch = labels.accent === "muted";
+        const previewHtml = designedEmailHtml(message.bodyHtml);
         return {
           id: message.messageId,
           at: message.createdAt,
@@ -801,7 +876,9 @@ export function LeadEmailThread({
             to: address(message.to),
             at: message.createdAt,
           },
-          body: (
+          body: previewHtml ? (
+            <HtmlEmailPreview title={labels.title} html={previewHtml} />
+          ) : (
             <p className="text-on-surface leading-relaxed whitespace-pre-wrap">
               {message.bodyText}
             </p>

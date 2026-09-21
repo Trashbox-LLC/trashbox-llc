@@ -51,6 +51,13 @@ export interface LeadMessageTimelineLabels {
   accent: "primary" | "muted";
 }
 
+/** Layout-builder HTML. A plain rich-text reply has no document marker. */
+export function designedEmailHtml(bodyHtml: string | undefined): string | null {
+  const html = bodyHtml?.trim();
+  if (!html || !html.includes("data-tb-doc")) return null;
+  return html;
+}
+
 /** Presentation of one thread entry, which differs by channel and direction. */
 export function leadMessageTimelineLabels(
   message: LeadMessage,

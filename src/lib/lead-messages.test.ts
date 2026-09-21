@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  designedEmailHtml,
   leadContactLabel,
   leadMessageTimelineLabels,
   resolveComposerChannel,
@@ -144,5 +145,18 @@ describe("resolveComposerChannel", () => {
         canSms: false,
       }),
     ).toBeNull();
+  });
+});
+
+describe("designedEmailHtml", () => {
+  it("returns a designed layout document", () => {
+    const html = '<div data-tb-doc="1"><p>Proposal</p></div>';
+    expect(designedEmailHtml(html)).toBe(html);
+  });
+
+  it("ignores a plain rich-text reply", () => {
+    expect(designedEmailHtml("<p>Hey how are you?</p>")).toBeNull();
+    expect(designedEmailHtml(undefined)).toBeNull();
+    expect(designedEmailHtml("   ")).toBeNull();
   });
 });
