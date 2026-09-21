@@ -78,3 +78,11 @@ export const Soft: Story = {
     value: "qualified",
   },
 };
+
+export const Field: Story = {
+  ...Default,
+  args: {
+    variant: "field",
+    value: "contacted",
+  },
+};

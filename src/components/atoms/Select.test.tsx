@@ -127,6 +127,23 @@ describe("Select", () => {
     expect(trigger.className).toMatch(/\brounded-none\b/);
   });
 
+  it("uses a full-width field trigger for the field variant", () => {
+    render(
+      <Select
+        aria-label="Status"
+        variant="field"
+        value="new"
+        options={options}
+        onChange={vi.fn()}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: /status/i });
+    expect(trigger.className).toMatch(/\brounded-md\b/);
+    expect(trigger.className).toMatch(/\bw-full\b/);
+    expect(trigger.className).not.toMatch(/\brounded-full\b/);
+  });
+
   it("uses a soft pill trigger for the soft variant", () => {
     render(
       <Select

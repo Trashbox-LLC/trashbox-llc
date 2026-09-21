@@ -300,7 +300,7 @@ export function PortalApp({ tab }: PortalAppProps) {
                       onSelect={openLead}
                       onClose={closeLead}
                     />
-                    <div className="bg-surface-container-low rounded-lg rounded-tl-none p-6 md:p-10">
+                    <div className="pt-2">
                       {visibleTabIds.map((id) => {
                         const submission = portal.items.find(
                           (entry) => entry.submissionId === id,

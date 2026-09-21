@@ -10,6 +10,14 @@ import type {
 } from "@/lib/api";
 import { LeadEmailThread } from "./LeadEmailThread";
 
+function dayChip(iso: string): string {
+  const date = new Date(iso);
+  const month = new Intl.DateTimeFormat(undefined, { month: "short" }).format(
+    date,
+  );
+  return `${month} ${date.getDate()}`.toUpperCase();
+}
+
 const fromOptions = [
   {
     id: "s1",
@@ -268,16 +276,8 @@ describe("LeadEmailThread", () => {
         /^\d{4}-\d{2}-\d{2}$/.test(el.getAttribute("dateTime") ?? ""),
       );
     expect(dayLabels).toHaveLength(2);
-    expect(dayLabels[0]).toHaveTextContent(
-      new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
-        new Date("2026-07-15T12:00:00.000Z"),
-      ),
-    );
-    expect(dayLabels[1]).toHaveTextContent(
-      new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
-        new Date("2026-07-16T15:00:00.000Z"),
-      ),
-    );
+    expect(dayLabels[0]).toHaveTextContent(dayChip("2026-07-15T12:00:00.000Z"));
+    expect(dayLabels[1]).toHaveTextContent(dayChip("2026-07-16T15:00:00.000Z"));
 
     expect(
       screen.getByRole("button", { name: /^Need a quote$/i }),
@@ -289,12 +289,14 @@ describe("LeadEmailThread", () => {
       screen.getByRole("button", { name: /^Follow-up$/i }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /^Latest$/i }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("button", { name: /^Latest$/i }),
+    ).toBeInTheDocument();
 
     const daySections = screen.getAllByLabelText(/^Messages on /i);
     expect(daySections).toHaveLength(2);
-    expect(daySections[0]?.parentElement?.className).toMatch(/\bborder-l\b/);
+    expect(
+      document.querySelector('[data-slot="timeline-spine"]'),
+    ).toBeInTheDocument();
   });
 
   it("hides the timeline when showHistory is false", () => {
@@ -329,19 +331,20 @@ describe("LeadEmailThread", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows prior messages in history and omits the latest reply", () => {
+  it("includes the latest reply in the history timeline", () => {
     renderConnected({
       messages: [sampleReply],
+      featuredBody: "Happy to help.",
+      featuredAuthor: "Sales Team",
       library: { templates: [], signatures: [], snippets: [] },
     });
 
+    const history = screen.getByRole("region", { name: /message history/i });
     expect(
-      screen.getByRole("heading", { name: /^history$/i }),
+      within(history).getByRole("button", { name: /^Re: Need a quote$/i }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText(/form submission event/i)).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /^Re: Need a quote$/i }),
-    ).not.toBeInTheDocument();
+    expect(within(history).getByText("Happy to help.")).toBeInTheDocument();
+    expect(screen.getAllByText("Happy to help.")).toHaveLength(1);
   });
 
   it("shows prevalent timeline icons for each node", () => {
@@ -356,19 +359,14 @@ describe("LeadEmailThread", () => {
     ).toBeInTheDocument();
   });
 
-  it("places the event time on the horizontal connector", () => {
+  it("shows the event time on the history card", () => {
     renderConnected({
       messages: [sampleReply],
       library: { templates: [], signatures: [], snippets: [] },
     });
 
-    const connector = document.querySelector(
-      '[data-slot="timeline-connector"]',
-    );
-    expect(connector).not.toBeNull();
-    expect(
-      within(connector as HTMLElement).getByRole("time"),
-    ).toHaveTextContent(
+    const card = screen.getByRole("button", { name: /^Need a quote$/i });
+    expect(within(card).getByRole("time")).toHaveTextContent(
       new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(
         new Date("2026-07-15T12:00:00.000Z"),
       ),
@@ -416,7 +414,8 @@ describe("LeadEmailThread", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows a truncated content preview on closed cards", () => {
+  it("shows a truncated content preview on closed cards", async () => {
+    const user = userEvent.setup();
     const reply: LeadMessage = {
       clientId: "c1",
       submissionId: "s1",
@@ -435,15 +434,18 @@ describe("LeadEmailThread", () => {
       library: { templates: [], signatures: [], snippets: [] },
     });
 
+    const card = screen.getByRole("button", { name: /^Re: Need a quote$/i });
+    expect(card).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText(/Happy to help with your quote request/i)).toBeInTheDocument();
+
+    await user.click(card);
+
     const preview = document.querySelector(".line-clamp-2");
     expect(preview).toHaveTextContent(/Happy to help with your quote request/i);
-    expect(
-      screen.getByRole("button", { name: /^Re: Need a quote$/i }),
-    ).toHaveAttribute("aria-expanded", "false");
+    expect(card).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("hides to, from, and date meta rows inside timeline entries", async () => {
-    const user = userEvent.setup();
+  it("hides to, from, and date meta rows inside timeline entries", () => {
     const reply: LeadMessage = {
       clientId: "c1",
       submissionId: "s1",
@@ -461,10 +463,6 @@ describe("LeadEmailThread", () => {
       messages: [reply, featuredLatest],
       library: { templates: [], signatures: [], snippets: [] },
     });
-
-    await user.click(
-      screen.getByRole("button", { name: /^Re: Need a quote$/i }),
-    );
 
     const body = screen.getByText("Happy to help.");
     expect(body.previousElementSibling).toBeNull();
@@ -500,15 +498,15 @@ describe("LeadEmailThread", () => {
     });
 
     const card = screen.getByRole("button", { name: /^Re: Need a quote$/i });
+    expect(card).toHaveAttribute("aria-expanded", "true");
+
+    await user.click(screen.getByText("Happy to help."));
     expect(card).toHaveAttribute("aria-expanded", "false");
 
     await user.click(
       screen.getByText(/Sent sales@acme\.test → ada@example\.com/i),
     );
     expect(card).toHaveAttribute("aria-expanded", "true");
-
-    await user.click(screen.getByText("Happy to help."));
-    expect(card).toHaveAttribute("aria-expanded", "false");
   });
 
   it("does not toggle while text is selected", async () => {
@@ -531,7 +529,6 @@ describe("LeadEmailThread", () => {
     });
 
     const card = screen.getByRole("button", { name: /^Re: Need a quote$/i });
-    await user.click(card);
     expect(card).toHaveAttribute("aria-expanded", "true");
 
     const getSelection = vi.spyOn(window, "getSelection").mockReturnValue({

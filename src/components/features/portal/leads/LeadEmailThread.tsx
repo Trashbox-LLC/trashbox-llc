@@ -85,6 +85,19 @@ function formatWhen(iso: string) {
   }
 }
 
+function formatDayChip(iso: string): string {
+  try {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return iso;
+    const month = new Intl.DateTimeFormat(undefined, { month: "short" }).format(
+      date,
+    );
+    return `${month} ${date.getDate()}`.toUpperCase();
+  } catch {
+    return iso;
+  }
+}
+
 function formatDay(iso: string) {
   try {
     return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
@@ -93,6 +106,13 @@ function formatDay(iso: string) {
   } catch {
     return iso;
   }
+}
+
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 function formatTime(iso: string) {
@@ -128,6 +148,12 @@ interface TimelineEntry {
   title: string;
   preview: string;
   accent: "primary" | "muted";
+  /** Short label above the title, such as Form or Sent. */
+  kind: string;
+  /** Inbound replies sit off the spine. */
+  branch?: boolean;
+  /** Name shown with initials on a branched reply. */
+  author?: string;
   icon: string;
   iconLabel: string;
   meta: TimelineMeta;
@@ -171,6 +197,9 @@ interface TimelineNodeProps {
   time: string;
   at: string;
   accent: "primary" | "muted";
+  kind: string;
+  branch?: boolean;
+  author?: string;
   icon: string;
   iconLabel: string;
   meta: TimelineMeta;
@@ -186,6 +215,9 @@ function TimelineNode({
   time,
   at,
   accent,
+  kind,
+  branch = false,
+  author,
   icon,
   iconLabel,
   meta,
@@ -226,76 +258,94 @@ function TimelineNode({
     }
   }
 
+  const sent = accent === "primary" && icon !== "description";
+
   return (
-    <li className="relative pt-3">
+    <li className="relative w-full">
       <div
         data-slot="timeline-connector"
-        className="absolute top-6 -left-[calc(7rem+1px)] z-10 w-[calc(7.25rem+1px)]"
+        aria-hidden="true"
+        className="relative mx-auto flex h-8 w-8 items-end justify-center"
       >
-        <time
-          dateTime={at}
-          className="text-outline-variant absolute right-8 bottom-full left-0 mb-1 text-center font-mono text-[9px] uppercase"
-        >
-          {time}
-        </time>
-        <span
-          aria-hidden="true"
-          className="absolute top-0 right-0 left-0 h-px -translate-y-1/2 bg-white/40"
+        <span className="absolute top-0 bottom-3 left-1/2 w-px -translate-x-1/2 bg-white/20" />
+        <MaterialIcon
+          name="arrow_downward"
+          className="text-outline relative text-base"
         />
       </div>
-      <span
-        role="img"
-        aria-label={iconLabel}
+      <div
         className={cn(
-          "ring-background absolute top-6 -left-1 z-10 flex size-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full ring-4 select-none",
-          accent === "primary"
-            ? "text-background bg-white"
-            : "bg-surface-container-highest text-white",
+          "relative rounded-xl border",
+          sent
+            ? "border-[#3d648c] bg-[#121c28] shadow-[0_10px_28px_-6px_rgba(0,0,0,0.75),0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(120,170,210,0.16)]"
+            : "border-[#2a2a2a] bg-[#161616] shadow-[0_10px_28px_-6px_rgba(0,0,0,0.75),0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.05)]",
         )}
       >
-        <MaterialIcon name={icon} className="text-base" />
-      </span>
-      <div className="relative">
-        <div
-          role="button"
-          tabIndex={0}
-          aria-expanded={open}
-          aria-controls={panelId}
-          aria-label={title}
-          onPointerDown={onCardPointerDown}
-          onClick={onCardClick}
-          onKeyDown={onCardKeyDown}
-          className="bg-surface-container-lowest peer focus-visible:ring-primary/40 cursor-pointer overflow-hidden rounded text-left outline-none select-text focus-visible:ring-2"
-        >
-          <div className="flex items-start justify-between gap-4 px-4 pt-4 pr-10">
-            <span className="font-label text-outline text-[9px] tracking-widest uppercase">
-              {eyebrow}
-            </span>
-          </div>
-          <div className={cn("px-4 pt-1 pr-10", open ? "pb-2" : "pb-3")}>
-            <span className="text-sm font-medium text-white">{title}</span>
-            {!open && preview ? (
-              <p className="text-on-surface-variant mt-1 line-clamp-2 text-xs">
-                {preview}
-              </p>
-            ) : null}
-          </div>
-          <div
-            id={panelId}
-            role="region"
-            aria-label={`${title} content`}
-            aria-hidden={!open}
-            inert={!open ? true : undefined}
+        <div className="flex items-start gap-3 px-4 py-4 pr-10">
+          <span
+            role="img"
+            aria-label={iconLabel}
             className={cn(
-              "grid transition-[grid-template-rows,opacity] duration-200 ease-out",
-              open
-                ? "grid-rows-[1fr] opacity-100"
-                : "grid-rows-[0fr] opacity-0",
+              "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full select-none",
+              icon === "description"
+                ? "bg-white text-[#1c1c1c]"
+                : sent
+                  ? "bg-[#3b84f0] text-white"
+                  : "bg-[#2a2a2a] text-white",
             )}
           >
-            <div className="min-h-0 overflow-hidden">
-              <div className="text-on-surface px-4 pt-1 pb-4 text-sm">
-                {children}
+            {branch && author ? (
+              <span className="text-[10px] font-semibold">
+                {initialsOf(author)}
+              </span>
+            ) : (
+              <MaterialIcon name={icon} className="text-base" />
+            )}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-label text-outline text-[10px] tracking-widest uppercase">
+              {kind}
+            </p>
+            <div
+              role="button"
+              tabIndex={0}
+              aria-expanded={open}
+              aria-controls={panelId}
+              aria-label={title}
+              onPointerDown={onCardPointerDown}
+              onClick={onCardClick}
+              onKeyDown={onCardKeyDown}
+              className="focus-visible:ring-primary/40 cursor-pointer text-left outline-none select-text focus-visible:ring-2"
+            >
+              <span className="mt-1 block text-sm font-medium text-white">
+                {title}
+              </span>
+              <p className="text-outline mt-1 text-xs">
+                {eyebrow}
+                <span aria-hidden="true"> · </span>
+                <time dateTime={at}>{time}</time>
+              </p>
+              {!open && preview ? (
+                <p className="text-on-surface-variant mt-2 line-clamp-2 text-xs">
+                  {preview}
+                </p>
+              ) : null}
+              <div
+                id={panelId}
+                role="region"
+                aria-label={`${title} content`}
+                aria-hidden={!open}
+                inert={!open ? true : undefined}
+                className={cn(
+                  "grid transition-[grid-template-rows,opacity] duration-200 ease-out",
+                  open
+                    ? "grid-rows-[1fr] opacity-100"
+                    : "grid-rows-[0fr] opacity-0",
+                )}
+              >
+                <div className="min-h-0 overflow-hidden">
+                  <div className="text-on-surface pt-3 text-sm">{children}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -341,18 +391,6 @@ function TimelineNode({
             </TooltipContent>
           </Tooltip>
         </div>
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute right-4 bottom-3 z-10 h-0 w-5 overflow-visible opacity-0 transition-opacity duration-200 select-none peer-hover:opacity-100 peer-focus-visible:opacity-100"
-        >
-          <MaterialIcon
-            name="expand_more"
-            className={cn(
-              "text-outline absolute right-0 bottom-0 text-sm transition-transform duration-200",
-              open && "rotate-180",
-            )}
-          />
-        </span>
       </div>
     </li>
   );
@@ -397,12 +435,24 @@ export interface LeadEmailThreadProps {
   formFrom: string;
   formAt: string;
   messages: LeadMessage[];
-  /** When true, render prior messages in the History timeline. */
+  /** When true, render every message, including the latest, in the History timeline. */
   showHistory?: boolean;
-  /** Latest message body shown below History (and for single-message leads). */
+  /** Latest message body shown when History is closed. */
   featuredBody: string;
+  /** Name shown beside the featured message. */
+  featuredAuthor?: string;
+  /** Timestamp for the featured message. */
+  featuredAt?: string;
   /** Optional form metadata shown with the featured body. */
   featuredMetadata?: Record<string, string>;
+  /** When false, the featured message stays mounted out of view. */
+  showFeatured?: boolean;
+  /** Replaces the featured message (notes, for example). */
+  conversationExtra?: ReactNode;
+  /** Pinned above the message list, inside the messages card. */
+  threadHeader?: ReactNode;
+  /** Lead name used on branched inbound replies. */
+  leadName?: string;
   mailboxConnected: boolean;
   fromAddress?: string;
   fromOptions?: FromIdentityOption[];
@@ -433,7 +483,13 @@ export function LeadEmailThread({
   messages,
   showHistory = false,
   featuredBody,
+  featuredAuthor,
+  featuredAt,
   featuredMetadata,
+  showFeatured = true,
+  conversationExtra,
+  threadHeader,
+  leadName,
   mailboxConnected,
   fromAddress,
   fromOptions = [],
@@ -456,7 +512,6 @@ export function LeadEmailThread({
     fromOptions[0];
   const [fromIdentityId, setFromIdentityId] = useState(defaultOption?.id ?? "");
   const selected = fromOptions.find((o) => o.id === fromIdentityId);
-  const resolvedPreview = selected?.displayName || selected?.label || "";
   const hasFromOptions = fromOptions.length > 0;
 
   const context = useMemo<TemplateVariableContext>(
@@ -683,6 +738,8 @@ export function LeadEmailThread({
     canSms,
   });
 
+  const showReplyNode =
+    Boolean(onSend) || (Boolean(onSendSms) && Boolean(leadPhone));
   const sendDisabled = busy || !hasContent || !fromIdentityId;
   const libraryEmpty =
     templates.length === 0 && signatures.length === 0 && snippets.length === 0;
@@ -692,8 +749,9 @@ export function LeadEmailThread({
       (a, b) =>
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     );
-    // Latest reply is featured above History; timeline keeps older entries only.
-    const historyMessages = ordered.length > 0 ? ordered.slice(0, -1) : ordered;
+    // While History is closed the latest reply stays in the featured block.
+    const historyMessages =
+      showHistory || ordered.length === 0 ? ordered : ordered.slice(0, -1);
 
     const entries: TimelineEntry[] = [
       {
@@ -703,14 +761,20 @@ export function LeadEmailThread({
         title: formMessage.split("\n")[0] || "Form submission",
         preview: formMessage.replace(/\s+/g, " ").trim(),
         accent: "primary",
+        kind: "Form",
         icon: "description",
         iconLabel: "Form submission event",
         meta: { from: formFrom, at: formAt },
         defaultOpen: true,
         body: (
-          <p className="text-on-surface leading-relaxed whitespace-pre-wrap">
-            {formMessage}
-          </p>
+          <div>
+            <p className="font-label text-outline mb-1 text-[10px] tracking-widest uppercase">
+              Message
+            </p>
+            <p className="text-on-surface leading-relaxed whitespace-pre-wrap">
+              {formMessage}
+            </p>
+          </div>
         ),
       },
       ...historyMessages.map((message) => {
@@ -718,6 +782,7 @@ export function LeadEmailThread({
         const sms = messageChannelOf(message) === "sms";
         const address = (value: string) =>
           sms ? formatPhoneDisplay(value) : value;
+        const branch = labels.accent === "muted";
         return {
           id: message.messageId,
           at: message.createdAt,
@@ -725,8 +790,12 @@ export function LeadEmailThread({
           title: labels.title,
           preview: message.bodyText.replace(/\s+/g, " ").trim(),
           accent: labels.accent,
+          kind: sms ? "Text" : branch ? "Received" : "Sent",
+          branch,
+          author: branch ? leadName || address(message.from) : undefined,
           icon: labels.icon,
           iconLabel: labels.iconLabel,
+          defaultOpen: true,
           meta: {
             from: address(message.from),
             to: address(message.to),
@@ -741,11 +810,19 @@ export function LeadEmailThread({
       }),
     ];
     return groupTimelineByDay(entries);
-  }, [formAt, formFrom, formMessage, messages]);
+  }, [formAt, formFrom, formMessage, leadName, messages, showHistory]);
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="mt-2 pt-2">
+      <div className="flex flex-col gap-3">
+        <div
+          role="region"
+          aria-label="Messages"
+          className="border-outline-variant/20 bg-surface-container-low flex flex-col rounded-xl border"
+        >
+        {threadHeader}
+        <div className="px-6 py-2">
+        {conversationExtra}
         {messages.length > 0 && (
           <div
             role="region"
@@ -760,35 +837,25 @@ export function LeadEmailThread({
             )}
           >
             <div className="min-h-0 overflow-hidden">
-              <div className="ml-4">
-                <h3 className="font-headline mb-8 text-center text-3xl font-bold tracking-tighter text-white">
-                  History
-                </h3>
-
-                <div className="relative space-y-8 border-l border-white/40 pt-2">
+              <div className="relative mx-auto max-w-lg px-6 pt-2 pb-8">
+                <h3 className="sr-only">History</h3>
+                <div data-slot="timeline-spine" className="relative space-y-6">
                   {timelineGroups.map((group) => (
                     <section
                       key={group.key}
                       aria-label={`Messages on ${group.label}`}
+                      className="space-y-2"
                     >
-                      <div className="mb-4 flex items-center gap-3">
-                        <div
-                          aria-hidden="true"
-                          className="h-px min-w-4 flex-1 bg-white/40"
-                        />
+                      <div className="flex justify-center">
                         <time
                           dateTime={group.key}
-                          className="font-label shrink-0 text-[10px] tracking-widest text-white uppercase"
+                          className="font-label relative z-10 rounded-full border border-[#3a3a3a] bg-[#1a1a1a] px-3 py-1 text-[10px] tracking-widest text-[#d4d4d4] uppercase"
                         >
-                          {group.label}
+                          {formatDayChip(group.entries[0]?.at ?? group.key)}
                         </time>
-                        <div
-                          aria-hidden="true"
-                          className="h-px min-w-4 flex-1 bg-white/40"
-                        />
                       </div>
 
-                      <ol className="space-y-6 pl-28">
+                      <ol className="space-y-2">
                         {group.entries.map((entry) => (
                           <TimelineNode
                             key={entry.id}
@@ -799,6 +866,9 @@ export function LeadEmailThread({
                             time={formatTime(entry.at)}
                             at={entry.at}
                             accent={entry.accent}
+                            kind={entry.kind}
+                            branch={entry.branch}
+                            author={entry.author}
                             icon={entry.icon}
                             iconLabel={entry.iconLabel}
                             meta={entry.meta}
@@ -816,13 +886,42 @@ export function LeadEmailThread({
           </div>
         )}
 
-        {featuredBody.trim().length > 0 && (
-          <div className="bg-surface-container-low -mx-6 px-6 py-8 md:-mx-10 md:px-10">
-            <p className="text-on-surface-variant text-lg leading-relaxed whitespace-pre-wrap">
-              {featuredBody}
-            </p>
+        {showFeatured && !showHistory && featuredBody.trim().length > 0 && (
+          <div className="py-4">
+            <div className="flex items-start gap-3">
+              {featuredAuthor ? (
+                <span
+                  aria-hidden="true"
+                  className="bg-surface-container-highest mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
+                >
+                  {initialsOf(featuredAuthor)}
+                </span>
+              ) : null}
+              <div className="min-w-0">
+                {(featuredAuthor || featuredAt) && (
+                  <div className="mb-1 flex flex-wrap items-baseline gap-2">
+                    {featuredAuthor ? (
+                      <span className="text-sm font-medium text-white">
+                        {featuredAuthor}
+                      </span>
+                    ) : null}
+                    {featuredAt ? (
+                      <time
+                        dateTime={featuredAt}
+                        className="text-outline text-xs"
+                      >
+                        {formatTime(featuredAt)}
+                      </time>
+                    ) : null}
+                  </div>
+                )}
+                <p className="text-on-surface text-sm leading-relaxed whitespace-pre-wrap">
+                  {featuredBody}
+                </p>
+              </div>
+            </div>
             {featuredMetadata && Object.keys(featuredMetadata).length > 0 && (
-              <dl className="mt-8 space-y-2">
+              <dl className="mt-6 space-y-2">
                 {Object.entries(featuredMetadata).map(([key, value]) => (
                   <div key={key} className="flex gap-4 text-sm">
                     <dt className="font-label text-outline tracking-widest uppercase">
@@ -836,13 +935,25 @@ export function LeadEmailThread({
           </div>
         )}
 
-        {error && <p className="text-error mt-4 text-sm">{error}</p>}
+        {!showReplyNode && error && (
+          <p className="text-error mt-4 text-sm">{error}</p>
+        )}
+        </div>
+        </div>
+
+        {showReplyNode && (
+        <div
+          role="region"
+          aria-label="Reply"
+          className="border-outline-variant/20 bg-surface-container-low shrink-0 overflow-hidden rounded-xl border"
+        >
+        {error && <p className="text-error px-6 pt-3 text-sm">{error}</p>}
 
         {canEmail && canSms && (
           <div
             role="tablist"
             aria-label="Reply channel"
-            className="border-outline-variant/15 bg-surface-container-lowest mt-8 inline-flex gap-1 rounded-lg border p-1"
+            className="border-outline-variant/15 mx-6 mt-3 inline-flex gap-1 self-start rounded-lg border p-1"
           >
             {(["email", "sms"] as const).map((channel) => (
               <button
@@ -873,13 +984,14 @@ export function LeadEmailThread({
             toPhone={leadPhone}
             fromPhone={smsFromPhone}
             busy={busy}
+            embedded
             onSend={onSendSms}
           />
         )}
 
         {activeChannel === "email" && onSend && (
-          <div className="border-outline-variant/10 bg-surface-container-low mt-8 overflow-hidden rounded-lg border shadow-md">
-            <div className="bg-surface-container-lowest/50 space-y-3 p-4">
+          <div>
+            <div className="px-6 py-3">
               <div className="flex flex-wrap items-center gap-4">
                 <span className="font-label text-outline w-8 shrink-0 text-[10px] uppercase">
                   To
@@ -1020,12 +1132,13 @@ export function LeadEmailThread({
                 key={editorKey}
                 ref={editorRef}
                 ariaLabel="Reply"
-                placeholder="Type your reply here… Use /shortcut for snippets."
+                placeholder="Reply"
                 disabled={busy}
                 initialHtml={editorSeed}
                 onChange={setDraft}
                 onKeyDown={onEditorKeyDown}
                 className="rounded-none border-0 bg-transparent"
+                editorClassName="min-h-24"
                 toolbarStart={
                   <>
                     <Button
@@ -1133,38 +1246,26 @@ export function LeadEmailThread({
               />
             )}
 
-            <div className="bg-surface-container/80 flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-              <div className="flex items-center gap-3">
-                {fromAddress && (
-                  <span className="font-label text-outline text-[10px] uppercase">
-                    Replying as{" "}
-                    <span className="text-on-surface font-medium">
-                      {resolvedPreview
-                        ? `${resolvedPreview} <${fromAddress}>`
-                        : fromAddress}
-                    </span>
-                  </span>
-                )}
-                <span className="text-outline font-mono text-[10px]">
-                  Cmd + Enter to send
-                </span>
-              </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3">
+              <span className="text-outline font-mono text-[10px]">
+                Cmd + Enter
+              </span>
               <Button
                 type="button"
                 variant="secondary"
+                aria-label="Send message"
                 disabled={sendDisabled}
                 onClick={() => void submit()}
-                className="font-label text-background hover:text-background rounded bg-white font-medium shadow-sm hover:bg-white/90"
+                className="font-label text-background hover:text-background h-9 rounded-md bg-white px-5 text-xs font-semibold tracking-widest uppercase shadow-sm hover:bg-white/90"
               >
-                Send message
-                <MaterialIcon name="send" className="text-sm" />
+                Send
               </Button>
             </div>
           </div>
         )}
 
         {onSend && !canEmail && !canSms && (
-          <p className="text-on-surface-variant mt-6 text-sm">
+          <p className="text-on-surface-variant px-6 py-4 text-sm">
             Connect a business mailbox in{" "}
             <a
               href={settingsSectionPath("email-accounts")}
@@ -1174,6 +1275,8 @@ export function LeadEmailThread({
             </a>{" "}
             to reply from the portal.
           </p>
+        )}
+        </div>
         )}
       </div>
 

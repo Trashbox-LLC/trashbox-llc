@@ -21,7 +21,7 @@ export interface SelectOption {
   indicatorClassName?: string;
 }
 
-export type SelectVariant = "underline" | "soft";
+export type SelectVariant = "underline" | "soft" | "field";
 
 interface SelectProps {
   id?: string;
@@ -30,7 +30,7 @@ interface SelectProps {
   onChange: (value: string) => void;
   disabled?: boolean;
   className?: string;
-  /** `underline` for filter fields; `soft` for quieter pill triggers. */
+  /** `underline` for filter fields; `soft` for pills; `field` for boxed dropdowns. */
   variant?: SelectVariant;
   /** Horizontal anchor for the listbox. Defaults to `start`. */
   listboxAlign?: "start" | "end";
@@ -41,12 +41,16 @@ const triggerVariantClass: Record<SelectVariant, string> = {
   underline:
     "h-auto w-full justify-between gap-2 rounded-none border-0 border-b border-outline-variant bg-transparent py-2 pl-1 font-body text-sm font-normal tracking-normal text-white normal-case hover:bg-transparent hover:text-white focus-visible:border-primary focus-visible:ring-0",
   soft: "h-auto w-full justify-between gap-2 rounded-full border border-outline-variant/25 bg-surface-container-highest/70 px-3 py-1.5 font-body text-sm font-normal tracking-normal text-white normal-case shadow-none hover:bg-surface-container-highest hover:text-white focus-visible:border-outline-variant/50 focus-visible:ring-0",
+  field:
+    "h-auto w-full justify-between gap-2 rounded-md border border-outline-variant/30 bg-transparent px-3 py-2.5 font-body text-sm font-normal tracking-normal text-white normal-case shadow-none hover:bg-white/5 hover:text-white focus-visible:border-outline-variant/60 focus-visible:ring-0",
 };
 
 const listboxVariantClass: Record<SelectVariant, string> = {
   underline:
     "absolute z-50 mt-1 max-h-60 w-full overflow-auto border border-outline-variant/40 bg-surface-container-high py-1 shadow-lg focus:outline-none",
   soft: "absolute z-50 mt-1.5 max-h-60 overflow-auto rounded-2xl border border-outline-variant/30 bg-surface-container-high py-1.5 shadow-lg focus:outline-none",
+  field:
+    "absolute z-50 mt-1.5 max-h-60 w-full overflow-auto rounded-md border border-outline-variant/30 bg-surface-container-high py-1.5 shadow-lg focus:outline-none",
 };
 
 export function Select({
@@ -198,7 +202,7 @@ export function Select({
           ref={(node) => node?.focus()}
           className={cn(
             listboxVariantClass[variant],
-            variant === "soft" &&
+            (variant === "soft" || variant === "field") &&
               (listboxAlign === "end"
                 ? "right-0 left-auto min-w-full w-max max-w-[14rem]"
                 : "w-full"),
@@ -221,6 +225,7 @@ export function Select({
                 className={cn(
                   "flex min-w-0 cursor-pointer items-center gap-2 py-2 pl-4 pr-3 text-sm text-on-surface",
                   variant === "soft" && "mx-1 rounded-full px-3",
+                  variant === "field" && "mx-1 rounded-md px-3",
                   isActive && "bg-surface-bright text-white",
                   isSelected && "font-medium text-white",
                 )}

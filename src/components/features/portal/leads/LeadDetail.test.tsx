@@ -77,7 +77,7 @@ describe("LeadDetail", () => {
     expect(onUpdate).toHaveBeenCalledWith({ status: "contacted" });
 
     expect(screen.queryByLabelText(/add note/i)).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /show notes/i }));
+    await user.click(screen.getByRole("button", { name: /^notes$/i }));
 
     await user.type(
       screen.getByLabelText(/add note/i),
@@ -114,12 +114,12 @@ describe("LeadDetail", () => {
     expect(screen.queryByText("Followed up by email.")).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/add note/i)).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /show notes/i }));
+    await user.click(screen.getByRole("button", { name: /^notes$/i }));
 
     expect(screen.getByText("Followed up by email.")).toBeInTheDocument();
     expect(screen.getByLabelText(/add note/i)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /hide notes/i }));
+    await user.click(screen.getByRole("button", { name: /^notes$/i }));
     expect(screen.queryByText("Followed up by email.")).not.toBeInTheDocument();
   });
 
@@ -140,7 +140,7 @@ describe("LeadDetail", () => {
     expect(screen.getByText("Full-Stack Development")).toBeInTheDocument();
   });
 
-  it("places show history between the lead header and the latest message", async () => {
+  it("shows the latest message as a history card instead of below the timeline", async () => {
     const user = userEvent.setup();
 
     render(
@@ -155,47 +155,65 @@ describe("LeadDetail", () => {
       />,
     );
 
-    const latest = screen.getByText(/Sounds good, when can we start\?/i, {
+    const historyTab = screen.getByRole("button", { name: /^history$/i });
+    const featured = screen.getByText(/Sounds good, when can we start\?/i, {
       selector: "p",
     });
-    const showHistory = screen.getByRole("button", { name: /show history/i });
-    const leadName = screen.getByRole("heading", { name: /^Ada$/i });
+    expect(
+      screen.queryByRole("region", { name: /message history/i })?.contains(featured),
+    ).not.toBe(true);
 
-    expect(
-      leadName.compareDocumentPosition(showHistory) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      showHistory.compareDocumentPosition(latest) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(screen.queryByText(/^service$/i)).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("heading", { name: /^history$/i }),
-    ).not.toBeInTheDocument();
+    await user.click(historyTab);
 
-    await user.click(showHistory);
-
-    expect(screen.getByRole("heading", { name: /^history$/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/form submission event/i)).toBeInTheDocument();
+    const history = screen.getByRole("region", { name: /message history/i });
+    const latest = within(history).getByText(
+      /Sounds good, when can we start\?/i,
+      { selector: "p" },
+    );
+    expect(history.contains(latest)).toBe(true);
     expect(
-      screen.getByRole("button", { name: /^Re: quote$/i }),
+      within(history).getByLabelText(/received message event/i),
     ).toBeInTheDocument();
+    expect(screen.getAllByText(/Sounds good, when can we start\?/i)).toHaveLength(
+      1,
+    );
 
-    const history = screen.getByRole("heading", { name: /^history$/i });
-    expect(
-      showHistory.compareDocumentPosition(history) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      history.compareDocumentPosition(latest) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-
-    await user.click(screen.getByRole("button", { name: /hide history/i }));
+    await user.click(historyTab);
     expect(
       screen.queryByRole("heading", { name: /^history$/i }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Sounds good, when can we start\?/i, { selector: "p" }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps addresses and assignment in the details panel", () => {
+    render(
+      <LeadDetail
+        submission={{
+          ...baseSubmission,
+          formName: "Web application",
+          message: "Need a quote",
+          metadata: undefined,
+        }}
+        members={[]}
+        fromAddress="contact@trashbox.io"
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    const details = screen.getByRole("complementary", { name: /^details$/i });
+    expect(
+      within(details).getByRole("button", { name: /^status$/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(details).getByRole("button", { name: /assigned to/i }),
+    ).toBeInTheDocument();
+    expect(within(details).getByText("ada@example.com")).toBeInTheDocument();
+    expect(within(details).getByText("contact@trashbox.io")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^Ada$/i })).toBeInTheDocument();
+    expect(screen.getByText(/\[Web application\]/)).toBeInTheDocument();
   });
 
   it("keeps the reply composer without the timeline when there are no replies", () => {
@@ -223,10 +241,47 @@ describe("LeadDetail", () => {
       screen.queryByRole("heading", { name: /^history$/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /show history/i }),
+      screen.queryByRole("button", { name: /^history$/i }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /send message/i }),
     ).toBeInTheDocument();
+  });
+
+  it("keeps the reply editor in its own region below the messages", () => {
+    render(
+      <LeadDetail
+        submission={baseSubmission}
+        members={[]}
+        messages={[]}
+        mailboxConnected
+        fromOptions={[
+          {
+            id: "s1",
+            label: "Sales Team",
+            displayName: "Sales Team",
+          },
+        ]}
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+        onSendMessage={vi.fn()}
+        composerLibrary={{ templates: [], signatures: [], snippets: [] }}
+      />,
+    );
+
+    const messages = screen.getByRole("region", { name: /^messages$/i });
+    const reply = screen.getByRole("region", { name: /^reply$/i });
+
+    expect(messages.contains(reply)).toBe(false);
+    expect(
+      messages.compareDocumentPosition(reply) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      reply.contains(screen.getByRole("button", { name: /send message/i })),
+    ).toBe(true);
+    expect(messages.contains(screen.getByRole("heading", { name: /^Ada$/i }))).toBe(
+      true,
+    );
   });
 });

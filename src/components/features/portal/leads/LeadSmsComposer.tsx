@@ -5,6 +5,7 @@ import { MaterialIcon } from "@/components/atoms/MaterialIcon";
 import { Button } from "@/components/ui/button";
 import { formatPhoneDisplay } from "@/lib/phone";
 import { MAX_SMS_BODY_LENGTH, smsSegmentCount } from "@/lib/sms";
+import { cn } from "@/lib/utils";
 
 export interface LeadSmsComposerProps {
   /** Lead's phone in E.164. */
@@ -12,6 +13,8 @@ export interface LeadSmsComposerProps {
   /** Project's sending number in E.164. */
   fromPhone?: string;
   busy?: boolean;
+  /** Drop the outer card when a parent already frames the composer. */
+  embedded?: boolean;
   onSend: (text: string) => Promise<void>;
 }
 
@@ -19,6 +22,7 @@ export function LeadSmsComposer({
   toPhone,
   fromPhone,
   busy = false,
+  embedded = false,
   onSend,
 }: LeadSmsComposerProps) {
   const [draft, setDraft] = useState("");
@@ -49,8 +53,18 @@ export function LeadSmsComposer({
   }
 
   return (
-    <div className="border-outline-variant/10 bg-surface-container-low mt-8 overflow-hidden rounded-lg border shadow-md">
-      <div className="bg-surface-container-lowest/50 flex flex-wrap items-center gap-4 p-4">
+    <div
+      className={cn(
+        !embedded &&
+          "border-outline-variant/10 bg-surface-container-low mt-8 overflow-hidden rounded-lg border shadow-md",
+      )}
+    >
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-4",
+          embedded ? "px-6 py-3" : "bg-surface-container-lowest/50 p-4",
+        )}
+      >
         <span className="font-label text-outline w-8 shrink-0 text-[10px] uppercase">
           To
         </span>
@@ -80,7 +94,13 @@ export function LeadSmsComposer({
         className="text-on-surface placeholder:text-outline w-full resize-y bg-transparent px-4 py-3 text-sm leading-relaxed outline-none disabled:opacity-60"
       />
 
-      <div className="bg-surface-container/80 flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+      <div
+        className={cn(
+          "flex flex-wrap items-center justify-between gap-3 px-4 py-3",
+          !embedded && "bg-surface-container/80",
+          embedded && "px-6",
+        )}
+      >
         <div className="flex items-center gap-3">
           <span className="font-label text-outline text-[10px] uppercase">
             {body.length} / {MAX_SMS_BODY_LENGTH} ·{" "}
