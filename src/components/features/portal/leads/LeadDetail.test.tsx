@@ -76,9 +76,6 @@ describe("LeadDetail", () => {
     );
     expect(onUpdate).toHaveBeenCalledWith({ status: "contacted" });
 
-    expect(screen.queryByLabelText(/add note/i)).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /^notes$/i }));
-
     await user.type(
       screen.getByLabelText(/add note/i),
       "Called customer July 15, requested estimate",
@@ -113,7 +110,7 @@ describe("LeadDetail", () => {
     expect(within(transcript).getByText("Your mom as a website")).toBeInTheDocument();
   });
 
-  it("keeps notes collapsed until show notes is clicked", async () => {
+  it("hides the details panel and brings it back", async () => {
     const user = userEvent.setup();
 
     render(
@@ -135,16 +132,27 @@ describe("LeadDetail", () => {
       />,
     );
 
-    expect(screen.queryByText("Followed up by email.")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/add note/i)).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /^notes$/i }));
-
     expect(screen.getByText("Followed up by email.")).toBeInTheDocument();
-    expect(screen.getByLabelText(/add note/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^details$/i })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
 
-    await user.click(screen.getByRole("button", { name: /^notes$/i }));
-    expect(screen.queryByText("Followed up by email.")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /close details/i }));
+    expect(
+      screen.queryByRole("complementary", { name: /^details$/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^details$/i })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+
+    await user.click(screen.getByRole("button", { name: /^details$/i }));
+    expect(
+      within(screen.getByRole("complementary", { name: /^details$/i })).getByText(
+        "Followed up by email.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("hides the quoted earlier email on the latest reply", () => {

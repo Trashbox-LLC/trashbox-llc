@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MaterialIcon } from "@/components/atoms/MaterialIcon";
 import { Select } from "@/components/atoms/Select";
 import { LeadEmailThreadSection } from "@/components/features/portal/leads/LeadEmailThreadSection";
 import type { LeadComposerLibrary } from "@/components/features/portal/leads/LeadEmailThread";
@@ -31,9 +32,6 @@ import {
 } from "@/lib/lead-messages";
 import { cn } from "@/lib/utils";
 
-const labelClass =
-  "mb-2 block font-label text-[10px] uppercase tracking-widest text-outline";
-
 function titleCase(value: string): string {
   return value
     .replace(/[_-]+/g, " ")
@@ -61,7 +59,7 @@ function sortLeadMessages(messages: LeadMessage[]): LeadMessage[] {
   );
 }
 
-type ConversationPanel = "thread" | "history" | "historyText" | "notes";
+type ConversationPanel = "thread" | "history" | "historyText";
 
 interface LeadDetailProps {
   submission: Submission;
@@ -116,6 +114,7 @@ export function LeadDetail({
 }: LeadDetailProps) {
   const [noteDraft, setNoteDraft] = useState("");
   const [panel, setPanel] = useState<ConversationPanel>("thread");
+  const [detailsOpen, setDetailsOpen] = useState(true);
   const status = leadStatusOf(submission);
   const tags = leadTagsOf(submission);
   const notes = leadNotesOf(submission);
@@ -166,51 +165,8 @@ export function LeadDetail({
     setPanel((current) => (current === next ? "thread" : next));
   }
 
-  const notesPanel = (
-    <div className="py-4">
-      <ul className="space-y-4">
-        {notes.length === 0 && (
-          <li className="text-on-surface-variant text-sm">No notes yet.</li>
-        )}
-        {notes.map((note) => (
-          <li key={note.id} className="text-sm">
-            <p className="text-white">{note.body}</p>
-            <p className="font-label text-outline mt-1 text-[10px] tracking-widest uppercase">
-              {note.authorEmail} · {formatWhen(note.createdAt)}
-            </p>
-          </li>
-        ))}
-      </ul>
-      <form
-        className="mt-6 space-y-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const body = noteDraft.trim();
-          if (!body) return;
-          void onAddNote(body).then(() => setNoteDraft(""));
-        }}
-      >
-        <label className={labelClass} htmlFor="lead-note">
-          Add note
-        </label>
-        <Textarea
-          id="lead-note"
-          rows={3}
-          value={noteDraft}
-          onChange={(e) => setNoteDraft(e.target.value)}
-          className="border-outline-variant/20 placeholder:text-outline focus-visible:border-primary min-h-0 border px-3 py-3"
-          placeholder="Add a note…"
-          disabled={busy}
-        />
-        <Button type="submit" disabled={busy || !noteDraft.trim()}>
-          Save note
-        </Button>
-      </form>
-    </div>
-  );
-
   return (
-    <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
+    <div className="flex flex-col lg:flex-row lg:items-stretch">
       <section
         aria-label="Conversation"
         className="flex min-w-0 flex-1 flex-col"
@@ -255,16 +211,36 @@ export function LeadDetail({
                   )}
                   <button
                     type="button"
-                    aria-pressed={panel === "notes"}
-                    onClick={() => selectPanel("notes")}
+                    aria-pressed={detailsOpen}
+                    onClick={() => setDetailsOpen((open) => !open)}
                     className={cn(
-                      "text-sm transition-colors",
-                      panel === "notes"
-                        ? "text-white"
-                        : "text-outline hover:text-white",
+                      "inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-sm transition-colors duration-300",
+                      detailsOpen
+                        ? "bg-white/10 text-white"
+                        : "text-outline hover:bg-white/5 hover:text-white",
                     )}
                   >
-                    Notes
+                    <span className="relative grid size-5 place-items-center">
+                      <MaterialIcon
+                        name="right_panel_close"
+                        className={cn(
+                          "col-start-1 row-start-1 text-lg transition-all duration-300",
+                          detailsOpen
+                            ? "scale-100 opacity-100"
+                            : "scale-75 opacity-0",
+                        )}
+                      />
+                      <MaterialIcon
+                        name="right_panel_open"
+                        className={cn(
+                          "col-start-1 row-start-1 text-lg transition-all duration-300",
+                          detailsOpen
+                            ? "scale-75 opacity-0"
+                            : "scale-100 opacity-100",
+                        )}
+                      />
+                    </span>
+                    Details
                   </button>
                 </div>
               </header>
@@ -302,8 +278,6 @@ export function LeadDetail({
           featuredAt={featuredAt}
           leadName={submission.senderName}
           members={members}
-          showFeatured={panel !== "notes"}
-          conversationExtra={panel === "notes" ? notesPanel : undefined}
           mailboxConnected={mailboxConnected}
           fromAddress={fromAddress}
           fromOptions={fromOptions}
@@ -326,14 +300,25 @@ export function LeadDetail({
         />
       </section>
 
+      <div
+        aria-hidden={!detailsOpen}
+        inert={!detailsOpen ? true : undefined}
+        className={cn(
+          "min-w-0 overflow-hidden transition-[width,max-height,opacity,margin] duration-300 ease-out",
+          detailsOpen
+            ? "mt-3 max-h-[120rem] opacity-100 lg:mt-0 lg:ml-3 lg:w-80"
+            : "mt-0 max-h-0 opacity-0 lg:ml-0 lg:w-0 lg:max-h-none",
+        )}
+      >
       <aside
         aria-label="Details"
-        className="border-outline-variant/20 bg-surface-container-low w-full shrink-0 rounded-xl border px-5 py-4 lg:w-80"
+        className="border-outline-variant/20 bg-surface-container-low w-full rounded-xl border px-5 py-4 lg:w-80"
       >
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-base leading-5 font-semibold text-white">
             Details
           </h2>
+          <div className="flex min-w-0 items-center gap-2">
           <Select
             id="detail-status"
             aria-label="Status"
@@ -349,6 +334,15 @@ export function LeadDetail({
               indicatorClassName: LEAD_STATUS_DOT_CLASS[s],
             }))}
           />
+          <button
+            type="button"
+            aria-label="Close details"
+            onClick={() => setDetailsOpen(false)}
+            className="text-outline hover:text-white inline-flex size-7 shrink-0 items-center justify-center rounded-md"
+          >
+            <MaterialIcon name="close" className="text-lg" />
+          </button>
+          </div>
         </div>
         <div className="mt-5 grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3 text-sm leading-5">
           <span className="text-outline">Assigned to</span>
@@ -428,7 +422,46 @@ export function LeadDetail({
             </dl>
           </div>
         ) : null}
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <p className="text-outline text-sm leading-5">Notes</p>
+          <ul className="mt-2 space-y-3">
+            {notes.length === 0 && (
+              <li className="text-on-surface-variant text-sm">No notes yet.</li>
+            )}
+            {notes.map((note) => (
+              <li key={note.id} className="text-sm">
+                <p className="text-white">{note.body}</p>
+                <p className="text-outline mt-1 text-xs">
+                  {note.authorEmail} · {formatWhen(note.createdAt)}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <form
+            className="mt-3 space-y-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const body = noteDraft.trim();
+              if (!body) return;
+              void onAddNote(body).then(() => setNoteDraft(""));
+            }}
+          >
+            <Textarea
+              aria-label="Add note"
+              rows={3}
+              value={noteDraft}
+              onChange={(event) => setNoteDraft(event.target.value)}
+              className="border-outline-variant/20 placeholder:text-outline focus-visible:border-primary min-h-0 border px-3 py-2 text-sm"
+              placeholder="Add a note"
+              disabled={busy}
+            />
+            <Button type="submit" disabled={busy || !noteDraft.trim()}>
+              Save note
+            </Button>
+          </form>
+        </div>
       </aside>
+      </div>
     </div>
   );
 }
