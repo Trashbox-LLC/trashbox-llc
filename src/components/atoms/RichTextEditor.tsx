@@ -1520,7 +1520,11 @@ export const RichTextEditor = forwardRef<
         {isEmpty && (
           <p
             aria-hidden="true"
-            className="text-outline pointer-events-none absolute top-2 left-0 text-sm italic"
+            className={cn(
+              "pointer-events-none absolute inset-0 px-4 py-3 text-sm leading-relaxed italic",
+              editorClassName,
+              "text-outline",
+            )}
           >
             {placeholder}
           </p>
