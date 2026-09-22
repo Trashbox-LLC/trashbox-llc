@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SettingsShell } from "./SettingsShell";
+import { EmailContentSettings } from "./EmailContentSettings";
 
 const usePathname = vi.fn(() => "/portal/settings/general/");
 
@@ -62,6 +63,48 @@ describe("SettingsShell", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Org section body")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /billing/i })).toBeInTheDocument();
+  });
+
+  it("lets the signature builder supply its own title", () => {
+    usePathname.mockReturnValue(
+      "/portal/acme/site/settings/signatures/new/",
+    );
+
+    render(
+      <SettingsShell>
+        <p>Builder</p>
+      </SettingsShell>,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: /^settings$/i, level: 1 }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /^signatures$/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Builder")).toBeInTheDocument();
+  });
+
+  it("places the new signature action on the signatures title row", () => {
+    usePathname.mockReturnValue("/portal/settings/signatures/");
+
+    render(
+      <SettingsShell>
+        <EmailContentSettings
+          kind="signature"
+          items={[]}
+          canManage
+          onCreate={vi.fn()}
+          onUpdate={vi.fn()}
+          onDelete={vi.fn()}
+        />
+      </SettingsShell>,
+    );
+
+    const heading = screen.getByRole("heading", { name: /^signatures$/i, level: 2 });
+    expect(heading.parentElement).toContainElement(
+      screen.getByRole("link", { name: /new signature/i }),
+    );
   });
 });
 

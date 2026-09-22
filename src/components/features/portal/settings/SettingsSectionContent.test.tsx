@@ -153,17 +153,29 @@ describe("SettingsSectionContent", () => {
     ).toBeInTheDocument();
   });
 
-  it.each([
-    ["signatures", /^signatures$/i],
-    ["snippets", /^snippets$/i],
-  ] as const)("renders the %s section", async (sectionId, heading) => {
+  it.each([["snippets", /^snippets$/i]] as const)(
+    "renders the %s section",
+    async (sectionId, heading) => {
+      render(
+        <PortalProvider>
+          <SettingsSectionContent sectionId={sectionId} />
+        </PortalProvider>,
+      );
+
+      expect(await screen.findByText(heading)).toBeInTheDocument();
+    },
+  );
+
+  it("renders the signatures section", async () => {
     render(
       <PortalProvider>
-        <SettingsSectionContent sectionId={sectionId} />
+        <SettingsSectionContent sectionId="signatures" />
       </PortalProvider>,
     );
 
-    expect(await screen.findByText(heading)).toBeInTheDocument();
+    expect(
+      await screen.findByRole("link", { name: /new signature/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders the template gallery instead of the template instructions", async () => {

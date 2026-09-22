@@ -9,6 +9,8 @@ import { OrgSettingsSectionContent } from "@/components/features/portal/orgs/Org
 import { PortalSkeleton } from "@/components/features/portal/PortalSkeleton";
 import { SettingsSectionContent } from "@/components/features/portal/settings/SettingsSectionContent";
 import { SettingsShell } from "@/components/features/portal/settings/SettingsShell";
+import { SignatureBuilderCreatePage } from "@/components/features/portal/settings/signature-builder/SignatureBuilderCreatePage";
+import { SignatureBuilderEditPage } from "@/components/features/portal/settings/signature-builder/SignatureBuilderEditPage";
 import { TemplateBuilderCreatePage } from "@/components/features/portal/settings/template-builder/TemplateBuilderCreatePage";
 import { TemplateBuilderEditPage } from "@/components/features/portal/settings/template-builder/TemplateBuilderEditPage";
 import { TemplateBuilderNewPage } from "@/components/features/portal/settings/template-builder/TemplateBuilderNewPage";
@@ -36,7 +38,9 @@ type ProjectSettingsSurface =
   | SettingsSectionId
   | "templates/new"
   | "templates/builder"
-  | "templates/edit";
+  | "templates/edit"
+  | "signatures/new"
+  | "signatures/edit";
 
 function settingsSurface(
   settingsRest: string | undefined,
@@ -55,6 +59,8 @@ function settingsSurface(
     if (rest === "templates/new") return "templates/new";
     if (rest === "templates/builder") return "templates/builder";
     if (rest === "templates/edit") return "templates/edit";
+    if (rest === "signatures/new") return "signatures/new";
+    if (rest === "signatures/edit") return "signatures/edit";
   }
   if (!rest) return DEFAULT_SETTINGS_SECTION;
   const section = rest.split("/")[0] || DEFAULT_SETTINGS_SECTION;
@@ -274,6 +280,20 @@ export function PortalWorkspaceApp({ pathname }: PortalWorkspaceAppProps) {
     return (
       <SettingsShell>
         <TemplateBuilderEditPage />
+      </SettingsShell>
+    );
+  }
+  if (settingsKind === "signatures/new") {
+    return (
+      <SettingsShell>
+        <SignatureBuilderCreatePage />
+      </SettingsShell>
+    );
+  }
+  if (settingsKind === "signatures/edit") {
+    return (
+      <SettingsShell>
+        <SignatureBuilderEditPage />
       </SettingsShell>
     );
   }

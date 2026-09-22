@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   RichTextEditor,
   type RichTextValue,
@@ -14,14 +14,24 @@ import {
   TEMPLATE_VARIABLES,
   contentBodyToHtml,
   plainTextToHtml,
-  PREVIEW_SAMPLE_CONTEXT,
   renderTemplateVariables,
   sanitizeShortcutInput,
   unknownTemplateVariables,
+  withPreviewSamples,
   type TemplateVariableContext,
 } from "@/lib/email-content";
 import {
+  parseSignatureDocument,
+  signaturePreviewLines,
+} from "@/lib/email-signature-document";
+import {
+  SettingsHeaderAction,
+  useHasSettingsHeader,
+} from "@/components/features/portal/settings/SettingsShell";
+import {
   settingsSectionPath,
+  signatureBuilderEditPath,
+  signatureBuilderNewPath,
   templateBuilderEditPath,
   templateBuilderNewPath,
 } from "@/lib/portal-settings";
@@ -87,8 +97,7 @@ const KIND_COPY: Record<EmailContentKind, KindCopy> = {
   signature: {
     label: "signature",
     heading: "Signatures",
-    description:
-      "Sign-off blocks appended to replies. The default signature is added to the composer automatically, and members can switch to another one before sending.",
+    description: "",
     bodyPlaceholder: "Thanks,\n{{sender.name}} — {{business.name}}",
     empty: "No signatures yet.",
   },
@@ -160,8 +169,20 @@ export function EmailContentSettings({
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [seedCounter, setSeedCounter] = useState(0);
 
-  const context = previewContext ?? PREVIEW_SAMPLE_CONTEXT;
-  const usesBuilder = kind === "template";
+  const context = withPreviewSamples(previewContext);
+  const usesBuilder = kind === "template" || kind === "signature";
+
+  function builderNewPath(): string {
+    return kind === "signature"
+      ? signatureBuilderNewPath()
+      : templateBuilderNewPath();
+  }
+
+  function builderEditPath(id: string): string {
+    return kind === "signature"
+      ? signatureBuilderEditPath(id)
+      : templateBuilderEditPath(id);
+  }
 
   function openForm(editingId: string | null, draft: EmailContentDraft) {
     const nextKey = seedCounter + 1;
@@ -225,22 +246,62 @@ export function EmailContentSettings({
     : [];
   const canSave =
     Boolean(form?.draft.name.trim()) && Boolean(form?.draft.bodyText.trim());
+  const inSettingsHeader = useHasSettingsHeader();
+  const startNewRef = useRef(startNew);
+  startNewRef.current = startNew;
+  const newHref = usesBuilder ? builderNewPath() : "";
+  const newButton = useMemo(() => {
+    if (!canManage) return null;
+    if (usesBuilder) {
+      return (
+        <Button type="button" variant="outline" disabled={busy} asChild>
+          <a href={newHref}>New {copy.label}</a>
+        </Button>
+      );
+    }
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        disabled={busy}
+        onClick={() => startNewRef.current()}
+      >
+        New {copy.label}
+      </Button>
+    );
+  }, [busy, canManage, copy.label, newHref, usesBuilder]);
 
   return (
-    <div className="space-y-8 border border-outline-variant/10 bg-surface-container-low p-6 md:p-8">
-      <div>
-        <Label>{copy.heading}</Label>
-        <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
-          {copy.description}{" "}
-          <a
-            href={settingsSectionPath("email-accounts")}
-            className="text-white underline"
-          >
-            A connected mailbox
-          </a>{" "}
-          is required to send replies.
-        </p>
-      </div>
+    <>
+      {kind === "signature" &&
+        (inSettingsHeader ? (
+          <SettingsHeaderAction>{newButton}</SettingsHeaderAction>
+        ) : (
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <h2 className="font-headline text-2xl font-bold tracking-tight text-white md:text-3xl">
+              {copy.heading}
+            </h2>
+            {newButton}
+          </div>
+        ))}
+      <div className="space-y-8 border border-outline-variant/10 bg-surface-container-low p-6 md:p-8">
+      {kind !== "signature" && (
+        <div>
+          <Label>{copy.heading}</Label>
+          {copy.description && (
+            <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
+              {copy.description}{" "}
+              <a
+                href={settingsSectionPath("email-accounts")}
+                className="text-white underline"
+              >
+                A connected mailbox
+              </a>{" "}
+              is required to send replies.
+            </p>
+          )}
+        </div>
+      )}
 
       {error && (
         <p className="border border-error/40 bg-error/10 p-4 text-sm text-error">
@@ -248,47 +309,39 @@ export function EmailContentSettings({
         </p>
       )}
 
-      <section>
-        <Label>Merge fields</Label>
-        <p className="mt-2 text-sm text-on-surface-variant">
-          Type these anywhere in a subject or body. They are replaced when the
-          content is inserted into a reply.
-        </p>
-        <ul className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
-          {TEMPLATE_VARIABLES.map((variable) => (
-            <li key={variable.token} className="text-sm">
-              <code className="font-mono text-xs text-white">
-                {variable.token}
-              </code>
-              <span className="ml-2 text-on-surface-variant">
-                {variable.description}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Label className="mb-0">Saved {copy.label}s</Label>
-          {canManage &&
-            (usesBuilder ? (
-              <Button type="button" variant="outline" disabled={busy} asChild>
-                <a href={templateBuilderNewPath()}>New {copy.label}</a>
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                disabled={busy}
-                onClick={startNew}
-              >
-                New {copy.label}
-              </Button>
+      {kind !== "signature" && (
+        <section>
+          <Label>Merge fields</Label>
+          <p className="mt-2 text-sm text-on-surface-variant">
+            Type these anywhere in a subject or body. They are replaced when the
+            content is inserted into a reply.
+          </p>
+          <ul className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+            {TEMPLATE_VARIABLES.map((variable) => (
+              <li key={variable.token} className="text-sm">
+                <code className="font-mono text-xs text-white">
+                  {variable.token}
+                </code>
+                <span className="ml-2 text-on-surface-variant">
+                  {variable.description}
+                </span>
+              </li>
             ))}
-        </div>
+          </ul>
+        </section>
+      )}
 
-        <ul className="mt-4 divide-y divide-outline-variant/10 border-y border-outline-variant/10">
+      <section>
+        {kind !== "signature" && (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Label className="mb-0">Saved {copy.label}s</Label>
+            {newButton}
+          </div>
+        )}
+
+        <ul
+          className={`divide-y divide-outline-variant/10 border-y border-outline-variant/10${kind === "signature" ? "" : " mt-4"}`}
+        >
           {items.length === 0 && (
             <li className="py-4 text-sm text-on-surface-variant">
               {copy.empty}
@@ -326,17 +379,21 @@ export function EmailContentSettings({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
-                    <Button
-                      type="button"
-                      variant="link"
-                      disabled={busy}
-                      onClick={() =>
-                        setPreviewId((id) => (id === entry.id ? null : entry.id))
-                      }
-                      className={actionClass}
-                    >
-                      Preview
-                    </Button>
+                    {kind !== "signature" && (
+                      <Button
+                        type="button"
+                        variant="link"
+                        disabled={busy}
+                        onClick={() =>
+                          setPreviewId((id) =>
+                            id === entry.id ? null : entry.id,
+                          )
+                        }
+                        className={actionClass}
+                      >
+                        Preview
+                      </Button>
+                    )}
                     {canManage && (
                       <>
                         {usesBuilder ? (
@@ -347,7 +404,7 @@ export function EmailContentSettings({
                             asChild
                             className={actionClass}
                           >
-                            <a href={templateBuilderEditPath(entry.id)}>Edit</a>
+                            <a href={builderEditPath(entry.id)}>Edit</a>
                           </Button>
                         ) : (
                           <Button
@@ -407,7 +464,11 @@ export function EmailContentSettings({
                   </div>
                 </div>
 
-                {previewId === entry.id && (
+                {kind === "signature" && (
+                  <SignatureSavedPreview entry={entry} context={context} />
+                )}
+
+                {kind !== "signature" && previewId === entry.id && (
                   <div className="mt-3 border border-outline-variant/20 bg-background/40 p-4">
                     <p className="font-label text-[10px] uppercase tracking-widest text-outline">
                       Preview with sample values
@@ -545,6 +606,56 @@ export function EmailContentSettings({
             </Button>
           </div>
         </form>
+      )}
+    </div>
+    </>
+  );
+}
+
+function SignatureSavedPreview({
+  entry,
+  context,
+}: {
+  entry: EmailContentEntry;
+  context: TemplateVariableContext;
+}) {
+  const doc = parseSignatureDocument({
+    bodyHtml: entry.bodyHtml,
+    bodyText: entry.bodyText,
+  });
+  const lines = signaturePreviewLines(doc, context);
+  const layoutClass =
+    doc.layout === "banner"
+      ? "flex items-center gap-3"
+      : doc.layout === "stacked"
+        ? "flex flex-col items-start gap-3"
+        : "flex items-center gap-4";
+
+  return (
+    <div
+      role="region"
+      aria-label={`Preview of ${entry.name}`}
+      className={`mt-3 border border-outline-variant/20 bg-background p-4 text-sm text-white ${layoutClass}`}
+    >
+      {doc.logoUrl ? (
+        <img
+          src={doc.logoUrl}
+          alt=""
+          className={
+            doc.layout === "banner" ? "size-6 object-cover" : "size-16 object-cover"
+          }
+        />
+      ) : null}
+      {doc.layout === "banner" ? (
+        <p>{lines.join(" · ")}</p>
+      ) : (
+        <div>
+          {lines.map((line, index) => (
+            <p key={`${index}-${line}`} className="whitespace-pre-line">
+              {line}
+            </p>
+          ))}
+        </div>
       )}
     </div>
   );

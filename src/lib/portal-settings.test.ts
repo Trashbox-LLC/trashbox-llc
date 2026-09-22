@@ -9,6 +9,8 @@ import {
   orgSettingsSectionPath,
   resolveOrgSettingsSection,
   settingsSectionPath,
+  signatureBuilderEditPath,
+  signatureBuilderNewPath,
 } from "./portal-settings";
 import { PORTAL_PATHS } from "./sites";
 
@@ -102,6 +104,20 @@ describe("portal-settings", () => {
     );
     window.history.replaceState({}, "", "/portal/acme/settings/members/");
     expect(settingsSectionPath("email-accounts")).toBe("/portal/acme/");
+  });
+
+  it("builds signature builder paths inside the current project", () => {
+    window.history.replaceState(
+      {},
+      "",
+      "/portal/acme/site/settings/signatures/",
+    );
+    expect(signatureBuilderNewPath()).toBe(
+      "/portal/acme/site/settings/signatures/new/",
+    );
+    expect(signatureBuilderEditPath("g1")).toBe(
+      "/portal/acme/site/settings/signatures/edit/?id=g1",
+    );
   });
 
   it("resolves known sections and rejects unknown ones", () => {

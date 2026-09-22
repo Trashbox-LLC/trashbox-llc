@@ -23,6 +23,7 @@ import {
   sanitizeShortcutInput,
   snippetTriggerAtEnd,
   unknownTemplateVariables,
+  withPreviewSamples,
 } from "@/lib/email-content";
 
 const context = {
@@ -45,6 +46,21 @@ describe("renderPreviewTemplate", () => {
     );
     expect(renderPreviewTemplate("Hi {{lead.nickname}}")).toBe(
       "Hi {{lead.nickname}}",
+    );
+  });
+});
+
+describe("withPreviewSamples", () => {
+  it("keeps a provided business name and fills the other fields from the sample", () => {
+    const merged = withPreviewSamples({ business: { name: "Acme Hauling" } });
+
+    expect(
+      renderTemplateVariables(
+        "{{business.name}} {{sender.name}} {{sender.email}}",
+        merged,
+      ),
+    ).toBe(
+      `Acme Hauling ${PREVIEW_SAMPLE_CONTEXT.sender?.name} ${PREVIEW_SAMPLE_CONTEXT.sender?.email}`,
     );
   });
 });

@@ -358,6 +358,33 @@ export function templateBuilderCreatePath(options?: {
   return query ? `${base}?${query}` : base;
 }
 
+export function signatureBuilderNewPath(): string {
+  const ws = currentWorkspaceSlugs();
+  if (ws?.orgSlug && ws.projectSlug) {
+    return portalWorkspacePath({
+      orgSlug: ws.orgSlug,
+      projectSlug: ws.projectSlug,
+      surface: "settings",
+      settingsRest: "signatures/new",
+    });
+  }
+  return `${PORTAL_PATHS.settings}signatures/new/`;
+}
+
+export function signatureBuilderEditPath(id: string): string {
+  const ws = currentWorkspaceSlugs();
+  const base =
+    ws?.orgSlug && ws.projectSlug
+      ? portalWorkspacePath({
+          orgSlug: ws.orgSlug,
+          projectSlug: ws.projectSlug,
+          surface: "settings",
+          settingsRest: "signatures/edit",
+        })
+      : `${PORTAL_PATHS.settings}signatures/edit/`;
+  return `${base}?id=${encodeURIComponent(id)}`;
+}
+
 export function templateBuilderEditPath(id: string): string {
   const ws = currentWorkspaceSlugs();
   const base =
@@ -370,6 +397,18 @@ export function templateBuilderEditPath(id: string): string {
         })
       : `${PORTAL_PATHS.settings}templates/edit/`;
   return `${base}?id=${encodeURIComponent(id)}`;
+}
+
+/** Signature builder keeps the settings sidebar; only the section title is replaced. */
+export function isSignatureBuilderPath(
+  pathname: string | null | undefined,
+): boolean {
+  if (!pathname) return false;
+  const normalized = pathname.replace(/\/$/, "");
+  return (
+    normalized.endsWith("/signatures/new") ||
+    normalized.endsWith("/signatures/edit")
+  );
 }
 
 /** True when Settings chrome should hide for a Zoho-style full-page builder. */

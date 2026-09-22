@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { signatureToContent } from "@/lib/email-signature-document";
 import {
   EmailContentSettings,
   type EmailContentEntry,
@@ -150,6 +151,35 @@ describe("EmailContentSettings", () => {
     expect(screen.getByText(/no snippets yet/i)).toBeInTheDocument();
   });
 
+  it("fills a saved signature preview from sample data when a field is a merge token", async () => {
+    const content = signatureToContent({
+      layout: "side",
+      logoUrl: "",
+      fields: [
+        { id: "name", label: "Name", value: "{{sender.name}}" },
+        { id: "title", label: "Title", value: "Owner" },
+        { id: "email", label: "Email", value: "{{sender.email}}" },
+      ],
+    });
+    renderSettings({
+      kind: "signature",
+      previewContext: { business: { name: "Acme Hauling" } },
+      items: [
+        {
+          ...signature,
+          bodyText: content.bodyText,
+          bodyHtml: content.bodyHtml,
+        },
+      ],
+    });
+
+    const preview = screen.getByRole("region", { name: /preview of sales sign-off/i });
+    expect(preview).toHaveTextContent("Your team");
+    expect(preview).toHaveTextContent("Owner");
+    expect(preview).toHaveTextContent("you@example.com");
+    expect(preview).not.toHaveTextContent("{{");
+  });
+
   it("marks the default signature and lets managers change it", async () => {
     const user = userEvent.setup();
     const second: EmailContentEntry = {
@@ -168,41 +198,44 @@ describe("EmailContentSettings", () => {
     expect(onMakeDefault).toHaveBeenCalledWith("g2");
   });
 
-  it("does not offer a subject field for signatures", async () => {
-    const user = userEvent.setup();
+  it("links New signature beside the signatures title", () => {
     renderSettings({ kind: "signature", items: [] });
 
-    await user.click(screen.getByRole("button", { name: /new signature/i }));
-    expect(screen.queryByLabelText(/subject/i)).not.toBeInTheDocument();
+    const heading = screen.getByRole("heading", { name: /^signatures$/i });
+    const link = screen.getByRole("link", { name: /new signature/i });
+    expect(link).toHaveAttribute(
+      "href",
+      expect.stringMatching(/signatures\/new\/?$/),
+    );
+    expect(heading.parentElement).toContainElement(link);
   });
 
-  it("warns about merge fields that will not be substituted for signatures", async () => {
-    const user = userEvent.setup();
-    renderSettings({ kind: "signature", items: [] });
+  it("links Edit to the signature builder", () => {
+    renderSettings({ kind: "signature", items: [signature] });
 
-    await user.click(screen.getByRole("button", { name: /new signature/i }));
-    await user.type(
-      screen.getByRole("textbox", { name: /body/i }),
-      "Hi {{{{lead.nickname}}",
-    );
-
-    expect(screen.getByText(/not a supported merge field/i)).toHaveTextContent(
-      "{{lead.nickname}}",
+    expect(screen.getByRole("link", { name: /^edit$/i })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/signatures\/edit\/\?id=g1$/),
     );
   });
 
-  it("closes the signature form without saving when cancelled", async () => {
+  it("duplicates a signature immediately", async () => {
     const user = userEvent.setup();
-    const { onUpdate } = renderSettings({
+    const { onCreate, onUpdate } = renderSettings({
       kind: "signature",
       items: [signature],
     });
 
-    await user.click(screen.getByRole("button", { name: /edit/i }));
-    await user.click(screen.getByRole("button", { name: /cancel/i }));
+    await user.click(screen.getByRole("button", { name: /duplicate/i }));
 
+    expect(onCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Sales sign-off (copy)",
+        bodyText: signature.bodyText,
+        isDefault: false,
+      }),
+    );
     expect(onUpdate).not.toHaveBeenCalled();
-    expect(screen.queryByLabelText(/^name$/i)).not.toBeInTheDocument();
   });
 
   it("shows a snippet shortcut and normalizes what is typed", async () => {

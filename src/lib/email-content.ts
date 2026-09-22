@@ -182,6 +182,18 @@ export const PREVIEW_SAMPLE_CONTEXT: TemplateVariableContext = {
   sender: { name: "Your team", email: "you@example.com" },
 };
 
+/** Sample values, with any provided preview fields winning over the stand-ins. */
+export function withPreviewSamples(
+  context?: TemplateVariableContext,
+): TemplateVariableContext {
+  return {
+    lead: { ...PREVIEW_SAMPLE_CONTEXT.lead, ...context?.lead },
+    business: { ...PREVIEW_SAMPLE_CONTEXT.business, ...context?.business },
+    sender: { ...PREVIEW_SAMPLE_CONTEXT.sender, ...context?.sender },
+    now: context?.now,
+  };
+}
+
 /** Replace catalog merge fields with sample values. Unknown tokens stay put. */
 export function renderPreviewTemplate(body: string, now = new Date()): string {
   return renderTemplateVariables(body, { ...PREVIEW_SAMPLE_CONTEXT, now });
