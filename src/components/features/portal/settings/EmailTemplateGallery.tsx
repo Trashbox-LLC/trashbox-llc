@@ -31,6 +31,14 @@ export interface EmailTemplateGalleryProps {
   className?: string;
 }
 
+type GalleryCategory = "all" | "saved" | EmailTemplateStarterCategory;
+
+const GALLERY_CATEGORIES: readonly { id: GalleryCategory; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "saved", label: "Saved" },
+  ...EMAIL_TEMPLATE_STARTER_CATEGORIES.filter((item) => item.id !== "all"),
+];
+
 function categoryLabel(id: EmailTemplateStarterCategory): string {
   return (
     EMAIL_TEMPLATE_STARTER_CATEGORIES.find((item) => item.id === id)?.label ??
@@ -97,12 +105,11 @@ export function EmailTemplateGallery({
   onClose,
   className,
 }: EmailTemplateGalleryProps): ReactElement {
-  const [category, setCategory] = useState<"all" | EmailTemplateStarterCategory>(
-    "all",
-  );
+  const [category, setCategory] = useState<GalleryCategory>("all");
   const [query, setQuery] = useState("");
 
   const visibleStarters = useMemo(() => {
+    if (category === "saved") return [];
     const inCategory =
       category === "all"
         ? starters
@@ -113,7 +120,7 @@ export function EmailTemplateGallery({
   }, [category, query, starters]);
 
   const visibleSaved = useMemo(() => {
-    if (category !== "all") return [];
+    if (category !== "all" && category !== "saved") return [];
     return savedTemplates.filter((template) =>
       matchesQuery(template.name, template.subject, query),
     );
@@ -180,7 +187,7 @@ export function EmailTemplateGallery({
         aria-label="Template categories"
         className="flex gap-2 overflow-x-auto border-b border-outline-variant/15 px-4 py-3 md:px-6"
       >
-        {EMAIL_TEMPLATE_STARTER_CATEGORIES.map((item) => {
+        {GALLERY_CATEGORIES.map((item) => {
           const selected = category === item.id;
           return (
             <button
@@ -201,46 +208,31 @@ export function EmailTemplateGallery({
         })}
       </div>
 
-      <div className="min-h-0 flex-1 space-y-8 overflow-y-auto p-4 md:p-6">
-        {mode === "compose" &&
-          category === "all" &&
-          savedTemplates.length === 0 &&
-          !query.trim() && (
-            <section aria-label="Your templates">
-              <p className="text-sm text-on-surface-variant">
-                No saved templates yet. Pick a starter below, or manage
-                templates in Settings.
-              </p>
-            </section>
-          )}
-
-        {mode === "compose" && category === "all" && visibleSaved.length > 0 && (
-          <section aria-label="Your templates">
-            <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {visibleSaved.map((template) => (
-                <GalleryCard
-                  key={template.id}
-                  title={template.name}
-                  subtitle={template.subject}
-                  html={template.bodyHtml?.trim() || "<p><br /></p>"}
-                  onClick={() => onSelectSaved?.(template)}
-                />
-              ))}
-            </ul>
-          </section>
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+        {category === "saved" && savedTemplates.length === 0 && !query.trim() ? (
+          <p className="text-sm text-on-surface-variant">No saved templates yet.</p>
+        ) : (
+          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {visibleSaved.map((template) => (
+              <GalleryCard
+                key={template.id}
+                title={template.name}
+                subtitle="Saved"
+                html={template.bodyHtml?.trim() || "<p><br /></p>"}
+                onClick={() => onSelectSaved?.(template)}
+              />
+            ))}
+            {visibleStarters.map((starter) => (
+              <GalleryCard
+                key={starter.id}
+                title={starter.name}
+                subtitle={categoryLabel(starter.category)}
+                html={starter.bodyHtml}
+                onClick={() => onSelectStarter(starter)}
+              />
+            ))}
+          </ul>
         )}
-
-        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {visibleStarters.map((starter) => (
-            <GalleryCard
-              key={starter.id}
-              title={starter.name}
-              subtitle={categoryLabel(starter.category)}
-              html={starter.bodyHtml}
-              onClick={() => onSelectStarter(starter)}
-            />
-          ))}
-        </ul>
       </div>
     </div>
   );

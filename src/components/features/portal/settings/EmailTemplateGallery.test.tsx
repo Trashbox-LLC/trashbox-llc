@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { EMAIL_TEMPLATE_STARTERS } from "@/lib/email-template-starters";
@@ -101,12 +101,12 @@ describe("EmailTemplateGallery", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows saved templates in compose mode and selects them", async () => {
+  it("shows saved templates in the gallery and selects them", async () => {
     const user = userEvent.setup();
     const onSelectSaved = vi.fn();
     render(
       <EmailTemplateGallery
-        mode="compose"
+        mode="create"
         savedTemplates={savedTemplates}
         onSelectStarter={vi.fn()}
         onSelectSaved={onSelectSaved}
@@ -114,15 +114,35 @@ describe("EmailTemplateGallery", () => {
       />,
     );
 
-    const yourTemplates = screen.getByRole("region", { name: /your templates/i });
     expect(
-      within(yourTemplates).getByRole("button", { name: /quote follow-up/i }),
+      screen.getByRole("button", { name: /quote follow-up/i }),
     ).toBeInTheDocument();
 
-    await user.click(
-      within(yourTemplates).getByRole("button", { name: /quote follow-up/i }),
-    );
+    await user.click(screen.getByRole("button", { name: /quote follow-up/i }));
     expect(onSelectSaved).toHaveBeenCalledWith(savedTemplates[0]);
+  });
+
+  it("filters to saved templates from the Saved category", async () => {
+    const user = userEvent.setup();
+    render(
+      <EmailTemplateGallery
+        mode="create"
+        savedTemplates={savedTemplates}
+        onSelectStarter={vi.fn()}
+        onSelectSaved={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /^saved$/i }));
+
+    expect(
+      screen.getByRole("button", { name: /quote follow-up/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /blank/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /follow-up check-in/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("filters the gallery as the search query changes", async () => {
@@ -191,7 +211,8 @@ describe("EmailTemplateGallery", () => {
     );
   });
 
-  it("shows an empty library message when there are no saved templates", () => {
+  it("shows an empty library message when Saved has no templates", async () => {
+    const user = userEvent.setup();
     render(
       <EmailTemplateGallery
         mode="compose"
@@ -202,11 +223,11 @@ describe("EmailTemplateGallery", () => {
       />,
     );
 
+    await user.click(screen.getByRole("button", { name: /^saved$/i }));
+
+    expect(screen.getByText(/no saved templates yet/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/no saved templates yet/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /follow-up check-in/i }),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: /follow-up check-in/i }),
+    ).not.toBeInTheDocument();
   });
 });

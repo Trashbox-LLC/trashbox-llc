@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { EmailTemplateGallery } from "@/components/features/portal/settings/EmailTemplateGallery";
+import { useEffect, useState } from "react";
+import {
+  EmailTemplateGallery,
+  type EmailTemplateGallerySavedItem,
+} from "@/components/features/portal/settings/EmailTemplateGallery";
+import { listEmailTemplates } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +19,7 @@ import {
   TEMPLATE_BUILDER_DRAFT_STORAGE_KEY,
   settingsSectionPath,
   templateBuilderCreatePath,
+  templateBuilderEditPath,
 } from "@/lib/portal-settings";
 
 /**
@@ -23,6 +28,31 @@ import {
 export function TemplateBuilderNewPage(): React.ReactElement {
   const [htmlSourceOpen, setHtmlSourceOpen] = useState(false);
   const [pastedSource, setPastedSource] = useState("");
+  const [savedTemplates, setSavedTemplates] = useState<
+    EmailTemplateGallerySavedItem[]
+  >([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    listEmailTemplates()
+      .then((response) => {
+        if (cancelled) return;
+        setSavedTemplates(
+          response.items.map((template) => ({
+            id: template.id,
+            name: template.name,
+            subject: template.subject,
+            bodyHtml: template.bodyHtml,
+          })),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setSavedTemplates([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function goList() {
     portalNavigate(settingsSectionPath("templates"));
@@ -30,6 +60,10 @@ export function TemplateBuilderNewPage(): React.ReactElement {
 
   function selectStarter(starter: EmailTemplateStarter) {
     portalNavigate(templateBuilderCreatePath({ starterId: starter.id }));
+  }
+
+  function selectSaved(template: EmailTemplateGallerySavedItem) {
+    portalNavigate(templateBuilderEditPath(template.id));
   }
 
   function applyPastedSource() {
@@ -116,7 +150,9 @@ export function TemplateBuilderNewPage(): React.ReactElement {
       <EmailTemplateGallery
         mode="create"
         className="min-h-0 flex-1"
+        savedTemplates={savedTemplates}
         onSelectStarter={selectStarter}
+        onSelectSaved={selectSaved}
         onInsertHtmlPlainText={() => setHtmlSourceOpen(true)}
         onClose={goList}
       />
