@@ -45,11 +45,39 @@ export function LeadSmsComposer({
     }
   }
 
-  function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+  function onKeyDown(
+    event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) {
     if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
       event.preventDefault();
       void submit();
     }
+  }
+
+  if (embedded) {
+    return (
+      <div className="flex items-center gap-2 border-t border-white/20 px-4 py-3">
+        <input
+          type="text"
+          aria-label="Text message"
+          value={draft}
+          maxLength={MAX_SMS_BODY_LENGTH}
+          disabled={busy || sending}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={onKeyDown}
+          className="border-white/15 text-on-surface placeholder:text-outline h-10 min-w-0 flex-1 rounded-lg border bg-transparent px-3 text-sm outline-none disabled:opacity-60"
+        />
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={disabled}
+          onClick={() => void submit()}
+          className="font-label text-background hover:text-background shrink-0 rounded bg-white font-medium shadow-sm hover:bg-white/90"
+        >
+          Send text
+        </Button>
+      </div>
+    );
   }
 
   return (

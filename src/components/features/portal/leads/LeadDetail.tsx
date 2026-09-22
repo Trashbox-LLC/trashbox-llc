@@ -8,6 +8,11 @@ import type { LeadComposerLibrary } from "@/components/features/portal/leads/Lea
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   LEAD_STATUSES,
   LEAD_STATUS_DOT_CLASS,
   LEAD_STATUS_LABELS,
@@ -128,7 +133,9 @@ export function LeadDetail({
 }: LeadDetailProps) {
   const [noteDraft, setNoteDraft] = useState("");
   const [panel, setPanel] = useState<ConversationPanel>("historyText");
+  const [channel, setChannel] = useState<MessageChannel>("email");
   const [detailsOpen, setDetailsOpen] = useState(true);
+  const [phoneHintOpen, setPhoneHintOpen] = useState(false);
   const stacked = useStackedLayout();
   const detailsCollapsed = !detailsOpen && !stacked;
   const status = leadStatusOf(submission);
@@ -195,30 +202,18 @@ export function LeadDetail({
                   {submission.senderName}
                 </h2>
                 <div className="flex shrink-0 items-center gap-4 pt-1">
-                  {hasHistory && (
-                    <button
-                      type="button"
-                      aria-pressed={panel === "history"}
-                      onClick={() => selectPanel("history")}
-                      className={cn(
-                        "text-sm transition-colors",
-                        panel === "history"
-                          ? "border-b border-white text-white"
-                          : "text-outline hover:text-white",
-                      )}
-                    >
-                      History
-                    </button>
-                  )}
                   <button
                     type="button"
                     aria-label="Email"
-                    aria-pressed={panel === "historyText"}
-                    onClick={() => selectPanel("historyText")}
+                    aria-pressed={panel === "historyText" && channel === "email"}
+                    onClick={() => {
+                      setChannel("email");
+                      setPanel("historyText");
+                    }}
                     className={cn(
                       "inline-flex size-7 items-center justify-center transition-colors",
-                      panel === "historyText"
-                        ? "border-b border-white text-white"
+                      panel === "historyText" && channel === "email"
+                        ? "text-white"
                         : "text-outline hover:text-white",
                     )}
                   >
@@ -227,17 +222,66 @@ export function LeadDetail({
                   <button
                     type="button"
                     aria-label="Text"
-                    className="text-outline inline-flex size-7 items-center justify-center"
+                    aria-pressed={panel === "historyText" && channel === "sms"}
+                    onClick={() => {
+                      setChannel("sms");
+                      setPanel("historyText");
+                    }}
+                    className={cn(
+                      "inline-flex size-7 items-center justify-center transition-colors",
+                      panel === "historyText" && channel === "sms"
+                        ? "text-white"
+                        : "text-outline hover:text-white",
+                    )}
                   >
-                    <MaterialIcon name="sms" className="text-lg" />
+                    <MaterialIcon name="sms" className="translate-y-[2px] text-lg" />
                   </button>
-                  <button
-                    type="button"
-                    aria-label="Phone"
-                    className="text-outline inline-flex size-7 items-center justify-center"
-                  >
-                    <MaterialIcon name="call" className="text-lg" />
-                  </button>
+                  {submission.senderPhone?.trim() ? (
+                    <a
+                      href={`tel:${submission.senderPhone.trim()}`}
+                      aria-label="Phone"
+                      className="text-outline hover:text-white inline-flex size-7 items-center justify-center"
+                    >
+                      <MaterialIcon name="call" className="text-lg" />
+                    </a>
+                  ) : (
+                    <Tooltip open={phoneHintOpen} onOpenChange={setPhoneHintOpen}>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="Phone"
+                          onClick={() => setPhoneHintOpen(true)}
+                          className="text-outline inline-flex size-7 items-center justify-center"
+                        >
+                          <MaterialIcon name="call" className="text-lg" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        sideOffset={8}
+                        className="bg-surface-container-highest text-on-surface border-outline-variant/20 border px-3 py-2 shadow-md"
+                        arrowClassName="fill-surface-container-highest"
+                      >
+                        No number to call
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {hasHistory && (
+                    <button
+                      type="button"
+                      aria-label="History"
+                      aria-pressed={panel === "history"}
+                      onClick={() => selectPanel("history")}
+                      className={cn(
+                        "inline-flex size-7 items-center justify-center transition-colors",
+                        panel === "history"
+                          ? "text-white"
+                          : "text-outline hover:text-white",
+                      )}
+                    >
+                      <MaterialIcon name="history" className="text-lg" />
+                    </button>
+                  )}
                   {!stacked && (
                   <button
                     type="button"
@@ -295,6 +339,11 @@ export function LeadDetail({
           fromOptions={fromOptions}
           availableChannels={availableChannels}
           leadPhone={submission.senderPhone}
+          channel={channel}
+          onChannelChange={(next) => {
+            setChannel(next);
+            setPanel("historyText");
+          }}
           smsFromPhone={smsFromPhone}
           busy={busy}
           error={messageError}

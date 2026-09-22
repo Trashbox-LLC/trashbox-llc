@@ -671,6 +671,9 @@ export interface LeadEmailThreadProps {
   availableChannels?: MessageChannel[];
   /** Lead's phone in E.164, required to compose a text. */
   leadPhone?: string;
+  /** Conversation and composer channel. Unset shows every message. */
+  channel?: MessageChannel;
+  onChannelChange?: (channel: MessageChannel) => void;
   /** Project's sending number in E.164. */
   smsFromPhone?: string;
   busy?: boolean;
@@ -708,6 +711,8 @@ export function LeadEmailThread({
   fromOptions = [],
   availableChannels = ["email"],
   leadPhone,
+  channel,
+  onChannelChange,
   smsFromPhone,
   busy = false,
   error,
@@ -944,13 +949,20 @@ export function LeadEmailThread({
     Boolean(onSendSms) &&
     Boolean(leadPhone) &&
     availableChannels.includes("sms");
-  const [requestedChannel, setRequestedChannel] =
+  const [internalChannel, setInternalChannel] =
     useState<MessageChannel>("email");
+  const requestedChannel = channel ?? internalChannel;
+  function selectChannel(next: MessageChannel) {
+    if (channel === undefined) setInternalChannel(next);
+    onChannelChange?.(next);
+  }
   const activeChannel = resolveComposerChannel({
     requested: requestedChannel,
     canEmail,
     canSms,
   });
+  const viewingText =
+    channel === "sms" || (channel === undefined && activeChannel === "sms");
 
   const showReplyNode =
     Boolean(onSend) || (Boolean(onSendSms) && Boolean(leadPhone));
@@ -969,6 +981,12 @@ export function LeadEmailThread({
     [messages],
   );
   const latestMessage = orderedMessages.at(-1);
+  const transcriptMessages =
+    channel === undefined
+      ? orderedMessages
+      : orderedMessages.filter(
+          (message) => messageChannelOf(message) === channel,
+        );
   const formSender = messageSenderPresentation({
     direction: "inbound",
     from: formFrom,
@@ -1064,7 +1082,7 @@ export function LeadEmailThread({
     const node = transcriptRef.current;
     if (!node) return;
     node.scrollTop = node.scrollHeight;
-  }, [showTranscript, orderedMessages.length, formMessage]);
+  }, [showTranscript, channel, transcriptMessages.length, formMessage]);
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -1147,15 +1165,19 @@ export function LeadEmailThread({
             aria-label="Message transcript"
             className="max-h-96 overflow-y-auto"
           >
-            <ConversationStart at={formAt} />
-            <ThreadMessage
-              author={formSender.name}
-              email={formSender.email}
-              side={formSender.side}
-              at={formAt}
-              body={formMessage}
-            />
-            {orderedMessages.map((message) => {
+            {channel !== "sms" && (
+              <>
+                <ConversationStart at={formAt} />
+                <ThreadMessage
+                  author={formSender.name}
+                  email={formSender.email}
+                  side={formSender.side}
+                  at={formAt}
+                  body={formMessage}
+                />
+              </>
+            )}
+            {transcriptMessages.map((message) => {
               const sender = messageSenderPresentation({
                 direction: message.direction,
                 from: message.from,
@@ -1210,13 +1232,59 @@ export function LeadEmailThread({
           </div>
         )}
 
-        {!showReplyNode && error && (
+        {!showReplyNode && !viewingText && error && (
           <p className="text-error mt-4 text-sm">{error}</p>
         )}
         </div>
+        {viewingText && leadPhone && onSendSms && (
+          <>
+            {error && <p className="text-error px-6 pt-3 text-sm">{error}</p>}
+            <LeadSmsComposer
+              toPhone={leadPhone}
+              fromPhone={smsFromPhone}
+              busy={busy}
+              embedded
+              onSend={onSendSms}
+            />
+          </>
+        )}
+        {viewingText && !(leadPhone?.trim() && onSendSms) && (
+          <div className="flex flex-col items-center gap-4 border-t border-white/20 px-4 py-8">
+            <div
+              aria-hidden="true"
+              className="border-white/15 bg-[#0d0d0d] flex aspect-[9/16] w-12 flex-col rounded-[0.85rem] border-2 px-1 pt-1.5 pb-1"
+            >
+              <span className="mx-auto mb-2 block h-0.5 w-4 rounded-full bg-white/20" />
+              <div className="flex min-h-0 flex-1 flex-col justify-end space-y-1">
+                <div className="bg-white/12 h-2.5 w-5 rounded-full" />
+                <div className="ml-auto h-2.5 w-6 rounded-full bg-[#3d648c]" />
+                <div className="bg-white/12 h-2.5 w-7 rounded-full" />
+                <div className="ml-auto h-2.5 w-4 rounded-full bg-[#3d648c]" />
+                <div className="bg-white/12 h-2.5 w-6 rounded-full" />
+              </div>
+              <span className="mx-auto mt-1 block h-0.5 w-3.5 rounded-full bg-white/20" />
+            </div>
+            <p className="text-outline max-w-sm text-center text-sm">
+              SMS text messaging is not set up for this account. Go to{" "}
+              <a
+                href={settingsSectionPath("text-messaging")}
+                className="text-white underline"
+              >
+                settings
+              </a>{" "}
+              or click below to apply for text messaging
+            </p>
+            <Button asChild>
+              <a href={settingsSectionPath("text-messaging")}>
+                <MaterialIcon name="sms" className="text-base" />
+                Get Started With SMS
+              </a>
+            </Button>
+          </div>
+        )}
         </div>
 
-        {showReplyNode && (
+        {showReplyNode && !viewingText && (
         <div
           role="region"
           aria-label="Reply"
@@ -1224,7 +1292,7 @@ export function LeadEmailThread({
         >
         {error && <p className="text-error px-6 pt-3 text-sm">{error}</p>}
 
-        {canEmail && canSms && (
+        {channel === undefined && canEmail && canSms && (
           <div
             role="tablist"
             aria-label="Reply channel"
@@ -1236,7 +1304,7 @@ export function LeadEmailThread({
                 type="button"
                 role="tab"
                 aria-selected={activeChannel === channel}
-                onClick={() => setRequestedChannel(channel)}
+                onClick={() => selectChannel(channel)}
                 className={cn(
                   "font-label inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-[10px] tracking-widest uppercase transition-colors",
                   activeChannel === channel
@@ -1252,16 +1320,6 @@ export function LeadEmailThread({
               </button>
             ))}
           </div>
-        )}
-
-        {activeChannel === "sms" && leadPhone && onSendSms && (
-          <LeadSmsComposer
-            toPhone={leadPhone}
-            fromPhone={smsFromPhone}
-            busy={busy}
-            embedded
-            onSend={onSendSms}
-          />
         )}
 
         {activeChannel === "email" && onSend && (

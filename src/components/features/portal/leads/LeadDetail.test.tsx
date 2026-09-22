@@ -97,39 +97,139 @@ describe("LeadDetail", () => {
       />,
     );
 
-    const transcript = screen.getByRole("region", { name: /message transcript/i });
+    const transcript = screen.getByRole("region", {
+      name: /message transcript/i,
+    });
     expect(screen.getByRole("button", { name: /^email$/i })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    expect(within(transcript).getByText("Thanks for reaching out")).toBeInTheDocument();
+    expect(
+      within(transcript).getByText("Thanks for reaching out"),
+    ).toBeInTheDocument();
     expect(
       within(transcript).getByText("Sounds good, when can we start?"),
     ).toBeInTheDocument();
-    expect(within(transcript).getByText("Your mom as a website")).toBeInTheDocument();
+    expect(
+      within(transcript).getByText("Your mom as a website"),
+    ).toBeInTheDocument();
   });
 
-  it("leaves the email thread in place from text and phone", async () => {
+  it("shows the text conversation from the text button", async () => {
+    const user = userEvent.setup();
+    render(
+      <LeadDetail
+        submission={{ ...baseSubmission, senderPhone: "+14255550182" }}
+        members={[]}
+        messages={[
+          outboundReply,
+          {
+            messageId: "m-sms",
+            submissionId: "s1",
+            clientId: "c1",
+            direction: "inbound",
+            channel: "sms",
+            from: "+14255550182",
+            to: "+18005550100",
+            subject: "",
+            bodyText: "On my way",
+            createdAt: "2026-07-15T15:00:00.000Z",
+          },
+        ]}
+        mailboxConnected
+        availableChannels={["email", "sms"]}
+        smsFromPhone="+18005550100"
+        composerLibrary={{ templates: [], signatures: [], snippets: [] }}
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+        onSendMessage={vi.fn()}
+        onSendSms={vi.fn()}
+      />,
+    );
+
+    const emailThread = screen.getByRole("region", { name: /message transcript/i });
+    expect(within(emailThread).queryByText("On my way")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^text$/i }));
+
+    const texts = screen.getByRole("region", { name: /message transcript/i });
+    expect(within(texts).getByText("On my way")).toBeInTheDocument();
+    expect(
+      within(texts).queryByText("Thanks for reaching out"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(texts).queryByText(/your mom as a website/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: /text message/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("textbox", { name: /^reply$/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^text$/i })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  it("asks for a phone number on the text thread", async () => {
     const user = userEvent.setup();
     render(
       <LeadDetail
         submission={baseSubmission}
         members={[]}
-        messages={[outboundReply, laterReply]}
         onUpdate={vi.fn()}
         onAddNote={vi.fn()}
       />,
     );
 
     await user.click(screen.getByRole("button", { name: /^text$/i }));
-    await user.click(screen.getByRole("button", { name: /^phone$/i }));
 
     expect(
-      screen.getByRole("region", { name: /message transcript/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^email$/i })).toHaveAttribute(
-      "aria-pressed",
-      "true",
+      screen.getByRole("link", { name: /get started with sms/i }),
+    ).toHaveAttribute(
+      "href",
+      expect.stringContaining("text-messaging"),
+    );
+    expect(
+      screen.queryByRole("textbox", { name: /^reply$/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("calls the lead phone number", () => {
+    render(
+      <LeadDetail
+        submission={{ ...baseSubmission, senderPhone: "+14255550182" }}
+        members={[]}
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: /^phone$/i })).toHaveAttribute(
+      "href",
+      "tel:+14255550182",
+    );
+  });
+
+  it("offers no call without a phone number", async () => {
+    const user = userEvent.setup();
+    render(
+      <LeadDetail
+        submission={baseSubmission}
+        members={[]}
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("link", { name: /^phone$/i }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^phone$/i }));
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      /no number to call/i,
     );
   });
 
@@ -172,9 +272,9 @@ describe("LeadDetail", () => {
 
     await user.click(screen.getByRole("button", { name: /^details$/i }));
     expect(
-      within(screen.getByRole("complementary", { name: /^details$/i })).getByText(
-        "Followed up by email.",
-      ),
+      within(
+        screen.getByRole("complementary", { name: /^details$/i }),
+      ).getByText("Followed up by email."),
     ).toBeInTheDocument();
   });
 
