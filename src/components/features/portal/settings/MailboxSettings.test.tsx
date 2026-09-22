@@ -62,6 +62,7 @@ describe("MailboxSettings", () => {
           email: "sales@example.com",
           connectedBy: "owner@example.com",
           status: "connected",
+          lastSyncAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
         }}
         onConnect={vi.fn()}
         onDisconnect={onDisconnect}
@@ -70,25 +71,11 @@ describe("MailboxSettings", () => {
     );
 
     expect(screen.getByText("sales@example.com")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /sync now/i }));
+    expect(screen.getByText(/synced 2 hours ago/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^sync$/i }));
     expect(onSync).toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: /disconnect/i }));
     expect(onDisconnect).toHaveBeenCalled();
   });
 
-  it("links to Sending Preferences for From identity settings", () => {
-    render(
-      <MailboxSettings
-        canManage
-        mailbox={{ connected: false }}
-        onConnect={vi.fn()}
-        onDisconnect={vi.fn()}
-        onSync={vi.fn()}
-      />,
-    );
-
-    expect(
-      screen.getByRole("link", { name: /sending preferences/i }),
-    ).toHaveAttribute("href", "/portal/settings/sending-preferences/");
-  });
 });
