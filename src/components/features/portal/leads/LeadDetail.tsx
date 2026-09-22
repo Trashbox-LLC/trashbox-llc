@@ -501,7 +501,8 @@ export function LeadDetail({
               <span
                 key={tag}
                 className={cn(
-                  "inline-flex h-7 items-center gap-1.5 rounded-md pr-1 pl-2.5 text-sm leading-none",
+                  "group inline-flex h-7 max-w-full items-center rounded-md pr-2.5 pl-2.5 text-sm leading-none",
+                  "[@media(hover:hover)]:group-focus-within:pr-1 [@media(hover:hover)]:group-hover:pr-1",
                   color.pill,
                 )}
               >
@@ -515,7 +516,14 @@ export function LeadDetail({
                       tags: tags.filter((entry) => entry !== tag),
                     })
                   }
-                  className="inline-flex size-5 items-center justify-center rounded opacity-70 hover:opacity-100 disabled:opacity-60"
+                  className={cn(
+                    "inline-flex h-5 shrink-0 items-center justify-center overflow-hidden rounded transition-[width,margin,opacity] duration-150",
+                    "[@media(hover:none)]:ml-1 [@media(hover:none)]:w-5 [@media(hover:none)]:opacity-70",
+                    "[@media(hover:hover)]:w-0 [@media(hover:hover)]:opacity-0",
+                    "[@media(hover:hover)]:group-hover:ml-1 [@media(hover:hover)]:group-hover:w-5 [@media(hover:hover)]:group-hover:opacity-100",
+                    "[@media(hover:hover)]:group-focus-within:ml-1 [@media(hover:hover)]:group-focus-within:w-5 [@media(hover:hover)]:group-focus-within:opacity-100",
+                    "disabled:opacity-60",
+                  )}
                 >
                   <MaterialIcon name="close" className="text-sm" />
                 </button>
