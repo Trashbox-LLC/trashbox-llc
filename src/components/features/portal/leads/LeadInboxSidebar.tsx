@@ -374,7 +374,7 @@ export function LeadInboxSidebar({
     >
       <div style={{ width }} className="max-lg:contents lg:pr-1">
         <aside className="max-lg:contents lg:flex lg:flex-col lg:gap-3">
-          <div className="order-2 min-w-0 lg:order-none">
+          <div className="order-1 min-w-0 lg:order-none">
             <LeadInboxFilters
               value={filters}
               members={members}
@@ -385,7 +385,7 @@ export function LeadInboxSidebar({
             />
           </div>
 
-          <div className="order-1 flex min-w-0 flex-col gap-3 lg:order-none">
+          <div className="order-2 flex min-w-0 flex-col gap-3 lg:order-none">
           {showListError && (
             <p className="border-outline-variant/20 bg-surface-container-low text-on-surface-variant border p-4 text-sm">
               {listError}

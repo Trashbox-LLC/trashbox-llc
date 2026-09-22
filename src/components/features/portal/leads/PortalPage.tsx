@@ -285,7 +285,7 @@ export function PortalApp({ tab }: PortalAppProps) {
               </div>
 
               {visibleTabIds.length > 0 && (
-                <div className="order-3 pb-2 lg:col-start-2 lg:row-start-1 lg:order-none">
+                <div className="order-3 max-lg:-mb-8 lg:col-start-2 lg:row-start-1 lg:order-none lg:pb-2">
                   <LeadThreadTabs
                     tabs={visibleTabIds.flatMap((id) => {
                       const item = portal.items.find(

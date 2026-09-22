@@ -97,7 +97,7 @@ export function LeadInboxFilters({
           value={value.q}
           onChange={(event) => onChange({ ...value, q: event.target.value })}
           className="search-clear-muted h-full min-w-0 flex-1 rounded-none border-0 bg-transparent px-2.5 py-0 placeholder:text-outline focus-visible:border-transparent"
-          placeholder="Name, email, or message"
+          placeholder="Search name, email, or message"
         />
         {available.length > 0 && (
           <AddFilterMenu options={available} onAdd={add} />
