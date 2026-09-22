@@ -532,6 +532,8 @@ describe("LeadDetail", () => {
       <LeadDetail
         submission={{
           ...baseSubmission,
+          submissionId: "8e0919d5abcd",
+          senderPhone: "+14255550182",
           formName: "Web application",
           message: "Need a quote",
           metadata: undefined,
@@ -554,6 +556,15 @@ describe("LeadDetail", () => {
     expect(
       within(details).getByText("contact@trashbox.io"),
     ).toBeInTheDocument();
+    expect(within(details).getByText("#8e0919d5")).toBeInTheDocument();
+    expect(within(details).getByText("Ada")).toBeInTheDocument();
+    expect(within(details).getByText("Web application")).toBeInTheDocument();
+    expect(within(details).getByText("(425) 555-0182")).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("region", { name: /^messages$/i })).queryByText(
+        "#8e0919d5",
+      ),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /^Ada$/i })).toBeInTheDocument();
     expect(screen.getByText(/\[Web application\]/)).toBeInTheDocument();
   });

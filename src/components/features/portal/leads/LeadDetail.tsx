@@ -35,6 +35,7 @@ import {
   leadContactLabel,
   visibleReplyText,
 } from "@/lib/lead-messages";
+import { formatPhoneDisplay } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 
 function useStackedLayout() {
@@ -142,6 +143,9 @@ export function LeadDetail({
   const tags = leadTagsOf(submission);
   const notes = leadNotesOf(submission);
   const contactLabel = leadContactLabel(submission);
+  const phoneLabel = submission.senderPhone?.trim()
+    ? formatPhoneDisplay(submission.senderPhone.trim())
+    : null;
   const orderedMessages = sortLeadMessages(messages);
   const latestMessage =
     orderedMessages.length > 0
@@ -311,9 +315,6 @@ export function LeadDetail({
                   />
                   {LEAD_STATUS_LABELS[status]}
                 </span>
-                <span className="font-mono">
-                  #{submission.submissionId.slice(0, 8)}
-                </span>
                 {submission.formName ? (
                   <span>[{submission.formName}]</span>
                 ) : null}
@@ -444,16 +445,44 @@ export function LeadDetail({
           </button>
         </div>
         <dl className="mt-4 space-y-2 border-t border-white/10 pt-4 text-sm leading-5">
+          {submission.senderName.trim() ? (
+            <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3">
+              <dt className="text-outline">Name</dt>
+              <dd className="min-w-0 break-words text-white">
+                {submission.senderName}
+              </dd>
+            </div>
+          ) : null}
+          <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3">
+            <dt className="text-outline">Id</dt>
+            <dd className="font-mono text-white">
+              #{submission.submissionId.slice(0, 8)}
+            </dd>
+          </div>
           {contactLabel ? (
             <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3">
               <dt className="text-outline">From</dt>
               <dd className="min-w-0 break-all text-white">{contactLabel}</dd>
             </div>
           ) : null}
+          {phoneLabel && phoneLabel !== contactLabel ? (
+            <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3">
+              <dt className="text-outline">Phone</dt>
+              <dd className="min-w-0 break-all text-white">{phoneLabel}</dd>
+            </div>
+          ) : null}
           {fromAddress ? (
             <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3">
               <dt className="text-outline">To</dt>
               <dd className="min-w-0 break-all text-white">{fromAddress}</dd>
+            </div>
+          ) : null}
+          {submission.formName?.trim() ? (
+            <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3">
+              <dt className="text-outline">Form</dt>
+              <dd className="min-w-0 break-words text-white">
+                {submission.formName}
+              </dd>
             </div>
           ) : null}
           <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3">
