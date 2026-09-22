@@ -42,6 +42,10 @@ export const EMAIL_TEMPLATE_STARTER_CATEGORIES: readonly EmailTemplateStarterCat
     { id: "notification", label: "Notification" },
   ] as const;
 
+/** Wide photo used by the two-column image starter. */
+export const EMAIL_TEMPLATE_STOCK_IMAGE =
+  "/images/email-templates/two-column-hero.webp";
+
 const PLACEHOLDER_LINE =
   '<div style="height:10px;background:#d4d4d4;border-radius:2px;margin:6px 0;"></div>';
 const PLACEHOLDER_SHORT =
@@ -166,7 +170,7 @@ export const EMAIL_TEMPLATE_STARTERS: readonly EmailTemplateStarter[] = [
       "Image\n\nFirst point\nA short detail.\n\nSecond point\nA short detail.",
     bodyHtml: emailFrame(
       "#1c1917",
-      `<tr><td style="background:#44403c;padding:36px 16px;font-family:Georgia,serif;font-size:22px;line-height:1.2;text-align:center;color:#fafaf9;">Image</td></tr>
+      `<tr><td style="padding:0;line-height:0;font-size:0;"><img src="${EMAIL_TEMPLATE_STOCK_IMAGE}" alt="Sunlit workspace" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;" /></td></tr>
 <tr><td style="padding:6px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
 <tr>

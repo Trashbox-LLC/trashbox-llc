@@ -4,6 +4,7 @@
  */
 
 import { toEmailCssColor } from "@/lib/color";
+import { EMAIL_TEMPLATE_STOCK_IMAGE } from "@/lib/email-template-starters";
 import {
   TEMPLATE_VARIABLES,
   decorateMergeFieldsHtml,
@@ -4249,15 +4250,21 @@ function blocksForStarter(id: string): EmailTemplateBlock[] | null {
         sectionBlock(
           [
             [
-              textColumnItem(
-                `<p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:1.2;text-align:center;color:#fafaf9;">Image</p>`,
-              ),
+              {
+                kind: "image",
+                src: EMAIL_TEMPLATE_STOCK_IMAGE,
+                alt: "Sunlit workspace",
+                ...DEFAULT_IMAGE_STYLE,
+                fit: "fill",
+                align: "center",
+                gapBefore: null,
+              },
             ],
           ],
           {
-            backgroundColor: "#44403c",
-            paddingX: 16,
-            paddingY: 36,
+            backgroundColor: "#ffffff",
+            paddingX: 0,
+            paddingY: 0,
             itemGap: 0,
           },
         ),

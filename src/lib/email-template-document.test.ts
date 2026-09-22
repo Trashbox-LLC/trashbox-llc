@@ -608,8 +608,12 @@ describe("email-template-document", () => {
     );
     expect(imageSection?.type).toBe("columns");
     if (imageSection?.type === "columns") {
-      expect(imageSection.backgroundColor).toBe("#44403c");
-      expect(imageSection.columns[0]).toContain("Image");
+      const items = parseColumnItems(imageSection.columns[0] ?? "");
+      const photo = items.find((item) => item.kind === "image");
+      expect(photo?.kind).toBe("image");
+      if (photo?.kind === "image") {
+        expect(photo.src).toBe("/images/email-templates/two-column-hero.webp");
+      }
     }
     expect(
       image.blocks.some(
