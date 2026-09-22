@@ -5,8 +5,6 @@ import { MaterialIcon } from "@/components/atoms/MaterialIcon";
 import { Select } from "@/components/atoms/Select";
 import { LeadEmailThreadSection } from "@/components/features/portal/leads/LeadEmailThreadSection";
 import type { LeadComposerLibrary } from "@/components/features/portal/leads/LeadEmailThread";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
@@ -465,12 +463,19 @@ export function LeadDetail({
               <dd className="min-w-0 break-all text-white">{contactLabel}</dd>
             </div>
           ) : null}
-          {phoneLabel && phoneLabel !== contactLabel ? (
+          {submission.senderEmail.trim() &&
+          submission.senderEmail.trim() !== contactLabel ? (
             <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3">
-              <dt className="text-outline">Phone</dt>
-              <dd className="min-w-0 break-all text-white">{phoneLabel}</dd>
+              <dt className="text-outline">Email</dt>
+              <dd className="min-w-0 break-all text-white">
+                {submission.senderEmail.trim()}
+              </dd>
             </div>
           ) : null}
+          <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3">
+            <dt className="text-outline">Phone</dt>
+            <dd className="min-w-0 break-all text-white">{phoneLabel ?? "—"}</dd>
+          </div>
           {fromAddress ? (
             <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3">
               <dt className="text-outline">To</dt>
@@ -518,9 +523,6 @@ export function LeadDetail({
         <div className="mt-4 border-t border-white/10 pt-4">
           <p className="text-outline text-sm leading-5">Notes</p>
           <ul className="mt-2 space-y-3">
-            {notes.length === 0 && (
-              <li className="text-on-surface-variant text-sm">No notes yet.</li>
-            )}
             {notes.map((note) => (
               <li key={note.id} className="text-sm">
                 <p className="text-white">{note.body}</p>
@@ -531,7 +533,7 @@ export function LeadDetail({
             ))}
           </ul>
           <form
-            className="mt-3 space-y-2"
+            className="mt-3"
             onSubmit={(event) => {
               event.preventDefault();
               const body = noteDraft.trim();
@@ -539,18 +541,25 @@ export function LeadDetail({
               void onAddNote(body).then(() => setNoteDraft(""));
             }}
           >
-            <Textarea
-              aria-label="Add note"
-              rows={3}
-              value={noteDraft}
-              onChange={(event) => setNoteDraft(event.target.value)}
-              className="border-outline-variant/20 placeholder:text-outline focus-visible:border-primary min-h-0 border px-3 py-2 text-sm"
-              placeholder="Add a note"
-              disabled={busy}
-            />
-            <Button type="submit" disabled={busy || !noteDraft.trim()}>
-              Save note
-            </Button>
+            <div className="border-white/15 flex h-10 items-center rounded-lg border">
+              <input
+                aria-label="Add note"
+                type="text"
+                value={noteDraft}
+                onChange={(event) => setNoteDraft(event.target.value)}
+                placeholder="Add a note"
+                disabled={busy}
+                className="placeholder:text-outline h-full min-w-0 flex-1 bg-transparent px-3 text-sm text-white outline-none disabled:opacity-60"
+              />
+              <button
+                type="submit"
+                aria-label="Save note"
+                disabled={busy || !noteDraft.trim()}
+                className="text-white inline-flex size-10 shrink-0 items-center justify-center disabled:text-outline"
+              >
+                <MaterialIcon name="send" className="text-lg" />
+              </button>
+            </div>
           </form>
         </div>
       </aside>
