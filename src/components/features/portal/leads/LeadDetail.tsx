@@ -6,8 +6,15 @@ import { Select } from "@/components/atoms/Select";
 import { LeadEmailThreadSection } from "@/components/features/portal/leads/LeadEmailThreadSection";
 import type { LeadComposerLibrary } from "@/components/features/portal/leads/LeadEmailThread";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
@@ -104,6 +111,7 @@ interface LeadDetailProps {
     assignedTo?: string | null;
   }) => Promise<void>;
   onAddNote: (body: string) => Promise<void>;
+  onDeleteNote?: (noteId: string) => Promise<void>;
   onSendMessage?: (
     body: string,
     bodyHtml?: string,
@@ -127,6 +135,7 @@ export function LeadDetail({
   composerLibrary,
   onUpdate,
   onAddNote,
+  onDeleteNote,
   onSendMessage,
   onSendSms,
 }: LeadDetailProps) {
@@ -522,16 +531,49 @@ export function LeadDetail({
         ) : null}
         <div className="mt-4 border-t border-white/10 pt-4">
           <p className="text-outline text-sm leading-5">Notes</p>
-          <ul className="mt-2 space-y-3">
+          <TooltipProvider delayDuration={200}>
+          <ul className="mt-2 space-y-2">
             {notes.map((note) => (
-              <li key={note.id} className="text-sm">
-                <p className="text-white">{note.body}</p>
-                <p className="text-outline mt-1 text-xs">
-                  {note.authorEmail} · {formatWhen(note.createdAt)}
-                </p>
+              <li key={note.id} className="flex items-start gap-1 text-sm">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="min-w-0 flex-1 text-white">{note.body}</p>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="left"
+                    sideOffset={8}
+                    className="bg-surface-container-highest text-on-surface border-outline-variant/20 border px-3 py-2 shadow-md"
+                    arrowClassName="fill-surface-container-highest"
+                  >
+                    {note.authorEmail} · {formatWhen(note.createdAt)}
+                  </TooltipContent>
+                </Tooltip>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Note actions"
+                      className="text-outline hover:text-white inline-flex size-7 shrink-0 items-center justify-center rounded-md"
+                    >
+                      <MaterialIcon name="more_vert" className="text-lg" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="border-outline-variant/20 bg-surface-container-high text-on-surface z-[100]"
+                  >
+                    <DropdownMenuItem
+                      disabled={!onDeleteNote || busy}
+                      onSelect={() => void onDeleteNote?.(note.id)}
+                    >
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </li>
             ))}
           </ul>
+          </TooltipProvider>
           <form
             className="mt-3"
             onSubmit={(event) => {

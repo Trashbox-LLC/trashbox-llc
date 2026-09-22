@@ -64,6 +64,7 @@ const meta = {
     members,
     onUpdate: fn().mockResolvedValue(undefined),
     onAddNote: fn().mockResolvedValue(undefined),
+    onDeleteNote: fn().mockResolvedValue(undefined),
   },
 } satisfies Meta<typeof LeadDetail>;
 

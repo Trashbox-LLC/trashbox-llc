@@ -357,6 +357,7 @@ export function PortalApp({ tab }: PortalAppProps) {
                               smsFromPhone={portal.sms?.phoneNumber}
                               onUpdate={portal.onLeadUpdate}
                               onAddNote={portal.onLeadNote}
+                              onDeleteNote={portal.onLeadDeleteNote}
                               onSendMessage={portal.onSendLeadMessage}
                               onSendSms={portal.onSendLeadSms}
                             />

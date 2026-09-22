@@ -475,6 +475,16 @@ export async function addSubmissionNote(
   )) as unknown as Submission;
 }
 
+export async function deleteSubmissionNote(
+  submissionId: string,
+  noteId: string,
+): Promise<Submission> {
+  return (await authFetch(
+    `/submissions/${encodeURIComponent(submissionId)}/notes/${encodeURIComponent(noteId)}`,
+    { method: "DELETE" },
+  )) as unknown as Submission;
+}
+
 export async function getTeam(): Promise<TeamResponse> {
   return (await authFetch("/team")) as unknown as TeamResponse;
 }

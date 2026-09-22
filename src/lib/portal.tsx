@@ -15,6 +15,7 @@ import {
   ApiError,
   acceptTeamInvite,
   addSubmissionNote,
+  deleteSubmissionNote,
   connectMailbox,
   createOrganization,
   createProject,
@@ -188,6 +189,7 @@ export interface PortalContextValue {
     submissionId?: string,
   ) => Promise<void>;
   onLeadNote: (body: string) => Promise<void>;
+  onLeadDeleteNote: (noteId: string) => Promise<void>;
   onSendLeadMessage: (
     body: string,
     bodyHtml?: string,
@@ -262,6 +264,7 @@ export function StubPortalProvider({
     loadMore: portalNoop,
     onLeadUpdate: portalNoop,
     onLeadNote: portalNoop,
+    onLeadDeleteNote: portalNoop,
     onSendLeadMessage: portalNoop,
     onSendLeadSms: portalNoop,
     onMailboxConnect: portalNoop,
@@ -679,6 +682,25 @@ export function PortalProvider({
       } catch (err) {
         setListError(
           err instanceof ApiError ? err.message : "Failed to add note",
+        );
+      } finally {
+        setCrmBusy(false);
+      }
+    },
+    [selectedId, replaceItem],
+  );
+
+  const onLeadDeleteNote = useCallback(
+    async (noteId: string) => {
+      if (!selectedId) return;
+      setCrmBusy(true);
+      setListError(null);
+      try {
+        const updated = await deleteSubmissionNote(selectedId, noteId);
+        replaceItem(updated);
+      } catch (err) {
+        setListError(
+          err instanceof ApiError ? err.message : "Failed to delete note",
         );
       } finally {
         setCrmBusy(false);
@@ -1105,6 +1127,7 @@ export function PortalProvider({
       loadMore,
       onLeadUpdate,
       onLeadNote,
+      onLeadDeleteNote,
       onSendLeadMessage,
       onSendLeadSms,
       onMailboxConnect,
@@ -1156,6 +1179,7 @@ export function PortalProvider({
       loadMore,
       onLeadUpdate,
       onLeadNote,
+      onLeadDeleteNote,
       onSendLeadMessage,
       onSendLeadSms,
       onMailboxConnect,

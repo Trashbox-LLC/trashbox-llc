@@ -86,6 +86,65 @@ describe("LeadDetail", () => {
     );
   });
 
+  it("keeps note author and time behind hover", async () => {
+    const user = userEvent.setup();
+    render(
+      <LeadDetail
+        submission={{
+          ...baseSubmission,
+          notes: [
+            {
+              id: "n1",
+              body: "Followed up by email.",
+              authorEmail: "owner@example.com",
+              createdAt: "2026-07-15T14:00:00.000Z",
+            },
+          ],
+        }}
+        members={[]}
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    const details = screen.getByRole("complementary", { name: /^details$/i });
+    expect(within(details).getByText("Followed up by email.")).toBeInTheDocument();
+    expect(within(details).queryByText("owner@example.com")).not.toBeInTheDocument();
+
+    await user.hover(within(details).getByText("Followed up by email."));
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "owner@example.com",
+    );
+  });
+
+  it("deletes a note from the note menu", async () => {
+    const user = userEvent.setup();
+    const onDeleteNote = vi.fn().mockResolvedValue(undefined);
+    render(
+      <LeadDetail
+        submission={{
+          ...baseSubmission,
+          notes: [
+            {
+              id: "n1",
+              body: "Followed up by email.",
+              authorEmail: "owner@example.com",
+              createdAt: "2026-07-15T14:00:00.000Z",
+            },
+          ],
+        }}
+        members={[]}
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+        onDeleteNote={onDeleteNote}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /note actions/i }));
+    await user.click(screen.getByRole("menuitem", { name: /delete/i }));
+    expect(onDeleteNote).toHaveBeenCalledWith("n1");
+  });
+
   it("shows earlier messages as text from history 2", () => {
     render(
       <LeadDetail

@@ -12,6 +12,7 @@ import { fetchAuthSession } from "aws-amplify/auth";
 import {
   acceptTeamInvite,
   addSubmissionNote,
+  deleteSubmissionNote,
   assigneeIdentity,
   teamMemberWithAccountName,
   createApiKey,
@@ -209,6 +210,28 @@ describe("CRM submissions API", () => {
     expect(fetch).toHaveBeenCalledWith(
       "https://api.trashbox.io/submissions/s1/notes",
       expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("deleteSubmissionNote DELETEs the note", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          clientId: "c1",
+          submissionId: "s1",
+          notes: [],
+        }),
+      }),
+    );
+
+    const result = await deleteSubmissionNote("s1", "n1");
+
+    expect(result.notes).toEqual([]);
+    expect(fetch).toHaveBeenCalledWith(
+      "https://api.trashbox.io/submissions/s1/notes/n1",
+      expect.objectContaining({ method: "DELETE" }),
     );
   });
 });
