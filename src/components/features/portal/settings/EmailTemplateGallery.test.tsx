@@ -172,7 +172,9 @@ describe("EmailTemplateGallery", () => {
       keys: "[MouseRight]",
     });
 
-    expect(screen.getByRole("menuitem", { name: /^edit$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitem", { name: /^edit$/i }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /options for one column/i }),
     ).not.toBeInTheDocument();
@@ -307,7 +309,7 @@ describe("EmailTemplateGallery", () => {
 
     expect(screen.getByTitle("One column preview")).toHaveAttribute(
       "srcdoc",
-      expect.stringContaining("Write your message here."),
+      expect.stringContaining("A clear note"),
     );
   });
 

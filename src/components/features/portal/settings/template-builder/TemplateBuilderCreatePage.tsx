@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PortalSkeleton } from "@/components/features/portal/PortalSkeleton";
 import {
@@ -14,7 +14,7 @@ import {
   type EmailTemplateDocument,
 } from "@/lib/email-template-document";
 import { getStarterById } from "@/lib/email-template-starters";
-import { portalNavigate } from "@/lib/portal-routes";
+import { portalNavigate, portalSearchParam } from "@/lib/portal-routes";
 import {
   TEMPLATE_BUILDER_DRAFT_STORAGE_KEY,
   settingsSectionPath,
@@ -33,7 +33,10 @@ function readDraft(): TemplateBuilderDraftPayload | null {
   }
 }
 
-function resolveInitial(starterId: string, useDraft: boolean): {
+function resolveInitial(
+  starterId: string,
+  useDraft: boolean,
+): {
   name: string;
   subject: string;
   document: EmailTemplateDocument;
@@ -61,14 +64,52 @@ function resolveInitial(starterId: string, useDraft: boolean): {
   return { name: "", subject: "", document: defaultDocument() };
 }
 
+function readCreateQuery(
+  routerStarter: string,
+  routerDraft: boolean,
+): {
+  starterId: string;
+  useDraft: boolean;
+} {
+  return {
+    starterId: portalSearchParam("starter", routerStarter),
+    useDraft:
+      portalSearchParam("draft", routerDraft ? "1" : "") === "1" || routerDraft,
+  };
+}
+
 function TemplateBuilderCreateInner(): React.ReactElement {
   const searchParams = useSearchParams();
-  const starterId = searchParams.get("starter")?.trim() ?? "";
-  const useDraft = searchParams.get("draft") === "1";
-
-  const [initial] = useState(() => resolveInitial(starterId, useDraft));
+  const routerStarter = searchParams.get("starter")?.trim() ?? "";
+  const routerDraft = searchParams.get("draft") === "1";
+  const [query, setQuery] = useState(() =>
+    typeof window === "undefined"
+      ? null
+      : readCreateQuery(routerStarter, routerDraft),
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const next = readCreateQuery(routerStarter, routerDraft);
+    setQuery((current) =>
+      current &&
+      current.starterId === next.starterId &&
+      current.useDraft === next.useDraft
+        ? current
+        : next,
+    );
+  }, [routerDraft, routerStarter]);
+
+  const initial = useMemo(
+    () =>
+      query
+        ? resolveInitial(query.starterId, query.useDraft)
+        : { name: "", subject: "", document: defaultDocument() },
+    [query],
+  );
+
+  if (!query) return <PortalSkeleton />;
 
   function goList() {
     portalNavigate(settingsSectionPath("templates"));
@@ -104,14 +145,14 @@ function TemplateBuilderCreateInner(): React.ReactElement {
 
   return (
     <EmailTemplateBuilder
-      key={`${starterId}-${useDraft ? "draft" : "starter"}`}
+      key={`${query.starterId}-${query.useDraft ? "draft" : "starter"}`}
       initialName={initial.name}
       initialSubject={initial.subject}
       initialDocument={initial.document}
       busy={busy}
       error={error}
       onSave={onSave}
-      onCancel={starterId || useDraft ? goGallery : goList}
+      onCancel={query.starterId || query.useDraft ? goGallery : goList}
       className="h-full min-h-0 border-0"
     />
   );

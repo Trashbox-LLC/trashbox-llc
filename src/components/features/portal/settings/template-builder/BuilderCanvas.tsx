@@ -12,6 +12,7 @@ import type {
   EmailTemplateDocument,
   EmailTemplatePageBand,
 } from "@/lib/email-template-document";
+import { decorateMergeFieldsHtml } from "@/lib/email-content";
 import {
   documentContentPaddingStyle,
   documentPageBackgroundStyle,
@@ -63,10 +64,7 @@ export interface BuilderCanvasProps {
     columnIndex: number,
   ) => void;
   selectedImageTextChild?: "image" | "text" | null;
-  onSelectImageTextChild?: (
-    blockId: string,
-    child: "image" | "text",
-  ) => void;
+  onSelectImageTextChild?: (blockId: string, child: "image" | "text") => void;
   selectedPageBand?: "header" | "footer" | null;
   onSelectPageBand?: (band: "header" | "footer" | null) => void;
   onChangePageBand?: (
@@ -182,8 +180,7 @@ function PageBandEditor({
         }
       : {
           borderTopWidth: band.borderWidth,
-          borderTopStyle:
-            band.borderWidth > 0 ? ("solid" as const) : undefined,
+          borderTopStyle: band.borderWidth > 0 ? ("solid" as const) : undefined,
           borderTopColor: band.borderColor,
         };
 
@@ -208,9 +205,7 @@ function PageBandEditor({
         const target = event.target as HTMLElement | null;
         if (
           target?.isContentEditable ||
-          target?.closest?.(
-            '[contenteditable="true"], input, textarea, select',
-          )
+          target?.closest?.('[contenteditable="true"], input, textarea, select')
         ) {
           return;
         }
@@ -221,12 +216,12 @@ function PageBandEditor({
         }
       }}
       className={cn(
-        "relative rounded-none text-[#18181b] transition-colors",
+        "relative rounded-none transition-colors",
         role === "footer" && "mt-0",
         selected
-          ? "outline-2 outline-sky-500 -outline-offset-1"
+          ? "outline-2 -outline-offset-1 outline-sky-500"
           : hovered
-            ? "outline-1 outline-sky-500/40 -outline-offset-1"
+            ? "outline-1 -outline-offset-1 outline-sky-500/40"
             : "outline-none",
       )}
       style={{
@@ -266,15 +261,18 @@ function PageBandEditor({
             toolbarOverlay
             acceptMergeFieldDrops
             className="border-0 bg-transparent"
-            editorClassName="min-h-[2.5rem] min-w-0 select-text break-words [overflow-wrap:anywhere] px-0 py-0 text-[15px] leading-relaxed text-[#18181b]"
+            editorClassName="min-h-[2.5rem] min-w-0 select-text break-words [overflow-wrap:anywhere] px-0 py-0 leading-relaxed"
           />
         </div>
       ) : (
         <div
-          className="min-w-0 break-words [overflow-wrap:anywhere] px-0 py-0 text-[15px] leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: band.html || "<p><br /></p>" }}
+          className="min-w-0 px-0 py-0 leading-relaxed [overflow-wrap:anywhere] break-words"
+          dangerouslySetInnerHTML={{
+            __html: decorateMergeFieldsHtml(band.html || "<p><br /></p>"),
+          }}
         />
-      )}    </div>
+      )}{" "}
+    </div>
   );
 }
 
@@ -412,21 +410,22 @@ export function BuilderCanvas({
       <style>{`
         [data-tb-merge], .tb-merge-field {
           display: inline;
-          border: 1px solid #0ea5e9;
-          background: #e0f2fe;
-          color: #0369a1;
-          border-radius: 4px;
-          padding: 0 0.35em;
-          margin: 0 0.1em;
-          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-          font-size: 0.92em;
-          line-height: 1.4;
-          box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.2);
+          border: 0;
+          border-bottom: 1px dotted currentColor;
+          background: transparent;
+          color: inherit;
+          border-radius: 0;
+          padding: 0;
+          margin: 0;
+          font: inherit;
+          letter-spacing: inherit;
+          text-transform: inherit;
+          line-height: inherit;
+          box-shadow: none;
           white-space: nowrap;
         }
         [data-tb-merge]:hover, .tb-merge-field:hover {
-          background: #bae6fd;
-          box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.45);
+          border-bottom-style: solid;
         }
         /* Override site-wide white selection so text is visible on the white paper. */
         [data-tb-selection="invert"]::selection,
@@ -441,8 +440,8 @@ export function BuilderCanvas({
           color: inherit;
         }
       `}</style>
-      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-zinc-300/80 bg-surface-container-high px-3 py-1.5">
-        <label className="font-label flex items-center text-[10px] uppercase tracking-widest text-outline">
+      <div className="bg-surface-container-high flex shrink-0 flex-wrap items-center gap-3 border-b border-zinc-300/80 px-3 py-1.5">
+        <label className="font-label text-outline flex items-center text-[10px] tracking-widest uppercase">
           Background
           <input
             type="color"
@@ -451,7 +450,7 @@ export function BuilderCanvas({
             onChange={(event) =>
               onChangeDocument({ backgroundColor: event.target.value })
             }
-            className="ml-2 h-7 w-8 cursor-pointer border border-outline-variant/30 bg-transparent"
+            className="border-outline-variant/30 ml-2 h-7 w-8 cursor-pointer border bg-transparent"
           />
         </label>
       </div>
@@ -481,14 +480,17 @@ export function BuilderCanvas({
         <div className="relative mx-auto w-full max-w-[600px]">
           <div
             className={cn(
-              "relative box-border w-full min-w-0 overflow-visible break-words [overflow-wrap:anywhere] text-[#18181b]",
+              "relative box-border w-full min-w-0 overflow-visible [overflow-wrap:anywhere] break-words text-[#18181b]",
               "shadow-[0_8px_30px_rgba(0,0,0,0.12)] ring-1 ring-black/5",
               dropIndex != null && "ring-2 ring-sky-500",
             )}
             style={{
               backgroundColor: doc.contentBackgroundColor || "#ffffff",
               maxWidth: 600,
-              ...margins,
+              paddingTop: 0,
+              paddingRight: 0,
+              paddingBottom: 0,
+              paddingLeft: 0,
             }}
             onClick={(event) => event.stopPropagation()}
             data-testid="template-paper-page"
@@ -510,7 +512,12 @@ export function BuilderCanvas({
               </div>
             ) : null}
 
-            <div ref={listRef} className="space-y-0">
+            <div
+              ref={listRef}
+              className="space-y-0"
+              style={margins}
+              data-testid="template-content-pad"
+            >
               <div className="relative h-0">
                 {dropPlacement && dropPlacement.index === 0 ? (
                   <InsertIndicator
@@ -558,9 +565,7 @@ export function BuilderCanvas({
                           : undefined
                       }
                       selectedColumnItem={
-                        selectedBlockId === block.id
-                          ? selectedColumnItem
-                          : null
+                        selectedBlockId === block.id ? selectedColumnItem : null
                       }
                       onSelectColumnItem={(selection) => {
                         onSelectPageBand?.(null);
@@ -576,9 +581,7 @@ export function BuilderCanvas({
                         onSelectColumn?.(block.id, columnIndex);
                       }}
                       selectedGridCell={
-                        selectedBlockId === block.id
-                          ? selectedGridCell
-                          : null
+                        selectedBlockId === block.id ? selectedGridCell : null
                       }
                       onSelectGridCell={(rowIndex, columnIndex) => {
                         onSelectPageBand?.(null);
@@ -597,14 +600,10 @@ export function BuilderCanvas({
                   </div>
                   {index < doc.blocks.length - 1 ? (
                     <BlockGap>
-                      {dropPlacement &&
-                      dropPlacement.index === index + 1 ? (
+                      {dropPlacement && dropPlacement.index === index + 1 ? (
                         <InsertIndicator
                           index={index + 1}
-                          label={insertSlotLabel(
-                            dropPlacement,
-                            doc.blocks,
-                          )}
+                          label={insertSlotLabel(dropPlacement, doc.blocks)}
                         />
                       ) : null}
                     </BlockGap>
@@ -612,8 +611,7 @@ export function BuilderCanvas({
                 </div>
               ))}
               <div className="relative h-0">
-                {dropPlacement &&
-                dropPlacement.index === doc.blocks.length ? (
+                {dropPlacement && dropPlacement.index === doc.blocks.length ? (
                   <InsertIndicator
                     index={doc.blocks.length}
                     label={insertSlotLabel(dropPlacement, doc.blocks)}

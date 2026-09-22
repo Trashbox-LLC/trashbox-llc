@@ -12,8 +12,11 @@ import {
   emptyDocument,
   appendBlock,
   appendVariant,
+  documentFromStarter,
   insertVariantIntoColumn,
 } from "@/lib/email-template-document";
+import { PREVIEW_SAMPLE_CONTEXT } from "@/lib/email-content";
+import { getStarterById } from "@/lib/email-template-starters";
 import {
   TB_BLOCK_MIME,
   TB_MERGE_MIME,
@@ -88,10 +91,16 @@ describe("EmailTemplateBuilder", () => {
     const rightMargin = within(inspector).getByLabelText(/^right$/i);
     await user.clear(rightMargin);
     await user.type(rightMargin, "12");
-    const paper = screen.getByTestId("template-paper-page");
-    expect(paper).toHaveStyle({
+    const content = screen.getByTestId("template-content-pad");
+    expect(content).toHaveStyle({
       paddingTop: "40px",
       paddingRight: "12px",
+      paddingBottom: "0px",
+      paddingLeft: "0px",
+    });
+    expect(screen.getByTestId("template-paper-page")).toHaveStyle({
+      paddingTop: "0px",
+      paddingRight: "0px",
       paddingBottom: "0px",
       paddingLeft: "0px",
     });
@@ -230,7 +239,10 @@ describe("EmailTemplateBuilder", () => {
     const topMargin = within(inspector).getByLabelText(/^top$/i);
     await user.clear(topMargin);
     await user.type(topMargin, "48");
-    expect(paper).toHaveStyle({ paddingTop: "48px" });
+    expect(screen.getByTestId("template-content-pad")).toHaveStyle({
+      paddingTop: "48px",
+    });
+    expect(paper).toHaveStyle({ paddingTop: "0px" });
   });
 
   it("adds header and footer from the page folder", async () => {
@@ -499,8 +511,12 @@ describe("EmailTemplateBuilder", () => {
     ).not.toBeInTheDocument();
     expect(screen.queryByText(/left column/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/details go here/i)).not.toBeInTheDocument();
-    expect(screen.queryByPlaceholderText(/column text/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/drop a component here/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByPlaceholderText(/column text/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/drop a component here/i),
+    ).not.toBeInTheDocument();
   });
 
   it("exposes layout chrome controls for columns on the inspector", async () => {
@@ -559,10 +575,14 @@ describe("EmailTemplateBuilder", () => {
     await user.click(screen.getByTestId("builder-column-delete-0"));
 
     expect(screen.getByTestId("builder-block-wrap-0")).toBeInTheDocument();
-    expect(screen.queryByTestId("builder-block-wrap-1")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("builder-block-wrap-1"),
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId("builder-columns-grid")).toBeInTheDocument();
     expect(screen.getByTestId("builder-column-drop-0")).toBeInTheDocument();
-    expect(screen.queryByTestId("builder-column-drop-1")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("builder-column-drop-1"),
+    ).not.toBeInTheDocument();
   });
 
   it("accepts a palette variant dropped onto the empty page", async () => {
@@ -1338,6 +1358,34 @@ describe("EmailTemplateBuilder", () => {
     });
     expect(payload.bodyHtml).toContain('data-tb-doc="1"');
     expect(payload.bodyHtml).toContain('data-tb-block="text"');
+  });
+
+  it("fills merge fields with sample values in preview", async () => {
+    const user = userEvent.setup();
+    const starter = getStarterById("followup-check-in");
+    if (!starter) throw new Error("missing starter");
+
+    render(
+      <EmailTemplateBuilder
+        initialName={starter.name}
+        initialSubject="Quote from {{business.name}}"
+        initialDocument={documentFromStarter(starter)}
+        onSave={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /^preview$/i }));
+
+    const iframe = screen.getByTitle("Template preview") as HTMLIFrameElement;
+    const business = PREVIEW_SAMPLE_CONTEXT.business?.name ?? "";
+    expect(iframe.srcdoc).toContain(business);
+    expect(iframe.srcdoc).not.toContain("{{business.name}}");
+    expect(iframe.srcdoc).not.toContain("{{lead.first_name}}");
+    expect(iframe.srcdoc).not.toContain("{{sender.email}}");
+    expect(screen.getByLabelText(/^subject$/i)).toHaveValue(
+      `Quote from ${business}`,
+    );
   });
 
   it("toggles preview mode", async () => {

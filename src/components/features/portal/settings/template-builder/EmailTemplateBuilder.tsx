@@ -37,7 +37,7 @@ import {
   type EmailTemplatePageBand,
   type ImageTextImageChild,
 } from "@/lib/email-template-document";
-import { isMergeFieldVariant } from "@/lib/email-content";
+import { isMergeFieldVariant, renderPreviewTemplate } from "@/lib/email-content";
 import type { BuilderDragPayload } from "@/lib/email-template-dnd";
 import {
   selectBlock,
@@ -370,8 +370,13 @@ export function EmailTemplateBuilder({
               </Label>
               <Input
                 id="builder-subject"
-                value={subject}
+                value={
+                  viewMode === "preview"
+                    ? renderPreviewTemplate(subject)
+                    : subject
+                }
                 onChange={(event) => setSubject(event.target.value)}
+                readOnly={viewMode === "preview"}
                 disabled={busy}
                 placeholder="Email subject"
                 className="py-2"

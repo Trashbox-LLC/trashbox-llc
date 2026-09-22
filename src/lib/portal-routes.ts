@@ -211,6 +211,25 @@ export function isLegacyPortalProductPath(
   );
 }
 
+/**
+ * Read a query param from the address bar.
+ * Soft navigation writes the query with history.pushState, which Next's
+ * useSearchParams does not observe. Pass the router value as a fallback for
+ * full page loads.
+ */
+export function portalSearchParam(
+  name: string,
+  fallback?: string | null,
+): string {
+  if (typeof window !== "undefined") {
+    const fromLocation = new URLSearchParams(window.location.search)
+      .get(name)
+      ?.trim();
+    if (fromLocation) return fromLocation;
+  }
+  return fallback?.trim() ?? "";
+}
+
 export function portalNavigate(
   path: string,
   options?: { replace?: boolean },

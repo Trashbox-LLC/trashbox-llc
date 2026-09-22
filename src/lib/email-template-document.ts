@@ -1340,9 +1340,7 @@ export function parseBoxChromeFromEl(el: Element): BoxChromeFields {
   };
 }
 
-export function blockHasBoxChrome(
-  block: EmailTemplateBlock,
-): boolean {
+export function blockHasBoxChrome(block: EmailTemplateBlock): boolean {
   return (
     block.type === "text" ||
     block.type === "html" ||
@@ -1366,7 +1364,8 @@ export function getBlockBoxChrome(
     block.type === "imageText"
   ) {
     return {
-      backgroundColor: block.backgroundColor ?? DEFAULT_BOX_CHROME.backgroundColor,
+      backgroundColor:
+        block.backgroundColor ?? DEFAULT_BOX_CHROME.backgroundColor,
       borderWidth: block.borderWidth ?? 0,
       borderColor: block.borderColor ?? DEFAULT_BOX_CHROME.borderColor,
       borderRadius: block.borderRadius ?? 0,
@@ -1575,7 +1574,8 @@ function serializeBlock(block: EmailTemplateBlock): string {
             : widths[index]!;
         return `<td width="${cellWidth}%" valign="${valign}" data-tb-col="${index}" style="${style}">${cellHtml}</td>`;
       }).join("");
-      const innerWidth = widthSum < 100 ? Math.max(1, Math.min(100, widthSum)) : 100;
+      const innerWidth =
+        widthSum < 100 ? Math.max(1, Math.min(100, widthSum)) : 100;
       const columnsTable = `<table role="presentation" width="${innerWidth}%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;"><tr>${cells}</tr></table>`;
       const table =
         widthSum < 100
@@ -1687,20 +1687,19 @@ export function documentToEmailHtml(doc: EmailTemplateDocument): string {
 
   const parts: string[] = [];
   if (doc.header) {
-    parts.push(
-      wrapContentColumn(serializePageBand(doc.header, "header"), horizontalPad),
-    );
+    parts.push(wrapContentColumn(serializePageBand(doc.header, "header")));
   }
-  for (const block of doc.blocks) {
-    parts.push(wrapContentColumn(serializeBlock(block), horizontalPad));
-  }
+  const blocks = doc.blocks
+    .map((block) => wrapContentColumn(serializeBlock(block)))
+    .join("");
+  parts.push(
+    `<div data-tb-content-pad="1" style="${horizontalPad ? `${horizontalPad};` : ""}${verticalPad}">${blocks}</div>`,
+  );
   if (doc.footer) {
-    parts.push(
-      wrapContentColumn(serializePageBand(doc.footer, "footer"), horizontalPad),
-    );
+    parts.push(wrapContentColumn(serializePageBand(doc.footer, "footer")));
   }
 
-  return `<div data-tb-doc="1"${documentChromeAttrs(doc)} style="${documentPageBackgroundCss(doc)};padding:0;"><div data-tb-canvas="1" style="background:${escapeAttr(contentBg)};${verticalPad}box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;color:#18181b;">${parts.join("")}</div></div>`;
+  return `<div data-tb-doc="1"${documentChromeAttrs(doc)} style="${documentPageBackgroundCss(doc)};padding:0;"><div data-tb-canvas="1" style="background:${escapeAttr(contentBg)};box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;color:#18181b;">${parts.join("")}</div></div>`;
 }
 
 export function documentToPlainText(doc: EmailTemplateDocument): string {
@@ -2145,7 +2144,7 @@ export function parseDocumentFromHtml(
 
   const blockEls = Array.from(
     (docEl ?? root).querySelectorAll(
-      ":scope > [data-tb-block], [data-tb-doc] > div > [data-tb-block], [data-tb-content-col] > [data-tb-block]",
+      ":scope > [data-tb-block], [data-tb-doc] > div > [data-tb-block], [data-tb-content-col] > [data-tb-block], [data-tb-content-pad] > [data-tb-content-col] > [data-tb-block]",
     ),
   );
 
@@ -2156,7 +2155,7 @@ export function parseDocumentFromHtml(
   const nested = canvas
     ? Array.from(
         canvas.querySelectorAll(
-          ":scope > [data-tb-block], :scope > [data-tb-content-col] > [data-tb-block]",
+          ":scope > [data-tb-block], :scope > [data-tb-content-col] > [data-tb-block], :scope > [data-tb-content-pad] > [data-tb-content-col] > [data-tb-block]",
         ),
       )
     : [];
@@ -2988,10 +2987,7 @@ export function removeColumn(
     return removeBlock(doc, blockId);
   }
 
-  const widths = resolveColumnWidths(
-    block.columnWidths,
-    block.columns.length,
-  );
+  const widths = resolveColumnWidths(block.columnWidths, block.columns.length);
   const nextColumns = block.columns.filter((_, index) => index !== columnIndex);
   const nextWidths = widths.filter((_, index) => index !== columnIndex);
   const widthSum = nextWidths.reduce((total, value) => total + value, 0);
@@ -3799,7 +3795,10 @@ export function createBlocksFromVariant(
 ): EmailTemplateBlock[] {
   switch (variantId) {
     case "sections-100-50-50":
-      return [createColumnsBlockFromWidths([100]), createColumnsBlockFromWidths([50, 50])];
+      return [
+        createColumnsBlockFromWidths([100]),
+        createColumnsBlockFromWidths([50, 50]),
+      ];
     case "sections-50-50-50-50":
       return [
         createColumnsBlockFromWidths([50, 50]),
@@ -4037,6 +4036,381 @@ export function createBlockFromVariant(variantId: string): EmailTemplateBlock {
   }
 }
 
+function textColumnItem(
+  html: string,
+  gapBefore: number | null = null,
+): ColumnTextItem {
+  return { kind: "text", html, gapBefore };
+}
+
+function buttonColumnItem(label: string, color: string): ColumnButtonItem {
+  return {
+    kind: "button",
+    label,
+    href: "mailto:{{sender.email}}",
+    align: "left",
+    ...DEFAULT_BUTTON_STYLE,
+    backgroundColor: color,
+    borderColor: color,
+    borderRadius: 8,
+    fontWeight: "700",
+    paddingX: 18,
+    paddingY: 12,
+    gapBefore: null,
+  };
+}
+
+function sectionBlock(
+  columns: ColumnItem[][],
+  options?: {
+    backgroundColor?: string;
+    paddingX?: number;
+    paddingY?: number;
+    itemGap?: number;
+  },
+): EmailTemplateColumnsBlock {
+  return {
+    id: createBlockId(),
+    type: "columns",
+    columns: columns.map((items) =>
+      serializeColumnItems(items, options?.itemGap ?? 12),
+    ),
+    columnWidths: equalColumnWidths(columns.length),
+    columnGap: 16,
+    itemGap: options?.itemGap ?? 12,
+    ...DEFAULT_LAYOUT_CHROME,
+    backgroundColor: options?.backgroundColor ?? "transparent",
+    paddingX: options?.paddingX ?? DEFAULT_LAYOUT_CHROME.paddingX,
+    paddingY: options?.paddingY ?? DEFAULT_LAYOUT_CHROME.paddingY,
+    ...AUTO_SIZE,
+  };
+}
+
+const CARD_CANVAS = "#f4f1ea";
+
+const STARTER_ACCENT: Record<string, string> = {
+  "basic-one-column": "#1c1917",
+  "basic-two-column": "#1c1917",
+  "basic-two-column-image": "#1c1917",
+  "followup-check-in": "#c2410c",
+  "followup-no-answer": "#9a3412",
+  "welcome-thanks": "#0f766e",
+  "welcome-intro": "#115e59",
+  "quotes-pricing": "#1d4ed8",
+  "quotes-ready": "#1e40af",
+  "notification-next-step": "#6d28d9",
+  "notification-appointment": "#5b21b6",
+};
+
+function cardSection(columns: ColumnItem[][]): EmailTemplateColumnsBlock {
+  return sectionBlock(columns, {
+    backgroundColor: "#ffffff",
+    paddingX: 16,
+    paddingY: 16,
+    itemGap: 0,
+  });
+}
+
+function starterShell(
+  accent: string,
+  blocks: EmailTemplateBlock[],
+): EmailTemplateDocument {
+  return {
+    ...defaultDocumentChrome(CARD_CANVAS),
+    contentBackgroundColor: CARD_CANVAS,
+    pageMarginTop: 8,
+    pageMarginRight: 10,
+    pageMarginBottom: 12,
+    pageMarginLeft: 10,
+    header: {
+      html: `<p style="margin:0;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#ffffff;">{{business.name}}</p>`,
+      backgroundColor: accent,
+      paddingX: 18,
+      paddingY: 16,
+      borderWidth: 0,
+      borderColor: accent,
+      align: "left",
+    },
+    blocks,
+  };
+}
+
+function starterTable(
+  rows: string[][],
+  headerBackgroundColor: string,
+): EmailTemplateTableBlock {
+  return {
+    id: createBlockId(),
+    type: "table",
+    rows,
+    ...DEFAULT_TABLE_STYLE,
+    headerBackgroundColor,
+    headerTextColor: "#ffffff",
+    boxChrome: { ...DEFAULT_BOX_CHROME },
+    ...AUTO_SIZE,
+  };
+}
+
+const HEADING_STYLE =
+  "margin:0;font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.15;color:#1c1917;";
+
+function letterItems(input: {
+  accent: string;
+  kicker: string;
+  heading: string;
+  paragraphs: string[];
+  button?: string;
+}): ColumnItem[] {
+  const items: ColumnItem[] = [
+    textColumnItem(
+      `<p style="margin:0;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#8a8175;">${input.kicker}</p>`,
+    ),
+    textColumnItem(`<p style="${HEADING_STYLE}">${input.heading}</p>`, 6),
+    ...input.paragraphs.map((html) =>
+      textColumnItem(
+        `<div style="font-size:15px;line-height:1.5;color:#44403c;">${html}</div>`,
+        10,
+      ),
+    ),
+  ];
+  if (input.button) {
+    items.push({
+      ...buttonColumnItem(input.button, input.accent),
+      gapBefore: 16,
+    });
+  }
+  items.push(
+    textColumnItem(
+      `<p style="margin:0;font-size:14px;line-height:1.45;color:#1c1917;">{{sender.name}}<br /><span style="color:#8a8175;">{{sender.email}}</span></p>`,
+      18,
+    ),
+  );
+  return items;
+}
+
+function pointColumn(
+  index: string,
+  title: string,
+  detail: string,
+  kickerColor: string,
+): ColumnItem[] {
+  return [
+    textColumnItem(
+      `<p style="margin:0;font-size:12px;letter-spacing:1.4px;color:${kickerColor};">${index}</p>`,
+    ),
+    textColumnItem(
+      `<p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:1.15;color:#1c1917;">${title}</p>`,
+      8,
+    ),
+    textColumnItem(
+      `<p style="margin:0;font-size:14px;line-height:1.45;color:#44403c;">${detail}</p>`,
+      8,
+    ),
+  ];
+}
+
+/** Known gallery starters as text, button, image, and table blocks. */
+function blocksForStarter(id: string): EmailTemplateBlock[] | null {
+  switch (id) {
+    case "basic-one-column":
+      return [
+        cardSection([
+          letterItems({
+            accent: "#1c1917",
+            kicker: "Note",
+            heading: "A clear note",
+            paragraphs: [
+              `<p style="margin:0;">Say what matters in the first line.</p>`,
+              `<p style="margin:0;">Add the detail underneath, then invite a reply.</p>`,
+            ],
+            button: "Continue",
+          }),
+        ]),
+      ];
+    case "basic-two-column":
+      return [
+        cardSection([
+          pointColumn(
+            "01",
+            "First point",
+            "A short detail the reader can scan.",
+            "#c2410c",
+          ),
+          pointColumn(
+            "02",
+            "Second point",
+            "A matching detail beside it.",
+            "#57534e",
+          ),
+        ]),
+      ];
+    case "basic-two-column-image":
+      return [
+        sectionBlock(
+          [
+            [
+              textColumnItem(
+                `<p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:1.2;text-align:center;color:#fafaf9;">Image</p>`,
+              ),
+            ],
+          ],
+          {
+            backgroundColor: "#44403c",
+            paddingX: 16,
+            paddingY: 36,
+            itemGap: 0,
+          },
+        ),
+        cardSection([
+          pointColumn(
+            "01",
+            "First point",
+            "A short detail under the image.",
+            "#1c1917",
+          ),
+          pointColumn(
+            "02",
+            "Second point",
+            "A matching detail beside it.",
+            "#1c1917",
+          ),
+        ]),
+      ];
+    case "followup-check-in":
+      return [
+        cardSection([
+          letterItems({
+            accent: "#c2410c",
+            kicker: "Follow-up",
+            heading: "Still here if you need us",
+            paragraphs: [
+              `<p style="margin:0;">Hi {{lead.first_name}}, just checking in on your note to {{business.name}}. Happy to answer questions or help with the next step.</p>`,
+            ],
+            button: "Reply",
+          }),
+        ]),
+      ];
+    case "followup-no-answer":
+      return [
+        cardSection([
+          letterItems({
+            accent: "#9a3412",
+            kicker: "Missed you",
+            heading: "We tried reaching you",
+            paragraphs: [
+              `<p style="margin:0;">Hi {{lead.first_name}}, we tried you on {{date.today}} and missed you. Reply when you have a moment and we'll find a time.</p>`,
+            ],
+            button: "Pick a time",
+          }),
+        ]),
+      ];
+    case "welcome-thanks":
+      return [
+        cardSection([
+          letterItems({
+            accent: "#0f766e",
+            kicker: "Welcome",
+            heading: "Thanks for reaching out",
+            paragraphs: [
+              `<p style="margin:0;">Hi {{lead.first_name}}, thanks for writing {{business.name}}. We have your message and will reply shortly.</p>`,
+            ],
+            button: "Add a detail",
+          }),
+        ]),
+      ];
+    case "welcome-intro":
+      return [
+        cardSection([
+          letterItems({
+            accent: "#115e59",
+            kicker: "Hello",
+            heading: "Welcome in",
+            paragraphs: [
+              `<p style="margin:0;">Hi {{lead.first_name}}, welcome to {{business.name}}. Tell us what you need and we'll point you the right way.</p>`,
+            ],
+            button: "Tell us more",
+          }),
+        ]),
+      ];
+    case "quotes-pricing":
+      return [
+        cardSection([
+          letterItems({
+            accent: "#1d4ed8",
+            kicker: "Quote",
+            heading: "Your quote",
+            paragraphs: [
+              `<p style="margin:0;">Hi {{lead.first_name}}, here is what {{business.name}} can offer.</p>`,
+            ],
+          }).slice(0, -1),
+        ]),
+        starterTable(
+          [
+            ["Service", "[describe]"],
+            ["Estimate", "[amount]"],
+          ],
+          "#1d4ed8",
+        ),
+        cardSection([
+          [
+            buttonColumnItem("Accept quote", "#1d4ed8"),
+            textColumnItem(
+              `<p style="margin:0;font-size:14px;line-height:1.45;color:#1c1917;">{{sender.name}}<br /><span style="color:#8a8175;">{{sender.email}}</span></p>`,
+            ),
+          ],
+        ]),
+      ];
+    case "quotes-ready":
+      return [
+        cardSection([
+          letterItems({
+            accent: "#1e40af",
+            kicker: "Ready",
+            heading: "Your quote is ready",
+            paragraphs: [
+              `<p style="margin:0;">Hi {{lead.first_name}}, your quote from {{business.name}} is ready. Reply if anything looks off, or if you want to move ahead.</p>`,
+            ],
+            button: "Review quote",
+          }),
+        ]),
+      ];
+    case "notification-next-step":
+      return [
+        cardSection([
+          letterItems({
+            accent: "#6d28d9",
+            kicker: "Next steps",
+            heading: "Here's what's next",
+            paragraphs: [
+              `<p style="margin:0;">Hi {{lead.first_name}}, a short list from {{business.name}}.</p>`,
+              `<p style="margin:0;"><span style="color:#6d28d9;font-family:Georgia,'Times New Roman',serif;">1</span> [Step one]</p>`,
+              `<p style="margin:0;"><span style="color:#6d28d9;font-family:Georgia,'Times New Roman',serif;">2</span> [Step two]</p>`,
+              `<p style="margin:0;"><span style="color:#6d28d9;font-family:Georgia,'Times New Roman',serif;">3</span> [Step three]</p>`,
+            ],
+          }),
+        ]),
+      ];
+    case "notification-appointment":
+      return [
+        cardSection([
+          letterItems({
+            accent: "#5b21b6",
+            kicker: "Confirmed",
+            heading: "You're on the calendar",
+            paragraphs: [
+              `<p style="margin:0;">Hi {{lead.first_name}}, this confirms your time with {{business.name}}.</p>`,
+              `<p style="margin:0;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:#6d28d9;">When</p>`,
+              `<p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#1c1917;">[date/time]</p>`,
+            ],
+            button: "Reschedule",
+          }),
+        ]),
+      ];
+    default:
+      return null;
+  }
+}
+
 /** Convert a gallery starter into an editable block document. */
 export function documentFromStarter(input: {
   id: string;
@@ -4051,35 +4425,16 @@ export function documentFromStarter(input: {
     return defaultDocument();
   }
 
-  if (
-    input.id === "basic-two-column" ||
-    input.id === "basic-two-column-image"
-  ) {
-    const doc = emptyDocument();
-    const columnsBlock = createDefaultBlock("columns");
-    if (columnsBlock.type !== "columns") {
-      throw new Error("Expected columns block from createDefaultBlock");
-    }
-    const twoColumnBlock: EmailTemplateColumnsBlock = {
-      ...columnsBlock,
-      columns: [
-        "<p><strong>Left column</strong></p><p>Details go here.</p>",
-        "<p><strong>Right column</strong></p><p>Details go here.</p>",
-      ],
-    };
-    if (input.id === "basic-two-column-image") {
-      return {
-        ...doc,
-        blocks: [createDefaultBlock("image"), twoColumnBlock],
-      };
-    }
-    return {
-      ...doc,
-      blocks: [twoColumnBlock],
-    };
+  const designed = blocksForStarter(input.id);
+  if (designed) {
+    return starterShell(STARTER_ACCENT[input.id] ?? "#1c1917", designed);
   }
 
   if (input.bodyHtml.includes("data-tb-doc")) {
+    return parseDocumentFromHtml(input.bodyHtml);
+  }
+
+  if (input.bodyHtml.trim()) {
     return parseDocumentFromHtml(input.bodyHtml);
   }
 

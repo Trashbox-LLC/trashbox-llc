@@ -175,6 +175,18 @@ export function renderTemplateVariables(
   });
 }
 
+/** Stand-in lead, business, and sender for previews that are not a real send. */
+export const PREVIEW_SAMPLE_CONTEXT: TemplateVariableContext = {
+  lead: { name: "Jordan Smith", email: "jordan@example.com" },
+  business: { name: "Your business" },
+  sender: { name: "Your team", email: "you@example.com" },
+};
+
+/** Replace catalog merge fields with sample values. Unknown tokens stay put. */
+export function renderPreviewTemplate(body: string, now = new Date()): string {
+  return renderTemplateVariables(body, { ...PREVIEW_SAMPLE_CONTEXT, now });
+}
+
 /** Tokens in `body` that are not in the published catalog, deduplicated. */
 export function unknownTemplateVariables(body: string): string[] {
   const unknown: string[] = [];

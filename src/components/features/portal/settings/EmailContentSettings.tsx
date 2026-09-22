@@ -14,6 +14,7 @@ import {
   TEMPLATE_VARIABLES,
   contentBodyToHtml,
   plainTextToHtml,
+  PREVIEW_SAMPLE_CONTEXT,
   renderTemplateVariables,
   sanitizeShortcutInput,
   unknownTemplateVariables,
@@ -101,13 +102,6 @@ const KIND_COPY: Record<EmailContentKind, KindCopy> = {
   },
 };
 
-/** Stand-in lead so the preview reads naturally on the settings page. */
-const SAMPLE_PREVIEW_CONTEXT: TemplateVariableContext = {
-  lead: { name: "Jordan Smith", email: "jordan@example.com" },
-  business: { name: "Your business" },
-  sender: { name: "Your team", email: "you@example.com" },
-};
-
 const EMPTY_DRAFT: EmailContentDraft = {
   name: "",
   subject: "",
@@ -166,7 +160,7 @@ export function EmailContentSettings({
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [seedCounter, setSeedCounter] = useState(0);
 
-  const context = previewContext ?? SAMPLE_PREVIEW_CONTEXT;
+  const context = previewContext ?? PREVIEW_SAMPLE_CONTEXT;
   const usesBuilder = kind === "template";
 
   function openForm(editingId: string | null, draft: EmailContentDraft) {

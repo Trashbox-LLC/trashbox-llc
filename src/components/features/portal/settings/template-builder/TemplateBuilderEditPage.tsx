@@ -14,19 +14,28 @@ import {
   withDefaultSection,
   type EmailTemplateDocument,
 } from "@/lib/email-template-document";
-import { portalNavigate } from "@/lib/portal-routes";
+import { portalNavigate, portalSearchParam } from "@/lib/portal-routes";
 import { settingsSectionPath } from "@/lib/portal-settings";
 
 function TemplateBuilderEditInner(): React.ReactElement {
   const searchParams = useSearchParams();
-  const id = searchParams.get("id")?.trim() ?? "";
+  const routerId = searchParams.get("id")?.trim() ?? "";
+  const [id, setId] = useState(() =>
+    typeof window === "undefined" ? "" : portalSearchParam("id", routerId),
+  );
+
+  useEffect(() => {
+    const next = portalSearchParam("id", routerId);
+    setId((current) => (current === next ? current : next));
+  }, [routerId]);
 
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [subject, setSubject] = useState("");
-  const [document, setDocument] = useState<EmailTemplateDocument>(defaultDocument);
+  const [document, setDocument] =
+    useState<EmailTemplateDocument>(defaultDocument);
 
   function goList() {
     portalNavigate(settingsSectionPath("templates"));
@@ -40,6 +49,7 @@ function TemplateBuilderEditInner(): React.ReactElement {
         setLoading(false);
         return;
       }
+      setError(null);
       try {
         const { items } = await listEmailTemplates();
         const item = items.find((template) => template.id === id);
@@ -106,7 +116,7 @@ function TemplateBuilderEditInner(): React.ReactElement {
 
   if (error && !name) {
     return (
-      <div className="border border-error/40 bg-error/10 p-6 text-sm text-error">
+      <div className="border-error/40 bg-error/10 text-error border p-6 text-sm">
         <p>{error}</p>
         <button
           type="button"

@@ -14,7 +14,7 @@ seeded = {
     if (block.type === "text") {
       return {
         ...block,
-        html: "<p>Preview sample on a grey stage.</p>",
+        html: "<p>Hi {{lead.first_name}}, preview sample from {{business.name}}.</p>",
       };
     }
     if (block.type === "button") {

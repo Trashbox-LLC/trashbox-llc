@@ -1,5 +1,6 @@
 "use client";
 
+import { renderPreviewTemplate } from "@/lib/email-content";
 import { documentToEmailHtml } from "@/lib/email-template-document";
 import type { EmailTemplateDocument } from "@/lib/email-template-document";
 import { cn } from "@/lib/utils";
@@ -27,7 +28,7 @@ export function BuilderPreview({
   htmlOverride,
   className,
 }: BuilderPreviewProps): React.ReactElement {
-  const html = htmlOverride ?? documentToEmailHtml(doc);
+  const html = renderPreviewTemplate(htmlOverride ?? documentToEmailHtml(doc));
   return (
     <iframe
       title="Template preview"

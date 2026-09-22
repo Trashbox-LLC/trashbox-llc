@@ -4,8 +4,10 @@ import { EmailTemplateBuilder } from "./EmailTemplateBuilder";
 import { decorateMergeFieldsHtml } from "@/lib/email-content";
 import {
   appendBlock,
+  documentFromStarter,
   emptyDocument,
 } from "@/lib/email-template-document";
+import { getStarterById } from "@/lib/email-template-starters";
 
 let seeded = emptyDocument();
 seeded = appendBlock(seeded, "text");
@@ -139,6 +141,16 @@ export const ComposeMode: Story = {
   args: {
     mode: "compose",
     initialDocument: seeded,
+  },
+};
+
+const followUp = getStarterById("followup-check-in");
+
+export const FollowUpStarter: Story = {
+  args: {
+    initialName: followUp?.name ?? "Follow-up check-in",
+    initialSubject: followUp?.subject ?? "",
+    initialDocument: followUp ? documentFromStarter(followUp) : emptyDocument(),
   },
 };
 

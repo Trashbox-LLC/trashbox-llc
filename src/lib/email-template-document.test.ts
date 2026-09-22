@@ -526,7 +526,7 @@ describe("email-template-document", () => {
     }
   });
 
-  it("converts gallery starters into documents", () => {
+  it("converts gallery starters into editable components", () => {
     const blank = documentFromStarter({
       id: "basic-blank",
       bodyHtml: "<p><br /></p>",
@@ -537,17 +537,85 @@ describe("email-template-document", () => {
 
     const columns = documentFromStarter({
       id: "basic-two-column",
-      bodyHtml: "<p>x</p>",
-      bodyText: "x",
+      bodyHtml: "<table><tr><td>ignored</td></tr></table>",
+      bodyText: "ignored",
     });
     expect(columns.blocks[0]?.type).toBe("columns");
+    if (columns.blocks[0]?.type === "columns") {
+      expect(columns.blocks[0].columns).toHaveLength(2);
+      expect(columns.blocks[0].columns[0]).toContain("First point");
+      expect(columns.blocks[0].columns[1]).toContain("Second point");
+    }
 
     const reply = documentFromStarter({
       id: "followup-check-in",
-      bodyHtml: "<p>Hi {{lead.first_name}}</p>",
-      bodyText: "Hi {{lead.first_name}}",
+      bodyHtml: "<table>ignored table</table>",
+      bodyText: "ignored",
     });
-    expect(reply.blocks[0]?.type).toBe("text");
+    expect(reply.header?.backgroundColor).toBe("#c2410c");
+    expect(reply.header?.html).toContain("{{business.name}}");
+    expect(reply.contentBackgroundColor).toBe("#f4f1ea");
+    expect(reply.blocks[0]?.type).toBe("columns");
+    if (reply.blocks[0]?.type === "columns") {
+      expect(reply.blocks[0].backgroundColor).toBe("#ffffff");
+      expect(reply.blocks[0].paddingX).toBe(16);
+      const items = parseColumnItems(reply.blocks[0].columns[0] ?? "");
+      expect(
+        items.some(
+          (item) =>
+            item.kind === "text" &&
+            item.html.includes("Still here if you need us"),
+        ),
+      ).toBe(true);
+      expect(
+        items.some(
+          (item) =>
+            item.kind === "text" && item.html.includes("{{lead.first_name}}"),
+        ),
+      ).toBe(true);
+      const button = items.find((item) => item.kind === "button");
+      expect(button?.kind).toBe("button");
+      if (button?.kind === "button") expect(button.label).toBe("Reply");
+    }
+    const replyHtml = documentToEmailHtml(reply);
+    expect(replyHtml).toContain("Still here if you need us");
+    expect(replyHtml).toContain(">Reply<");
+    expect(replyHtml.indexOf('data-tb-header="1"')).toBeGreaterThan(-1);
+    expect(replyHtml.indexOf('data-tb-header="1"')).toBeLessThan(
+      replyHtml.indexOf('data-tb-content-pad="1"'),
+    );
+
+    const quote = documentFromStarter({
+      id: "quotes-pricing",
+      bodyHtml: "<p>ignored</p>",
+      bodyText: "ignored",
+    });
+    expect(quote.blocks.some((block) => block.type === "table")).toBe(true);
+    const table = quote.blocks.find((block) => block.type === "table");
+    if (table?.type === "table") {
+      expect(table.rows.flat()).toEqual(
+        expect.arrayContaining(["[describe]", "[amount]"]),
+      );
+    }
+
+    const image = documentFromStarter({
+      id: "basic-two-column-image",
+      bodyHtml: "<p>ignored</p>",
+      bodyText: "ignored",
+    });
+    const imageSection = image.blocks.find(
+      (block) => block.type === "columns" && block.columns.length === 1,
+    );
+    expect(imageSection?.type).toBe("columns");
+    if (imageSection?.type === "columns") {
+      expect(imageSection.backgroundColor).toBe("#44403c");
+      expect(imageSection.columns[0]).toContain("Image");
+    }
+    expect(
+      image.blocks.some(
+        (block) => block.type === "columns" && block.columns.length === 2,
+      ),
+    ).toBe(true);
   });
 
   it("duplicates, removes, and reorders blocks", () => {

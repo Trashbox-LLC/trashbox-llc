@@ -15,6 +15,8 @@ import {
   parseMergeFieldVariant,
   plainTextToHtml,
   renderContentForInsert,
+  PREVIEW_SAMPLE_CONTEXT,
+  renderPreviewTemplate,
   renderTemplateVariables,
   replaceReplyBody,
   replaceReplySignature,
@@ -29,6 +31,23 @@ const context = {
   sender: { name: "Sales Team", email: "sales@acme.test" },
   now: new Date("2026-07-25T12:00:00.000Z"),
 };
+
+describe("renderPreviewTemplate", () => {
+  it("replaces every catalog token with a sample value", () => {
+    for (const variable of TEMPLATE_VARIABLES) {
+      const rendered = renderPreviewTemplate(variable.token);
+      expect(rendered).not.toBe(variable.token);
+      expect(rendered).not.toContain("{{");
+      expect(rendered.trim().length).toBeGreaterThan(0);
+    }
+    expect(renderPreviewTemplate("Hi {{lead.first_name}}")).toBe(
+      `Hi ${PREVIEW_SAMPLE_CONTEXT.lead?.name?.split(" ")[0]}`,
+    );
+    expect(renderPreviewTemplate("Hi {{lead.nickname}}")).toBe(
+      "Hi {{lead.nickname}}",
+    );
+  });
+});
 
 describe("renderTemplateVariables", () => {
   it("substitutes lead, business and sender tokens", () => {
