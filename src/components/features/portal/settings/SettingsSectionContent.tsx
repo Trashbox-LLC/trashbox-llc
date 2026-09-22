@@ -5,6 +5,7 @@ import {
   type EmailContentSectionInitialState,
 } from "@/components/features/portal/settings/EmailContentSettingsSection";
 import type { EmailContentKind } from "@/components/features/portal/settings/EmailContentSettings";
+import { TemplateBuilderNewPage } from "@/components/features/portal/settings/template-builder/TemplateBuilderNewPage";
 import { MailboxSettings } from "@/components/features/portal/settings/MailboxSettings";
 import { NotificationSettingsSection } from "@/components/features/portal/settings/NotificationSettingsSection";
 import { SendingPreferencesSettings } from "@/components/features/portal/settings/SendingPreferencesSettings";
@@ -32,7 +33,6 @@ import {
 const EMAIL_CONTENT_SECTIONS: Partial<
   Record<SettingsSectionId, EmailContentKind>
 > = {
-  templates: "template",
   signatures: "signature",
   snippets: "snippet",
 };
@@ -135,6 +135,10 @@ export function SettingsSectionContent({
         onPatch={portal.onMailboxPatch}
       />
     );
+  }
+
+  if (sectionId === "templates") {
+    return <TemplateBuilderNewPage showClose={false} />;
   }
 
   const emailContentKind = EMAIL_CONTENT_SECTIONS[sectionId];

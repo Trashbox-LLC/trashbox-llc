@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { EMAIL_TEMPLATE_STARTERS } from "@/lib/email-template-starters";
@@ -27,7 +27,9 @@ describe("EmailTemplateGallery", () => {
       screen.getByRole("dialog", { name: /template gallery/i }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^all$/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^basic$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^basic$/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /blank/i })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /follow-up check-in/i }),
@@ -52,7 +54,9 @@ describe("EmailTemplateGallery", () => {
     expect(
       screen.getByRole("button", { name: /quote \/ pricing/i }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^blank$/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^blank$/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /follow-up check-in/i }),
     ).not.toBeInTheDocument();
@@ -71,7 +75,9 @@ describe("EmailTemplateGallery", () => {
 
     await user.click(screen.getByRole("button", { name: /one column/i }));
 
-    const starter = EMAIL_TEMPLATE_STARTERS.find((s) => s.name === "One column");
+    const starter = EMAIL_TEMPLATE_STARTERS.find(
+      (s) => s.name === "One column",
+    );
     expect(onSelectStarter).toHaveBeenCalledWith(starter);
   });
 
@@ -99,6 +105,118 @@ describe("EmailTemplateGallery", () => {
     expect(
       screen.queryByRole("button", { name: /insert html \/ plain text/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("edits a saved template from its options menu", async () => {
+    const user = userEvent.setup();
+    const onSelectSaved = vi.fn();
+    render(
+      <EmailTemplateGallery
+        mode="create"
+        savedTemplates={savedTemplates}
+        onSelectStarter={vi.fn()}
+        onSelectSaved={onSelectSaved}
+        onDuplicateSaved={vi.fn()}
+        onDeleteSaved={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /options for quote follow-up/i }),
+    );
+    await user.click(screen.getByRole("menuitem", { name: /^edit$/i }));
+
+    expect(onSelectSaved).toHaveBeenCalledWith(savedTemplates[0]);
+  });
+
+  it("requests a copy from the options menu", async () => {
+    const user = userEvent.setup();
+    const onDuplicateSaved = vi.fn();
+    render(
+      <EmailTemplateGallery
+        mode="create"
+        savedTemplates={savedTemplates}
+        onSelectStarter={vi.fn()}
+        onSelectSaved={vi.fn()}
+        onDuplicateSaved={onDuplicateSaved}
+        onDeleteSaved={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /options for quote follow-up/i }),
+    );
+    await user.click(screen.getByRole("menuitem", { name: /create a copy/i }));
+
+    expect(onDuplicateSaved).toHaveBeenCalledWith(savedTemplates[0]);
+  });
+
+  it("opens saved-template options on right click", async () => {
+    const user = userEvent.setup();
+    render(
+      <EmailTemplateGallery
+        mode="create"
+        savedTemplates={savedTemplates}
+        onSelectStarter={vi.fn()}
+        onSelectSaved={vi.fn()}
+        onDuplicateSaved={vi.fn()}
+        onDeleteSaved={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    await user.pointer({
+      target: screen.getByRole("button", { name: /^quote follow-up$/i }),
+      keys: "[MouseRight]",
+    });
+
+    expect(screen.getByRole("menuitem", { name: /^edit$/i })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /options for one column/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps delete disabled until the confirm delay passes", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const user = userEvent.setup();
+      const onDeleteSaved = vi.fn();
+      render(
+        <EmailTemplateGallery
+          mode="create"
+          savedTemplates={savedTemplates}
+          onSelectStarter={vi.fn()}
+          onSelectSaved={vi.fn()}
+          onDuplicateSaved={vi.fn()}
+          onDeleteSaved={onDeleteSaved}
+          deleteConfirmDelayMs={3000}
+          onClose={vi.fn()}
+        />,
+      );
+
+      await user.click(
+        screen.getByRole("button", { name: /options for quote follow-up/i }),
+      );
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
+
+      const dialog = screen.getByRole("dialog", {
+        name: /delete quote follow-up/i,
+      });
+      const confirm = within(dialog).getByRole("button", { name: /delete/i });
+      expect(confirm).toBeDisabled();
+      await user.click(confirm);
+      expect(onDeleteSaved).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(3000);
+
+      expect(confirm).toBeEnabled();
+      await user.click(confirm);
+      expect(onDeleteSaved).toHaveBeenCalledWith(savedTemplates[0]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("shows saved templates in the gallery and selects them", async () => {
@@ -139,7 +257,9 @@ describe("EmailTemplateGallery", () => {
     expect(
       screen.getByRole("button", { name: /quote follow-up/i }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /blank/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /blank/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /follow-up check-in/i }),
     ).not.toBeInTheDocument();
@@ -168,7 +288,9 @@ describe("EmailTemplateGallery", () => {
     expect(
       screen.getByRole("button", { name: /quote \/ pricing/i }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /blank/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /blank/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /welcome note/i }),
     ).not.toBeInTheDocument();

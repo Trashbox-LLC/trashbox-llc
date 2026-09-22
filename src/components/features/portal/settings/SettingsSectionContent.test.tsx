@@ -154,7 +154,6 @@ describe("SettingsSectionContent", () => {
   });
 
   it.each([
-    ["templates", /email templates/i],
     ["signatures", /^signatures$/i],
     ["snippets", /^snippets$/i],
   ] as const)("renders the %s section", async (sectionId, heading) => {
@@ -165,6 +164,22 @@ describe("SettingsSectionContent", () => {
     );
 
     expect(await screen.findByText(heading)).toBeInTheDocument();
+  });
+
+  it("renders the template gallery instead of the template instructions", async () => {
+    render(
+      <PortalProvider>
+        <SettingsSectionContent sectionId="templates" />
+      </PortalProvider>,
+    );
+
+    expect(
+      await screen.findByRole("searchbox", { name: /search layouts/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/merge fields/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^close$/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("renders the project tags", async () => {

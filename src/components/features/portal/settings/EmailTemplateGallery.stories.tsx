@@ -8,7 +8,7 @@ const meta = {
   tags: ["autodocs"],
   decorators: [
     (Story) => (
-      <div className="mx-auto max-w-5xl bg-background p-6">
+      <div className="bg-background mx-auto max-w-5xl p-6">
         <Story />
       </div>
     ),
@@ -44,6 +44,8 @@ export const CreateMode: Story = {
     mode: "create",
     onInsertHtmlPlainText: fn(),
     onSelectSaved: fn(),
+    onDuplicateSaved: fn(),
+    onDeleteSaved: fn(),
     savedTemplates,
   },
 };

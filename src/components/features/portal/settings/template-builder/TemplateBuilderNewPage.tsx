@@ -5,7 +5,7 @@ import {
   EmailTemplateGallery,
   type EmailTemplateGallerySavedItem,
 } from "@/components/features/portal/settings/EmailTemplateGallery";
-import { listEmailTemplates } from "@/lib/api";
+import { listEmailTemplates, createEmailTemplate, deleteEmailTemplate, type EmailTemplate } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,30 +21,27 @@ import {
   templateBuilderCreatePath,
   templateBuilderEditPath,
 } from "@/lib/portal-settings";
+import { EMAIL_CONTENT_LIMITS } from "@/lib/email-content";
 
 /**
  * Starter gallery only — selecting a template opens the full-page builder.
  */
-export function TemplateBuilderNewPage(): React.ReactElement {
+export function TemplateBuilderNewPage({
+  showClose = true,
+}: {
+  showClose?: boolean;
+} = {}): React.ReactElement {
   const [htmlSourceOpen, setHtmlSourceOpen] = useState(false);
   const [pastedSource, setPastedSource] = useState("");
-  const [savedTemplates, setSavedTemplates] = useState<
-    EmailTemplateGallerySavedItem[]
-  >([]);
+  const [savedTemplates, setSavedTemplates] = useState<EmailTemplate[]>([]);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     listEmailTemplates()
       .then((response) => {
         if (cancelled) return;
-        setSavedTemplates(
-          response.items.map((template) => ({
-            id: template.id,
-            name: template.name,
-            subject: template.subject,
-            bodyHtml: template.bodyHtml,
-          })),
-        );
+        setSavedTemplates(response.items);
       })
       .catch(() => {
         if (!cancelled) setSavedTemplates([]);
@@ -64,6 +61,37 @@ export function TemplateBuilderNewPage(): React.ReactElement {
 
   function selectSaved(template: EmailTemplateGallerySavedItem) {
     portalNavigate(templateBuilderEditPath(template.id));
+  }
+
+  async function duplicateSaved(template: EmailTemplateGallerySavedItem) {
+    const source = savedTemplates.find((item) => item.id === template.id);
+    if (!source) return;
+    setActionError(null);
+    try {
+      const created = await createEmailTemplate({
+        name: `${source.name} (copy)`.slice(0, EMAIL_CONTENT_LIMITS.name),
+        subject: source.subject,
+        bodyText: source.bodyText,
+        bodyHtml: source.bodyHtml ?? null,
+      });
+      portalNavigate(templateBuilderEditPath(created.id));
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Could not copy template");
+    }
+  }
+
+  async function removeSaved(template: EmailTemplateGallerySavedItem) {
+    setActionError(null);
+    try {
+      await deleteEmailTemplate(template.id);
+      setSavedTemplates((current) =>
+        current.filter((item) => item.id !== template.id),
+      );
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Could not delete template",
+      );
+    }
   }
 
   function applyPastedSource() {
@@ -150,12 +178,26 @@ export function TemplateBuilderNewPage(): React.ReactElement {
       <EmailTemplateGallery
         mode="create"
         className="min-h-0 flex-1"
-        savedTemplates={savedTemplates}
+        savedTemplates={savedTemplates.map((template) => ({
+          id: template.id,
+          name: template.name,
+          subject: template.subject,
+          bodyHtml: template.bodyHtml,
+        }))}
         onSelectStarter={selectStarter}
         onSelectSaved={selectSaved}
+        onDuplicateSaved={(template) => {
+          void duplicateSaved(template);
+        }}
+        onDeleteSaved={(template) => {
+          void removeSaved(template);
+        }}
         onInsertHtmlPlainText={() => setHtmlSourceOpen(true)}
-        onClose={goList}
+        onClose={showClose ? goList : undefined}
       />
+      {actionError ? (
+        <p className="px-4 pb-4 text-sm text-error">{actionError}</p>
+      ) : null}
     </div>
   );
 }
