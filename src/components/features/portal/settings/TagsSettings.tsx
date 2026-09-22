@@ -55,15 +55,17 @@ const SAMPLE_USAGE: Omit<TagUsageExample, "tags"> = {
   stage: "Proposal",
 };
 
-/** A real tagged lead when one is loaded, otherwise a sample that wears the catalog tags. */
+const SAMPLE_TAGS = ["hot lead", "quote sent"];
+
+/** A real tagged lead when one is loaded, otherwise a sample. Empty catalogs still wear demo tags. */
 export function tagUsageExample(
   tags: readonly string[],
   items: readonly Submission[],
-): TagUsageExample | null {
-  if (tags.length === 0) return null;
+): TagUsageExample {
   const lead = tagPreviewLead(items);
-  if (!lead) {
-    return { ...SAMPLE_USAGE, tags: tags.slice(0, 2) };
+  if (tags.length === 0 || !lead) {
+    const worn = tags.length > 0 ? tags.slice(0, 2) : SAMPLE_TAGS;
+    return { ...SAMPLE_USAGE, tags: worn };
   }
   const source = lead.formName?.trim();
   return {
@@ -223,12 +225,7 @@ export function TagsSettings({ initialState }: TagsSettingsProps) {
   const example = tagUsageExample(tags, portal.items);
 
   return (
-    <div
-      className={cn(
-        "grid items-start gap-4",
-        example && "lg:grid-cols-[minmax(0,1fr)_17.5rem]",
-      )}
-    >
+    <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_17.5rem]">
       <div className="rounded-lg border border-white/10 bg-[#141414] p-4">
         <form
           className="flex items-center gap-3"
@@ -364,9 +361,7 @@ export function TagsSettings({ initialState }: TagsSettingsProps) {
           })}
         </ul>
       </div>
-      {example ? (
-        <TagUsageExampleCard example={example} colors={colors} />
-      ) : null}
+      <TagUsageExampleCard example={example} colors={colors} />
     </div>
   );
 }

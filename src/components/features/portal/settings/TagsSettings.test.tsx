@@ -151,6 +151,18 @@ describe("TagsSettings", () => {
     expect(tagPreviewLead([plain])).toBeNull();
   });
 
+  it("shows demo tags on the sample lead when the project has none", () => {
+    expect(tagUsageExample([], [])).toMatchObject({
+      name: "Jordan Hale",
+      tags: ["hot lead", "quote sent"],
+    });
+
+    renderTags([]);
+    const preview = screen.getByRole("complementary", { name: /^lead$/i });
+    expect(preview).toHaveTextContent("hot lead");
+    expect(preview).toHaveTextContent("quote sent");
+  });
+
   it("shows a sample lead when nothing in the inbox is tagged", () => {
     const example = tagUsageExample(["vip", "sales"], []);
     expect(example).toMatchObject({
