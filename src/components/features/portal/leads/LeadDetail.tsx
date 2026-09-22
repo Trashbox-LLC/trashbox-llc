@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MaterialIcon } from "@/components/atoms/MaterialIcon";
 import { Select } from "@/components/atoms/Select";
 import { LeadEmailThreadSection } from "@/components/features/portal/leads/LeadEmailThreadSection";
@@ -12,6 +12,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -21,11 +26,13 @@ import {
   LEAD_STATUSES,
   LEAD_STATUS_DOT_CLASS,
   LEAD_STATUS_LABELS,
-  LEAD_TAG_LABELS,
   leadNotesOf,
   leadStatusOf,
+  leadTagLabel,
   assigneeIdentity,
   leadTagsOf,
+  nextLeadTags,
+  normalizeLeadTag,
   teamMemberDisplayName,
   type FromIdentityOption,
   type LeadMessage,
@@ -110,6 +117,8 @@ interface LeadDetailProps {
   smsFromPhone?: string;
   /** Storybook/tests: seed the composer library without hitting the API. */
   composerLibrary?: LeadComposerLibrary;
+  /** Tags already used on other leads, offered when adding one. */
+  availableTags?: string[];
   onUpdate: (patch: {
     status?: LeadStatus;
     tags?: LeadTag[];
@@ -138,6 +147,7 @@ export function LeadDetail({
   availableChannels = ["email"],
   smsFromPhone,
   composerLibrary,
+  availableTags = [],
   onUpdate,
   onAddNote,
   onDeleteNote,
@@ -145,6 +155,9 @@ export function LeadDetail({
   onSendSms,
 }: LeadDetailProps) {
   const [noteDraft, setNoteDraft] = useState("");
+  const [tagOpen, setTagOpen] = useState(false);
+  const [tagDraft, setTagDraft] = useState("");
+  const tagInputRef = useRef<HTMLInputElement>(null);
   const [panel, setPanel] = useState<ConversationPanel>("historyText");
   const [channel, setChannel] = useState<MessageChannel>("email");
   const [detailsOpen, setDetailsOpen] = useState(true);
@@ -199,6 +212,44 @@ export function LeadDetail({
     }),
   ];
   const hasHistory = orderedMessages.length > 0;
+  const tagQuery = tagDraft.trim().toLowerCase();
+  const tagSuggestions = availableTags.filter((tag) => {
+    if (tags.some((current) => current.toLowerCase() === tag.toLowerCase())) {
+      return false;
+    }
+    if (!tagQuery) return true;
+    return (
+      tag.toLowerCase().includes(tagQuery) ||
+      leadTagLabel(tag).toLowerCase().includes(tagQuery)
+    );
+  });
+  const draftTag = normalizeLeadTag(tagDraft);
+  const draftMatch = draftTag
+    ? availableTags.find(
+        (tag) =>
+          tag.toLowerCase() === draftTag ||
+          leadTagLabel(tag).toLowerCase() === draftTag,
+      )
+    : undefined;
+  const canCreateTag = Boolean(
+    draftTag && nextLeadTags(tags, tagDraft) && !draftMatch,
+  );
+
+  function addTag(raw: string) {
+    const normalized = normalizeLeadTag(raw);
+    const existing = normalized
+      ? availableTags.find(
+          (tag) =>
+            tag.toLowerCase() === normalized ||
+            leadTagLabel(tag).toLowerCase() === normalized,
+        )
+      : undefined;
+    const next = nextLeadTags(tags, existing ?? raw);
+    if (!next) return;
+    void onUpdate({ tags: next });
+    setTagDraft("");
+    setTagOpen(false);
+  }
 
   function selectPanel(next: Exclude<ConversationPanel, "thread">) {
     setPanel((current) => (current === next ? "thread" : next));
@@ -439,22 +490,97 @@ export function LeadDetail({
           />
         </div>
         <div className="mt-4 flex flex-wrap gap-x-3 gap-y-2">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="inline-flex h-7 items-center rounded-lg border border-white/20 px-2.5 text-sm leading-none text-white"
-            >
-              {LEAD_TAG_LABELS[tag]}
-            </span>
-          ))}
-          <button
-            type="button"
-            aria-label="Add tag"
-            className="text-outline inline-flex h-7 min-w-7 items-center justify-center gap-1.5 rounded-lg border border-white/20 px-2.5 text-sm leading-none"
+          {tags.map((tag) => {
+            const label = leadTagLabel(tag);
+            return (
+              <span
+                key={tag}
+                className="inline-flex h-7 items-center gap-1 rounded-lg border border-white/20 pr-1 pl-2.5 text-sm leading-none text-white"
+              >
+                {label}
+                <button
+                  type="button"
+                  aria-label={`Remove ${label}`}
+                  disabled={busy}
+                  onClick={() =>
+                    void onUpdate({
+                      tags: tags.filter((entry) => entry !== tag),
+                    })
+                  }
+                  className="text-outline hover:text-white inline-flex size-5 items-center justify-center rounded disabled:opacity-60"
+                >
+                  <MaterialIcon name="close" className="text-sm" />
+                </button>
+              </span>
+            );
+          })}
+          <Popover
+            open={tagOpen}
+            onOpenChange={(open) => {
+              setTagOpen(open);
+              if (!open) setTagDraft("");
+            }}
           >
-            <span aria-hidden="true">+</span>
-            {tags.length === 0 ? "Tags" : null}
-          </button>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label="Add tag"
+                disabled={busy}
+                className="text-outline inline-flex h-7 min-w-7 items-center justify-center gap-1.5 rounded-lg border border-white/20 px-2.5 text-sm leading-none disabled:opacity-60"
+              >
+                <span aria-hidden="true">+</span>
+                {tags.length === 0 ? "Tags" : null}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              className="border-outline-variant/20 bg-surface-container-high text-on-surface z-100 w-56 p-2"
+              onOpenAutoFocus={(event) => {
+                event.preventDefault();
+                tagInputRef.current?.focus();
+              }}
+            >
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  addTag(tagDraft);
+                }}
+              >
+                <input
+                  ref={tagInputRef}
+                  aria-label="Tag name"
+                  value={tagDraft}
+                  onChange={(event) => setTagDraft(event.target.value)}
+                  disabled={busy}
+                  className="placeholder:text-outline h-8 w-full rounded-md border border-white/15 bg-transparent px-2.5 text-sm text-white outline-none"
+                />
+              </form>
+              {canCreateTag && draftTag ? (
+                <button
+                  type="button"
+                  onClick={() => addTag(tagDraft)}
+                  className="hover:bg-surface-bright mt-1 w-full rounded-md px-2.5 py-1.5 text-left text-sm text-white"
+                >
+                  {leadTagLabel(draftTag)}
+                </button>
+              ) : null}
+              {tagSuggestions.length > 0 ? (
+                <ul className="mt-1 max-h-48 overflow-auto">
+                  {tagSuggestions.map((tag) => (
+                    <li key={tag}>
+                      <button
+                        type="button"
+                        onClick={() => addTag(tag)}
+                        className="hover:bg-surface-bright w-full rounded-md px-2.5 py-1.5 text-left text-sm text-white"
+                      >
+                        {leadTagLabel(tag)}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </PopoverContent>
+          </Popover>
         </div>
         <dl className="mt-4 space-y-2 border-t border-white/10 pt-4 text-sm leading-5">
           {submission.senderName.trim() ? (

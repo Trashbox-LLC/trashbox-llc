@@ -12,9 +12,18 @@ export const LEAD_STATUSES = [
 
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
 
-export const LEAD_TAGS = ["website_quote", "support", "sales", "vip"] as const;
+/** Free-form lead labels. The API stores them lowercased. */
+export type LeadTag = string;
 
-export type LeadTag = (typeof LEAD_TAGS)[number];
+const MAX_LEAD_TAGS = 20;
+const MAX_LEAD_TAG_LENGTH = 32;
+
+const LEGACY_LEAD_TAG_LABELS: Record<string, string> = {
+  website_quote: "Website Quote",
+  support: "Support",
+  sales: "Sales",
+  vip: "VIP",
+};
 
 export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   new: "New",
@@ -33,12 +42,55 @@ export const LEAD_STATUS_DOT_CLASS: Record<LeadStatus, string> = {
   lost: "bg-error shadow-[0_0_8px_2px_rgba(255,180,171,0.65)]",
 };
 
-export const LEAD_TAG_LABELS: Record<LeadTag, string> = {
-  website_quote: "Website Quote",
-  support: "Support",
-  sales: "Sales",
-  vip: "VIP",
-};
+export function normalizeLeadTag(value: string): string | null {
+  const tag = value
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .slice(0, MAX_LEAD_TAG_LENGTH);
+  return tag || null;
+}
+
+/** Label for a stored tag. Known slugs keep their original names. */
+export function leadTagLabel(tag: string): string {
+  const legacy = LEGACY_LEAD_TAG_LABELS[tag];
+  if (legacy) return legacy;
+  return tag
+    .replace(/[_-]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+/**
+ * Tags after adding `raw`. Returns null when the value is blank, already
+ * applied (ignoring case), or the lead is already at the cap.
+ */
+export function nextLeadTags(
+  current: readonly string[],
+  raw: string,
+): string[] | null {
+  const tag = normalizeLeadTag(raw);
+  if (!tag) return null;
+  if (current.some((entry) => entry.toLowerCase() === tag)) return null;
+  if (current.length >= MAX_LEAD_TAGS) return null;
+  return [...current, tag];
+}
+
+/** Unique tags across leads, in alphabetical order. */
+export function collectLeadTags(
+  submissions: readonly { tags?: readonly string[] | null }[],
+): string[] {
+  const seen = new Set<string>();
+  for (const submission of submissions) {
+    for (const raw of submission.tags ?? []) {
+      const tag = normalizeLeadTag(raw);
+      if (tag) seen.add(tag);
+    }
+  }
+  return [...seen].sort((a, b) => a.localeCompare(b));
+}
 
 export type TeamRole = "owner" | "admin" | "member";
 

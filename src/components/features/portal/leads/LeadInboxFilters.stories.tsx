@@ -59,6 +59,7 @@ const meta = {
         updatedAt: "2026-01-01T00:00:00.000Z",
       },
     ],
+    tags: ["website_quote", "follow up", "vip"],
     onChange: fn(),
     onApply: fn(),
   },

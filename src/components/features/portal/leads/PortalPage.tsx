@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LeadDetail } from "@/components/features/portal/leads/LeadDetail";
 import { LeadInboxEmptyDetail } from "@/components/features/portal/leads/LeadInboxEmptyDetail";
 import {
@@ -19,6 +19,7 @@ import {
 } from "@/components/features/portal/leads/lead-thread-tabs";
 import { PortalSkeleton } from "@/components/features/portal/PortalSkeleton";
 import { Button } from "@/components/ui/button";
+import { collectLeadTags } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import {
   displayPlanTier,
@@ -38,6 +39,10 @@ interface PortalAppProps {
 export function PortalApp({ tab }: PortalAppProps) {
   const auth = useAuth();
   const portal = usePortal();
+  const leadTags = useMemo(
+    () => collectLeadTags(portal.items),
+    [portal.items],
+  );
   const [inboxSidebarOpen, setInboxSidebarOpen] = useState(true);
   const [inboxSidebarWidth, setInboxSidebarWidth] = useState(
     INBOX_SIDEBAR_SNAP_WIDTH,
@@ -355,6 +360,7 @@ export function PortalApp({ tab }: PortalAppProps) {
                                 ] ?? ["email"]
                               }
                               smsFromPhone={portal.sms?.phoneNumber}
+                              availableTags={leadTags}
                               onUpdate={portal.onLeadUpdate}
                               onAddNote={portal.onLeadNote}
                               onDeleteNote={portal.onLeadDeleteNote}

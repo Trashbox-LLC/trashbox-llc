@@ -89,6 +89,7 @@ export const WithNotesAndTags: Story = {
         },
       ],
     },
+    availableTags: ["website_quote", "sales", "follow up", "vip"],
   },
 };
 

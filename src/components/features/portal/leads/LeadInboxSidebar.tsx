@@ -15,6 +15,7 @@ import {
 } from "@/components/features/portal/leads/LeadInboxFilters";
 import { Button } from "@/components/ui/button";
 import {
+  collectLeadTags,
   leadStatusOf,
   type ProjectForm,
   type Submission,
@@ -378,6 +379,7 @@ export function LeadInboxSidebar({
               value={filters}
               members={members}
               forms={forms}
+              tags={collectLeadTags(items)}
               onChange={onFiltersChange}
               onApply={onApplyFilters}
             />

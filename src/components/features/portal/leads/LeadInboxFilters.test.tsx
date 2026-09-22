@@ -90,6 +90,33 @@ describe("LeadInboxFilters", () => {
     expect(screen.getByRole("menuitem", { name: /^tag$/i })).toBeInTheDocument();
   });
 
+  it("filters by a tag the project uses", async () => {
+    const user = userEvent.setup();
+    const onApply = vi.fn();
+    render(
+      <LeadInboxFilters
+        value={{ q: "", status: "", tag: "", assignedTo: "", formId: "" }}
+        tags={["follow up", "vip"]}
+        members={[]}
+        forms={[]}
+        onChange={vi.fn()}
+        onApply={onApply}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /add filter/i }));
+    await user.click(screen.getByRole("menuitem", { name: /^tag$/i }));
+    const listbox = screen.getByRole("listbox");
+    expect(
+      within(listbox).getByRole("option", { name: /follow up/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(listbox).queryByRole("option", { name: /^support$/i }),
+    ).not.toBeInTheDocument();
+    await user.click(within(listbox).getByRole("option", { name: /^vip$/i }));
+    expect(onApply).toHaveBeenCalledWith(expect.objectContaining({ tag: "vip" }));
+  });
+
   it("clears a filter when it is removed", async () => {
     const user = userEvent.setup();
     const onApply = vi.fn();

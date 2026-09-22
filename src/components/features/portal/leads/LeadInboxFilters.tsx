@@ -8,8 +8,7 @@ import {
   LEAD_STATUSES,
   LEAD_STATUS_DOT_CLASS,
   LEAD_STATUS_LABELS,
-  LEAD_TAGS,
-  LEAD_TAG_LABELS,
+  leadTagLabel,
   teamMemberDisplayName,
   type LeadStatus,
   type LeadTag,
@@ -29,6 +28,8 @@ interface LeadInboxFiltersProps {
   value: LeadInboxFiltersValue;
   members: TeamMember[];
   forms?: ProjectForm[];
+  /** Tags used on leads in this project. */
+  tags?: string[];
   onChange: (next: LeadInboxFiltersValue) => void;
   onApply: (next?: LeadInboxFiltersValue) => void;
 }
@@ -50,6 +51,7 @@ export function LeadInboxFilters({
   value,
   members,
   forms = [],
+  tags = [],
   onChange,
   onApply,
 }: LeadInboxFiltersProps) {
@@ -116,7 +118,7 @@ export function LeadInboxFilters({
               onChange={(next) =>
                 commit({ ...value, [field.key]: next })
               }
-              options={optionsFor(field.key, members, forms)}
+              options={optionsFor(field.key, members, forms, tags, value)}
             />
             <button
               type="button"
@@ -144,13 +146,22 @@ function optionsFor(
   key: FilterField,
   members: TeamMember[],
   forms: ProjectForm[],
+  tags: string[],
+  value: LeadInboxFiltersValue,
 ) {
   if (key === "tag") {
+    const choices = [...tags];
+    if (
+      value.tag &&
+      !choices.some((tag) => tag.toLowerCase() === value.tag.toLowerCase())
+    ) {
+      choices.unshift(value.tag);
+    }
     return [
       { value: "", label: "All tags" },
-      ...LEAD_TAGS.map((tag) => ({
+      ...choices.map((tag) => ({
         value: tag,
-        label: LEAD_TAG_LABELS[tag],
+        label: leadTagLabel(tag),
       })),
     ];
   }

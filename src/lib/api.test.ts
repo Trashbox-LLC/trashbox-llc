@@ -24,7 +24,9 @@ import {
   getTeam,
   getTeamRoles,
   hasPermission,
+  collectLeadTags,
   listSubmissions,
+  nextLeadTags,
   PERMISSIONS,
   PERMISSION_LABELS,
   updateSubmission,
@@ -152,6 +154,36 @@ describe("CRM submissions API", () => {
     expect(url).toContain("tag=sales");
     expect(url).toContain("assignedTo=sarah%40example.com");
     expect(url).toContain("q=estimate");
+  });
+
+  it("stores a new tag in lowercase with the spacing collapsed", () => {
+    expect(nextLeadTags(["sales"], "  Hot   Lead ")).toEqual([
+      "sales",
+      "hot lead",
+    ]);
+  });
+
+  it("rejects a tag the lead already has, ignoring case", () => {
+    expect(nextLeadTags(["sales"], " Sales ")).toBeNull();
+  });
+
+  it("rejects a blank tag", () => {
+    expect(nextLeadTags(["sales"], "   ")).toBeNull();
+  });
+
+  it("rejects a tag once the lead already has 20", () => {
+    const current = Array.from({ length: 20 }, (_, index) => `tag ${index}`);
+    expect(nextLeadTags(current, "another")).toBeNull();
+  });
+
+  it("collects the tags used across leads", () => {
+    expect(
+      collectLeadTags([
+        { tags: ["VIP", "sales"] },
+        { tags: ["sales", "follow up"] },
+        { tags: [] },
+      ]),
+    ).toEqual(["follow up", "sales", "vip"]);
   });
 
   it("updateSubmission PATCHes status and tags", async () => {

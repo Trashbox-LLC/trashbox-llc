@@ -481,9 +481,35 @@ describe("LeadDetail", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows only tags on the lead, with an add control that does not change them", async () => {
+  it("shows only the tags on the lead", () => {
+    render(
+      <LeadDetail
+        submission={{
+          ...baseSubmission,
+          tags: ["website_quote", "sales"],
+        }}
+        members={[]}
+        availableTags={["website_quote", "sales", "support"]}
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    const details = screen.getByRole("complementary", { name: /^details$/i });
+    expect(
+      within(details).getByRole("button", { name: /remove website quote/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(details).getByRole("button", { name: /remove sales/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(details).queryByRole("button", { name: /remove support/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("adds a new tag from the detail panel", async () => {
     const user = userEvent.setup();
-    const onUpdate = vi.fn();
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
 
     render(
       <LeadDetail
@@ -498,14 +524,83 @@ describe("LeadDetail", () => {
     );
 
     const details = screen.getByRole("complementary", { name: /^details$/i });
-    expect(within(details).getByText("Website Quote")).toBeInTheDocument();
-    expect(within(details).getByText("Sales")).toBeInTheDocument();
-    expect(
-      within(details).queryByRole("button", { name: /^support$/i }),
-    ).not.toBeInTheDocument();
-
     await user.click(within(details).getByRole("button", { name: /add tag/i }));
     expect(onUpdate).not.toHaveBeenCalled();
+
+    await user.type(screen.getByRole("textbox", { name: /tag name/i }), "Hot  Lead{Enter}");
+    expect(onUpdate).toHaveBeenCalledWith({
+      tags: ["website_quote", "sales", "hot lead"],
+    });
+  });
+
+  it("adds a tag the project already uses", async () => {
+    const user = userEvent.setup();
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <LeadDetail
+        submission={{
+          ...baseSubmission,
+          tags: ["sales"],
+        }}
+        members={[]}
+        availableTags={["sales", "follow up"]}
+        onUpdate={onUpdate}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    const details = screen.getByRole("complementary", { name: /^details$/i });
+    await user.click(within(details).getByRole("button", { name: /add tag/i }));
+    await user.click(screen.getByRole("button", { name: /^follow up$/i }));
+    expect(onUpdate).toHaveBeenCalledWith({
+      tags: ["sales", "follow up"],
+    });
+  });
+
+  it("does not add a tag the lead already has", async () => {
+    const user = userEvent.setup();
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <LeadDetail
+        submission={{
+          ...baseSubmission,
+          tags: ["sales"],
+        }}
+        members={[]}
+        onUpdate={onUpdate}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    const details = screen.getByRole("complementary", { name: /^details$/i });
+    await user.click(within(details).getByRole("button", { name: /add tag/i }));
+    await user.type(screen.getByRole("textbox", { name: /tag name/i }), "Sales{Enter}");
+    expect(onUpdate).not.toHaveBeenCalled();
+  });
+
+  it("removes a tag from the lead", async () => {
+    const user = userEvent.setup();
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <LeadDetail
+        submission={{
+          ...baseSubmission,
+          tags: ["website_quote", "sales"],
+        }}
+        members={[]}
+        onUpdate={onUpdate}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    const details = screen.getByRole("complementary", { name: /^details$/i });
+    await user.click(
+      within(details).getByRole("button", { name: /remove website quote/i }),
+    );
+    expect(onUpdate).toHaveBeenCalledWith({ tags: ["sales"] });
   });
 
   it("opens the assignee menu from the name or the email", async () => {
