@@ -38,11 +38,15 @@ export const ComposeWithSaved: Story = {
         id: "t1",
         name: "Quote follow-up",
         subject: "Your quote from {{business.name}}",
+        bodyHtml:
+          "<p>Hi {{lead.first_name}},</p><p>Your quote from {{business.name}} is ready to review.</p>",
       },
       {
         id: "t2",
         name: "No answer follow-up",
         subject: "Trying to reach you",
+        bodyHtml:
+          "<p>Hi {{lead.first_name}},</p><p>We tried reaching you today. Reply whenever you have a moment.</p>",
       },
     ],
   },

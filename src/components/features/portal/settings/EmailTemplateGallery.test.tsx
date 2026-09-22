@@ -125,6 +125,72 @@ describe("EmailTemplateGallery", () => {
     expect(onSelectSaved).toHaveBeenCalledWith(savedTemplates[0]);
   });
 
+  it("filters the gallery as the search query changes", async () => {
+    const user = userEvent.setup();
+    render(
+      <EmailTemplateGallery
+        mode="compose"
+        savedTemplates={[
+          ...savedTemplates,
+          { id: "saved-2", name: "Welcome note", subject: "Hello" },
+        ]}
+        onSelectStarter={vi.fn()}
+        onSelectSaved={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    await user.type(
+      screen.getByRole("searchbox", { name: /search layouts/i }),
+      "pricing",
+    );
+
+    expect(
+      screen.getByRole("button", { name: /quote \/ pricing/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /blank/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /welcome note/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows each starter's HTML in the card preview", () => {
+    render(
+      <EmailTemplateGallery
+        mode="create"
+        onSelectStarter={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTitle("One column preview")).toHaveAttribute(
+      "srcdoc",
+      expect.stringContaining("Write your message here."),
+    );
+  });
+
+  it("shows saved template HTML in the card preview", () => {
+    render(
+      <EmailTemplateGallery
+        mode="compose"
+        savedTemplates={[
+          {
+            ...savedTemplates[0],
+            bodyHtml: "<p>Ready when you are</p>",
+          },
+        ]}
+        onSelectStarter={vi.fn()}
+        onSelectSaved={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTitle("Quote follow-up preview")).toHaveAttribute(
+      "srcdoc",
+      expect.stringContaining("Ready when you are"),
+    );
+  });
+
   it("shows an empty library message when there are no saved templates", () => {
     render(
       <EmailTemplateGallery

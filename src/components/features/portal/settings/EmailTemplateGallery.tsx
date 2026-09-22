@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo, useState, type ReactElement } from "react";
+import { MaterialIcon } from "@/components/atoms/MaterialIcon";
+import { HtmlEmailCard } from "@/components/shared/HtmlEmailCard";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
   EMAIL_TEMPLATE_STARTERS,
   EMAIL_TEMPLATE_STARTER_CATEGORIES,
-  startersByCategory,
-  starterThumbnailPreview,
   type EmailTemplateStarter,
   type EmailTemplateStarterCategory,
 } from "@/lib/email-template-starters";
@@ -17,6 +17,7 @@ export interface EmailTemplateGallerySavedItem {
   id: string;
   name: string;
   subject?: string;
+  bodyHtml?: string | null;
 }
 
 export interface EmailTemplateGalleryProps {
@@ -30,35 +31,59 @@ export interface EmailTemplateGalleryProps {
   className?: string;
 }
 
-function StarterThumbnail({
-  starter,
-}: {
-  starter: EmailTemplateStarter;
-}): ReactElement {
-  const preview = starterThumbnailPreview(starter.thumbnail);
-  return (
-    <div
-      aria-hidden
-      className="flex h-36 items-start justify-center overflow-hidden border border-outline-variant/20 bg-white p-3"
-    >
-      {starter.thumbnail === "blank" ? (
-        <div className="h-full w-full bg-white" />
-      ) : (
-        <div
-          className="w-full scale-90 origin-top"
-          dangerouslySetInnerHTML={{ __html: preview }}
-        />
-      )}
-    </div>
-  );
-}
-
-function categoryHeading(
-  id: "all" | EmailTemplateStarterCategory,
-): string {
+function categoryLabel(id: EmailTemplateStarterCategory): string {
   return (
     EMAIL_TEMPLATE_STARTER_CATEGORIES.find((item) => item.id === id)?.label ??
     id
+  );
+}
+
+function matchesQuery(
+  name: string,
+  subject: string | undefined,
+  query: string,
+): boolean {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+  return (
+    name.toLowerCase().includes(needle) ||
+    (subject ?? "").toLowerCase().includes(needle)
+  );
+}
+
+function GalleryCard({
+  title,
+  subtitle,
+  html,
+  onClick,
+}: {
+  title: string;
+  subtitle?: string;
+  html: string;
+  onClick: () => void;
+}): ReactElement {
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        className="group w-full rounded-lg border border-white/10 bg-black/20 p-3 text-left transition-colors hover:border-white/40 focus-visible:border-white"
+      >
+        <div className="relative">
+          <HtmlEmailCard title={title} html={html} />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute right-2 bottom-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-black opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+          >
+            Use
+          </span>
+        </div>
+        <p className="mt-3 text-sm text-white">{title}</p>
+        {subtitle ? (
+          <p className="mt-0.5 text-xs text-white/45">{subtitle}</p>
+        ) : null}
+      </button>
+    </li>
   );
 }
 
@@ -75,28 +100,24 @@ export function EmailTemplateGallery({
   const [category, setCategory] = useState<"all" | EmailTemplateStarterCategory>(
     "all",
   );
+  const [query, setQuery] = useState("");
 
-  const catalog = useMemo(() => {
-    if (category === "all") return [...starters];
-    return starters.filter((starter) => starter.category === category);
-  }, [category, starters]);
-
-  const grouped = useMemo(() => {
-    if (category !== "all") {
-      return [{ id: category, items: catalog }] as const;
-    }
-    const order = EMAIL_TEMPLATE_STARTER_CATEGORIES.filter(
-      (item) => item.id !== "all",
+  const visibleStarters = useMemo(() => {
+    const inCategory =
+      category === "all"
+        ? starters
+        : starters.filter((starter) => starter.category === category);
+    return inCategory.filter((starter) =>
+      matchesQuery(starter.name, starter.subject, query),
     );
-    return order
-      .map((item) => ({
-        id: item.id,
-        items: startersByCategory(item.id).filter((starter) =>
-          starters.some((s) => s.id === starter.id),
-        ),
-      }))
-      .filter((group) => group.items.length > 0);
-  }, [catalog, category, starters]);
+  }, [category, query, starters]);
+
+  const visibleSaved = useMemo(() => {
+    if (category !== "all") return [];
+    return savedTemplates.filter((template) =>
+      matchesQuery(template.name, template.subject, query),
+    );
+  }, [category, query, savedTemplates]);
 
   return (
     <div
@@ -104,126 +125,122 @@ export function EmailTemplateGallery({
       aria-modal="true"
       aria-label="Template Gallery"
       className={cn(
-        "flex max-h-[min(90vh,720px)] min-h-[420px] flex-col border border-outline-variant/20 bg-surface-container-low",
+        "flex max-h-[min(90vh,720px)] min-h-105 flex-col border border-outline-variant/20 bg-surface-container-low",
         className,
       )}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/15 px-4 py-3 md:px-6">
-        <Label className="mb-0 text-white">Template Gallery</Label>
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-3 border-b border-outline-variant/15 px-4 py-3 md:px-6">
+        <p className="font-label shrink-0 text-[10px] tracking-widest text-white/70 uppercase">
+          Templates
+        </p>
+        <form
+          className="mx-auto w-full max-w-md min-w-48 flex-1"
+          onSubmit={(event) => event.preventDefault()}
+        >
+          <div className="flex h-9 items-center gap-2 rounded-md border border-white/15 px-3">
+            <MaterialIcon name="search" className="text-base text-white/40" />
+            <Input
+              type="search"
+              aria-label="Search layouts"
+              placeholder="Search layouts"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              className="h-full border-0 bg-transparent px-0 py-0 placeholder:text-white/40 focus-visible:border-transparent"
+            />
+          </div>
+        </form>
+        <div className="ml-auto flex shrink-0 items-center gap-1">
           {mode === "create" && onInsertHtmlPlainText && (
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               size="sm"
+              aria-label="Insert HTML / Plain Text"
               onClick={onInsertHtmlPlainText}
             >
-              Insert HTML / Plain Text
+              HTML
             </Button>
           )}
           {onClose && (
-            <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-              Close
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Close"
+              onClick={onClose}
+            >
+              <MaterialIcon name="close" className="text-base" />
             </Button>
           )}
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-        <nav
-          aria-label="Template categories"
-          className="flex shrink-0 gap-1 overflow-x-auto border-b border-outline-variant/15 p-3 md:w-44 md:flex-col md:overflow-y-auto md:border-b-0 md:border-r"
-        >
-          {EMAIL_TEMPLATE_STARTER_CATEGORIES.map((item) => (
-            <Button
+      <div
+        role="group"
+        aria-label="Template categories"
+        className="flex gap-2 overflow-x-auto border-b border-outline-variant/15 px-4 py-3 md:px-6"
+      >
+        {EMAIL_TEMPLATE_STARTER_CATEGORIES.map((item) => {
+          const selected = category === item.id;
+          return (
+            <button
               key={item.id}
               type="button"
-              variant="ghost"
-              size="sm"
-              aria-pressed={category === item.id}
+              aria-pressed={selected}
               onClick={() => setCategory(item.id)}
               className={cn(
-                "justify-start text-left",
-                category === item.id && "text-white",
+                "shrink-0 rounded-full border px-3 py-1 text-sm",
+                selected
+                  ? "border-white bg-white text-black"
+                  : "border-white/20 text-white/80 hover:border-white/40",
               )}
             >
               {item.label}
-            </Button>
-          ))}
-        </nav>
+            </button>
+          );
+        })}
+      </div>
 
-        <div className="min-h-0 flex-1 space-y-8 overflow-y-auto p-4 md:p-6">
-          {mode === "compose" && (
+      <div className="min-h-0 flex-1 space-y-8 overflow-y-auto p-4 md:p-6">
+        {mode === "compose" &&
+          category === "all" &&
+          savedTemplates.length === 0 &&
+          !query.trim() && (
             <section aria-label="Your templates">
-              <h3 className="font-label text-[10px] uppercase tracking-widest text-outline">
-                Your templates ({savedTemplates.length})
-              </h3>
-              {savedTemplates.length === 0 ? (
-                <p className="mt-3 text-sm text-on-surface-variant">
-                  No saved templates yet. Pick a starter below, or manage
-                  templates in Settings.
-                </p>
-              ) : (
-                <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {savedTemplates.map((template) => (
-                    <li key={template.id}>
-                      <button
-                        type="button"
-                        onClick={() => onSelectSaved?.(template)}
-                        className="w-full border border-outline-variant/20 bg-background/40 p-3 text-left transition-colors hover:border-outline-variant/40 hover:bg-background/60"
-                      >
-                        <div
-                          aria-hidden
-                          className="mb-3 flex h-24 items-center justify-center border border-outline-variant/15 bg-white/90"
-                        >
-                          <span className="font-label text-[9px] uppercase tracking-widest text-outline">
-                            Saved
-                          </span>
-                        </div>
-                        <p className="text-sm text-white">{template.name}</p>
-                        {template.subject ? (
-                          <p className="mt-1 truncate text-xs text-on-surface-variant">
-                            {template.subject}
-                          </p>
-                        ) : null}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <p className="text-sm text-on-surface-variant">
+                No saved templates yet. Pick a starter below, or manage
+                templates in Settings.
+              </p>
             </section>
           )}
 
-          {grouped.map((group) => (
-            <section
-              key={group.id}
-              aria-label={`${categoryHeading(group.id)} starters`}
-            >
-              <h3 className="font-label text-[10px] uppercase tracking-widest text-outline">
-                {categoryHeading(group.id)} ({group.items.length})
-              </h3>
-              <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {group.items.map((starter) => (
-                  <li key={starter.id}>
-                    <button
-                      type="button"
-                      onClick={() => onSelectStarter(starter)}
-                      className="w-full border border-outline-variant/20 bg-background/40 p-3 text-left transition-colors hover:border-outline-variant/40 hover:bg-background/60"
-                    >
-                      <StarterThumbnail starter={starter} />
-                      <p className="mt-3 text-sm text-white">{starter.name}</p>
-                      {starter.subject ? (
-                        <p className="mt-1 truncate text-xs text-on-surface-variant">
-                          {starter.subject}
-                        </p>
-                      ) : null}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
+        {mode === "compose" && category === "all" && visibleSaved.length > 0 && (
+          <section aria-label="Your templates">
+            <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {visibleSaved.map((template) => (
+                <GalleryCard
+                  key={template.id}
+                  title={template.name}
+                  subtitle={template.subject}
+                  html={template.bodyHtml?.trim() || "<p><br /></p>"}
+                  onClick={() => onSelectSaved?.(template)}
+                />
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {visibleStarters.map((starter) => (
+            <GalleryCard
+              key={starter.id}
+              title={starter.name}
+              subtitle={categoryLabel(starter.category)}
+              html={starter.bodyHtml}
+              onClick={() => onSelectStarter(starter)}
+            />
           ))}
-        </div>
+        </ul>
       </div>
     </div>
   );

@@ -21,6 +21,10 @@ import {
 import { LeadComposeLayoutPreview } from "@/components/features/portal/leads/LeadComposeLayoutPreview";
 import { EmailTemplateGallery } from "@/components/features/portal/settings/EmailTemplateGallery";
 import {
+  emailPreviewSrcDoc,
+  HtmlEmailCard,
+} from "@/components/shared/HtmlEmailCard";
+import {
   EmailTemplateBuilder,
   type EmailTemplateBuilderSavePayload,
 } from "@/components/features/portal/settings/template-builder/EmailTemplateBuilder";
@@ -295,10 +299,6 @@ interface TimelineEntry {
   body: ReactNode;
 }
 
-function emailPreviewSrcDoc(html: string): string {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:#fff;}</style></head><body>${html}</body></html>`;
-}
-
 function HtmlEmailPreview({ title, html }: { title: string; html: string }) {
   const [open, setOpen] = useState(false);
   const srcDoc = emailPreviewSrcDoc(html);
@@ -322,15 +322,9 @@ function HtmlEmailPreview({ title, html }: { title: string; html: string }) {
           event.stopPropagation();
           setOpen(true);
         }}
-        className="relative block h-36 w-full overflow-hidden rounded-md border border-white/10 bg-white text-left"
+        className="block w-full text-left"
       >
-        <iframe
-          title={`${title} preview`}
-          sandbox=""
-          srcDoc={srcDoc}
-          tabIndex={-1}
-          className="pointer-events-none absolute top-0 left-0 h-[280%] w-[280%] origin-top-left scale-[0.36] border-0"
-        />
+        <HtmlEmailCard title={title} html={html} />
       </button>
       {open ? (
         <div
@@ -1505,6 +1499,7 @@ export function LeadEmailThread({
               id: template.id,
               name: template.name,
               subject: template.subject,
+              bodyHtml: template.bodyHtml,
             }))}
             onSelectSaved={(template) => {
               applyTemplate(template.id);
