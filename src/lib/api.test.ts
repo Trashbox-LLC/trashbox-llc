@@ -25,6 +25,8 @@ import {
   getTeamRoles,
   hasPermission,
   collectLeadTags,
+  LEAD_TAG_PALETTE,
+  leadTagColor,
   listSubmissions,
   nextLeadTags,
   PERMISSIONS,
@@ -174,6 +176,18 @@ describe("CRM submissions API", () => {
   it("rejects a tag once the lead already has 20", () => {
     const current = Array.from({ length: 20 }, (_, index) => `tag ${index}`);
     expect(nextLeadTags(current, "another")).toBeNull();
+  });
+
+  it("keeps a tag on the same palette color", () => {
+    const color = leadTagColor("vip");
+    expect(LEAD_TAG_PALETTE.map((entry) => entry.id)).toContain(color.id);
+    expect(leadTagColor("vip")).toBe(color);
+    expect(leadTagColor("VIP")).toBe(leadTagColor("vip"));
+  });
+
+  it("uses the color stored on the tag", () => {
+    expect(leadTagColor("vip", "green").id).toBe("green");
+    expect(leadTagColor("vip", "nope").id).toBe(leadTagColor("vip").id);
   });
 
   it("collects the tags used across leads", () => {

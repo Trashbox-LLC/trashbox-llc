@@ -165,6 +165,9 @@ export interface PortalContextValue {
   /** Project tag catalog, including tags not yet on a loaded lead. */
   leadTags: string[];
   setLeadTags: (tags: string[]) => void;
+  /** Palette id for each catalog tag. */
+  leadTagColors: Record<string, string>;
+  setLeadTagColors: (colors: Record<string, string>) => void;
   /** Rename or drop a tag on leads already loaded in the inbox. */
   rewriteLeadTag: (from: string, to: string | null) => void;
   teamRole: TeamRole;
@@ -256,6 +259,8 @@ export function StubPortalProvider({
     forms: [],
     leadTags: [],
     setLeadTags: () => {},
+    leadTagColors: {},
+    setLeadTagColors: () => {},
     rewriteLeadTag: () => {},
     teamRole: "member",
     permissions: [],
@@ -333,6 +338,9 @@ export function PortalProvider({
   );
   const [forms, setForms] = useState<ProjectForm[]>([]);
   const [leadTags, setLeadTags] = useState<string[]>([]);
+  const [leadTagColors, setLeadTagColors] = useState<Record<string, string>>(
+    {},
+  );
   const [teamRole, setTeamRole] = useState<TeamRole>("member");
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [roles, setRoles] = useState<ClientRole[]>([]);
@@ -421,6 +429,7 @@ export function PortalProvider({
       setAccountProfile(null);
       setForms([]);
       setLeadTags([]);
+      setLeadTagColors({});
       setPermissions([]);
       setRoles([]);
       setMessagesById({});
@@ -495,6 +504,7 @@ export function PortalProvider({
           setMembers([]);
           setForms([]);
           setLeadTags([]);
+          setLeadTagColors({});
           setPermissions([]);
           setRoles([]);
           setMailbox({ connected: false });
@@ -547,10 +557,14 @@ export function PortalProvider({
             }),
           listProjectTags()
             .then((catalog) => {
-              if (!cancelled) setLeadTags(catalog.tags);
+              if (cancelled) return;
+              setLeadTags(catalog.tags);
+              setLeadTagColors(catalog.colors ?? {});
             })
             .catch(() => {
-              if (!cancelled) setLeadTags([]);
+              if (cancelled) return;
+              setLeadTags([]);
+              setLeadTagColors({});
             }),
           getMailbox()
             .then((box) => {
@@ -1156,6 +1170,8 @@ export function PortalProvider({
       forms,
       leadTags,
       setLeadTags,
+      leadTagColors,
+      setLeadTagColors,
       rewriteLeadTag,
       teamRole,
       permissions,
@@ -1211,6 +1227,8 @@ export function PortalProvider({
       forms,
       leadTags,
       setLeadTags,
+      leadTagColors,
+      setLeadTagColors,
       rewriteLeadTag,
       teamRole,
       permissions,

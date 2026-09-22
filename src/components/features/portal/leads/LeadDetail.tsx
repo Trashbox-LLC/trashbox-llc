@@ -28,6 +28,7 @@ import {
   LEAD_STATUS_LABELS,
   leadNotesOf,
   leadStatusOf,
+  leadTagColor,
   leadTagLabel,
   assigneeIdentity,
   leadTagsOf,
@@ -119,6 +120,8 @@ interface LeadDetailProps {
   composerLibrary?: LeadComposerLibrary;
   /** Tags already used on other leads, offered when adding one. */
   availableTags?: string[];
+  /** Palette id for each project tag. */
+  tagColors?: Record<string, string>;
   onUpdate: (patch: {
     status?: LeadStatus;
     tags?: LeadTag[];
@@ -148,6 +151,7 @@ export function LeadDetail({
   smsFromPhone,
   composerLibrary,
   availableTags = [],
+  tagColors,
   onUpdate,
   onAddNote,
   onDeleteNote,
@@ -492,10 +496,14 @@ export function LeadDetail({
         <div className="mt-4 flex flex-wrap gap-x-3 gap-y-2">
           {tags.map((tag) => {
             const label = leadTagLabel(tag);
+            const color = leadTagColor(tag, tagColors?.[tag]);
             return (
               <span
                 key={tag}
-                className="inline-flex h-7 items-center gap-1 rounded-lg border border-white/20 pr-1 pl-2.5 text-sm leading-none text-white"
+                className={cn(
+                  "inline-flex h-7 items-center gap-1.5 rounded-md pr-1 pl-2.5 text-sm leading-none",
+                  color.pill,
+                )}
               >
                 {label}
                 <button
@@ -507,7 +515,7 @@ export function LeadDetail({
                       tags: tags.filter((entry) => entry !== tag),
                     })
                   }
-                  className="text-outline hover:text-white inline-flex size-5 items-center justify-center rounded disabled:opacity-60"
+                  className="inline-flex size-5 items-center justify-center rounded opacity-70 hover:opacity-100 disabled:opacity-60"
                 >
                   <MaterialIcon name="close" className="text-sm" />
                 </button>
@@ -559,8 +567,15 @@ export function LeadDetail({
                 <button
                   type="button"
                   onClick={() => addTag(tagDraft)}
-                  className="hover:bg-surface-bright mt-1 w-full rounded-md px-2.5 py-1.5 text-left text-sm text-white"
+                  className="hover:bg-surface-bright mt-1 flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm text-white"
                 >
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "size-2 shrink-0 rounded-full",
+                      leadTagColor(draftTag, tagColors?.[draftTag]).dot,
+                    )}
+                  />
                   {leadTagLabel(draftTag)}
                 </button>
               ) : null}
@@ -571,8 +586,15 @@ export function LeadDetail({
                       <button
                         type="button"
                         onClick={() => addTag(tag)}
-                        className="hover:bg-surface-bright w-full rounded-md px-2.5 py-1.5 text-left text-sm text-white"
+                        className="hover:bg-surface-bright flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm text-white"
                       >
+                        <span
+                          aria-hidden
+                          className={cn(
+                            "size-2 shrink-0 rounded-full",
+                            leadTagColor(tag, tagColors?.[tag]).dot,
+                          )}
+                        />
                         {leadTagLabel(tag)}
                       </button>
                     </li>

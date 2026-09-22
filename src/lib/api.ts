@@ -51,6 +51,31 @@ export function normalizeLeadTag(value: string): string | null {
   return tag || null;
 }
 
+export const LEAD_TAG_PALETTE = [
+  { id: "red", label: "Red", dot: "bg-[#F05252]", pill: "bg-[#F05252] text-white" },
+  { id: "amber", label: "Amber", dot: "bg-[#E3A008]", pill: "bg-[#E3A008] text-neutral-950" },
+  { id: "blue", label: "Blue", dot: "bg-[#3B82F6]", pill: "bg-[#3B82F6] text-white" },
+  { id: "violet", label: "Violet", dot: "bg-[#A78BFA]", pill: "bg-[#A78BFA] text-neutral-950" },
+  { id: "green", label: "Green", dot: "bg-[#22C55E]", pill: "bg-[#22C55E] text-neutral-950" },
+  { id: "teal", label: "Teal", dot: "bg-[#14B8A6]", pill: "bg-[#14B8A6] text-neutral-950" },
+  { id: "slate", label: "Slate", dot: "bg-[#94A3B8]", pill: "bg-[#94A3B8] text-neutral-950" },
+  { id: "pink", label: "Pink", dot: "bg-[#EC4899]", pill: "bg-[#EC4899] text-white" },
+] as const;
+
+export type LeadTagColor = (typeof LEAD_TAG_PALETTE)[number];
+
+/** Stored palette id when the catalog has one, otherwise a stable swatch. */
+export function leadTagColor(tag: string, stored?: string | null): LeadTagColor {
+  const known = LEAD_TAG_PALETTE.find((entry) => entry.id === stored);
+  if (known) return known;
+  const key = normalizeLeadTag(tag) ?? tag;
+  let hash = 0;
+  for (let index = 0; index < key.length; index += 1) {
+    hash = (hash * 31 + key.charCodeAt(index)) >>> 0;
+  }
+  return LEAD_TAG_PALETTE[hash % LEAD_TAG_PALETTE.length];
+}
+
 /** Label for a stored tag. Known slugs keep their original names. */
 export function leadTagLabel(tag: string): string {
   const legacy = LEGACY_LEAD_TAG_LABELS[tag];
@@ -815,36 +840,52 @@ export async function deleteApiKey(): Promise<ApiKeyResponse> {
   })) as unknown as ApiKeyResponse;
 }
 
-export async function listProjectTags(): Promise<{ tags: string[] }> {
-  return (await authFetch("/tags")) as { tags: string[] };
+export type ProjectTagCatalog = {
+  tags: string[];
+  colors: Record<string, string>;
+};
+
+export async function listProjectTags(): Promise<ProjectTagCatalog> {
+  return (await authFetch("/tags")) as ProjectTagCatalog;
 }
 
 export async function createProjectTag(
   name: string,
-): Promise<{ tags: string[] }> {
+  color: string,
+): Promise<ProjectTagCatalog> {
   return (await authFetch("/tags", {
     method: "POST",
-    body: JSON.stringify({ name }),
-  })) as { tags: string[] };
+    body: JSON.stringify({ name, color }),
+  })) as ProjectTagCatalog;
 }
 
 export async function renameProjectTag(
   from: string,
   to: string,
-): Promise<{ tags: string[] }> {
+): Promise<ProjectTagCatalog> {
   return (await authFetch("/tags", {
     method: "PATCH",
     body: JSON.stringify({ from, to }),
-  })) as { tags: string[] };
+  })) as ProjectTagCatalog;
+}
+
+export async function recolorProjectTag(
+  tag: string,
+  color: string,
+): Promise<ProjectTagCatalog> {
+  return (await authFetch("/tags", {
+    method: "PATCH",
+    body: JSON.stringify({ from: tag, to: tag, color }),
+  })) as ProjectTagCatalog;
 }
 
 export async function deleteProjectTag(
   tag: string,
-): Promise<{ tags: string[] }> {
+): Promise<ProjectTagCatalog> {
   return (await authFetch("/tags", {
     method: "DELETE",
     body: JSON.stringify({ tag }),
-  })) as { tags: string[] };
+  })) as ProjectTagCatalog;
 }
 
 export async function listForms(): Promise<FormsListResponse> {

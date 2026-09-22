@@ -1,6 +1,19 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import type { Submission } from "@/lib/api";
 import { StubPortalProvider } from "@/lib/portal";
 import { TagsSettings } from "./TagsSettings";
+
+const previewLead: Submission = {
+  clientId: "c1",
+  submissionId: "lead-1",
+  senderName: "Jordan Hale",
+  senderEmail: "jordan@northline.co",
+  message: "",
+  formName: "Website",
+  status: "qualified",
+  tags: ["vip", "website_quote"],
+  submittedAt: "2026-06-01T00:00:00.000Z",
+};
 
 const meta = {
   title: "Features/Portal/Settings/TagsSettings",
@@ -9,7 +22,7 @@ const meta = {
   decorators: [
     (Story) => (
       <StubPortalProvider>
-        <div className="max-w-xl bg-background p-8">
+        <div className="max-w-5xl bg-background p-8">
           <Story />
         </div>
       </StubPortalProvider>
@@ -32,4 +45,11 @@ export const WithTags: Story = {
       tags: ["follow up", "sales", "vip", "website_quote"],
     },
   },
+  decorators: [
+    (Story) => (
+      <StubPortalProvider value={{ items: [previewLead] }}>
+        <Story />
+      </StubPortalProvider>
+    ),
+  ],
 };

@@ -358,6 +358,7 @@ export function PortalApp({ tab }: PortalAppProps) {
                               }
                               smsFromPhone={portal.sms?.phoneNumber}
                               availableTags={leadTags}
+                              tagColors={portal.leadTagColors}
                               onUpdate={portal.onLeadUpdate}
                               onAddNote={portal.onLeadNote}
                               onDeleteNote={portal.onLeadDeleteNote}
