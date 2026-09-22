@@ -182,6 +182,23 @@ export const PREVIEW_SAMPLE_CONTEXT: TemplateVariableContext = {
   sender: { name: "Your team", email: "you@example.com" },
 };
 
+/**
+ * How a snippet reads once it is dropped into a reply.
+ * `greeting` is the sample lead-in; `body` is the passage with tokens filled.
+ */
+export function snippetReplyParts(
+  bodyText: string,
+  context?: TemplateVariableContext,
+): { to: string; greeting: string; body: string } {
+  const ctx = withPreviewSamples(context);
+  const first = firstWord(ctx.lead?.name) || "there";
+  return {
+    to: ctx.lead?.email?.trim() ?? "",
+    greeting: `Hi ${first},`,
+    body: renderTemplateVariables(bodyText, ctx).trim(),
+  };
+}
+
 /** Sample values, with any provided preview fields winning over the stand-ins. */
 export function withPreviewSamples(
   context?: TemplateVariableContext,

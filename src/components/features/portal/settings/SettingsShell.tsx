@@ -18,6 +18,7 @@ import {
   getSettingsSection,
   isSettingsSectionId,
   isSignatureBuilderPath,
+  isSnippetBuilderPath,
   isTemplateBuilderImmersivePath,
   type SettingsScope,
 } from "@/lib/portal-settings";
@@ -81,6 +82,7 @@ export function SettingsShell({
   const section = getSettingsSection(sectionId, scope);
   const title = scope === "org" ? "Organization settings" : "Settings";
   const signatureBuilder = isSignatureBuilderPath(pathname);
+  const snippetBuilder = isSnippetBuilderPath(pathname);
 
   if (isTemplateBuilderImmersivePath(pathname)) {
     return (
@@ -117,12 +119,14 @@ export function SettingsShell({
                     {section.groupLabel}
                   </p>
                 )}
-                <div className="flex items-center justify-between gap-4">
-                  <h2 className="font-headline text-2xl font-bold tracking-tight text-white md:text-3xl">
-                    {section?.label ?? "Settings"}
-                  </h2>
-                  {headerActions}
-                </div>
+                {!snippetBuilder && (
+                  <div className="flex items-center justify-between gap-4">
+                    <h2 className="font-headline text-2xl font-bold tracking-tight text-white md:text-3xl">
+                      {section?.label ?? "Settings"}
+                    </h2>
+                    {headerActions}
+                  </div>
+                )}
               </div>
             )}
             {children}

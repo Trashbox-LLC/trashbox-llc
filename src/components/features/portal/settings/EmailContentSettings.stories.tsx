@@ -46,17 +46,24 @@ const signatures: EmailContentEntry[] = [
 const snippets: EmailContentEntry[] = [
   {
     id: "s1",
-    name: "Business hours",
+    name: "Hours",
     shortcut: "hours",
     bodyText: "We are open 8am to 5pm, Monday through Friday.",
     updatedAt: "2026-07-20T10:00:00.000Z",
   },
   {
     id: "s2",
-    name: "Base pricing",
+    name: "Pricing",
     shortcut: "pricing",
-    bodyText: "Standard pickups start at $99 including disposal fees.",
+    bodyText: "A standard pickup is $45. Extra bags are $8 each.",
     updatedAt: "2026-07-14T12:00:00.000Z",
+  },
+  {
+    id: "s3",
+    name: "Directions",
+    shortcut: "directions",
+    bodyText: "We are at 120 Market St. Ask for {{sender.name}}.",
+    updatedAt: "2026-07-11T09:15:00.000Z",
   },
 ];
 

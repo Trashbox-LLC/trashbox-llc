@@ -371,6 +371,45 @@ export function signatureBuilderNewPath(): string {
   return `${PORTAL_PATHS.settings}signatures/new/`;
 }
 
+export function snippetBuilderNewPath(): string {
+  const ws = currentWorkspaceSlugs();
+  if (ws?.orgSlug && ws.projectSlug) {
+    return portalWorkspacePath({
+      orgSlug: ws.orgSlug,
+      projectSlug: ws.projectSlug,
+      surface: "settings",
+      settingsRest: "snippets/new",
+    });
+  }
+  return `${PORTAL_PATHS.settings}snippets/new/`;
+}
+
+export function snippetBuilderEditPath(id: string): string {
+  const ws = currentWorkspaceSlugs();
+  const base =
+    ws?.orgSlug && ws.projectSlug
+      ? portalWorkspacePath({
+          orgSlug: ws.orgSlug,
+          projectSlug: ws.projectSlug,
+          surface: "settings",
+          settingsRest: "snippets/edit",
+        })
+      : `${PORTAL_PATHS.settings}snippets/edit/`;
+  return `${base}?id=${encodeURIComponent(id)}`;
+}
+
+/** Snippet builder keeps the settings sidebar and the group label. */
+export function isSnippetBuilderPath(
+  pathname: string | null | undefined,
+): boolean {
+  if (!pathname) return false;
+  const normalized = pathname.replace(/\/$/, "");
+  return (
+    normalized.endsWith("/snippets/new") ||
+    normalized.endsWith("/snippets/edit")
+  );
+}
+
 export function signatureBuilderEditPath(id: string): string {
   const ws = currentWorkspaceSlugs();
   const base =

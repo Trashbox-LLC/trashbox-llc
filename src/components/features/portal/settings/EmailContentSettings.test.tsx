@@ -32,9 +32,9 @@ const snippet: EmailContentEntry = {
   updatedAt: "2026-07-20T10:00:00.000Z",
 };
 
-function renderSettings(props: Partial<
-  React.ComponentProps<typeof EmailContentSettings>
-> = {}) {
+function renderSettings(
+  props: Partial<React.ComponentProps<typeof EmailContentSettings>> = {},
+) {
   const handlers = {
     onCreate: vi.fn().mockResolvedValue(undefined),
     onUpdate: vi.fn().mockResolvedValue(undefined),
@@ -73,9 +73,10 @@ describe("EmailContentSettings", () => {
   it("links New template to the visual builder", () => {
     renderSettings({ items: [] });
 
-    expect(
-      screen.getByRole("link", { name: /new template/i }),
-    ).toHaveAttribute("href", expect.stringMatching(/templates\/new\/?$/));
+    expect(screen.getByRole("link", { name: /new template/i })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/templates\/new\/?$/),
+    );
   });
 
   it("links Edit to the template builder edit route", () => {
@@ -124,10 +125,10 @@ describe("EmailContentSettings", () => {
 
     await user.click(screen.getByRole("button", { name: /preview/i }));
 
-    expect(screen.getByText(/Your quote from Acme Hauling/)).toBeInTheDocument();
     expect(
-      screen.getByTitle("Preview of Quote follow-up"),
+      screen.getByText(/Your quote from Acme Hauling/),
     ).toBeInTheDocument();
+    expect(screen.getByTitle("Preview of Quote follow-up")).toBeInTheDocument();
   });
 
   it("hides editing affordances without the manage permission", () => {
@@ -173,7 +174,9 @@ describe("EmailContentSettings", () => {
       ],
     });
 
-    const preview = screen.getByRole("region", { name: /preview of sales sign-off/i });
+    const preview = screen.getByRole("region", {
+      name: /preview of sales sign-off/i,
+    });
     expect(preview).toHaveTextContent("Your team");
     expect(preview).toHaveTextContent("Owner");
     expect(preview).toHaveTextContent("you@example.com");
@@ -238,25 +241,18 @@ describe("EmailContentSettings", () => {
     expect(onUpdate).not.toHaveBeenCalled();
   });
 
-  it("shows a snippet shortcut and normalizes what is typed", async () => {
-    const user = userEvent.setup();
-    const { onCreate } = renderSettings({ kind: "snippet", items: [snippet] });
+  it("lists a snippet shortcut and links to the builder", () => {
+    renderSettings({ kind: "snippet", items: [snippet] });
 
-    expect(screen.getByText("/hours")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /new snippet/i }));
-    await user.type(screen.getByLabelText(/^name$/i), "Pricing");
-    await user.type(screen.getByLabelText(/shortcut/i), "Base Pricing!");
-    await user.type(
-      screen.getByRole("textbox", { name: /body/i }),
-      "Our base rate is $99.",
+    expect(screen.getByRole("button", { name: /business hours/i })).toHaveTextContent(
+      "/hours",
     );
-    expect(screen.getByLabelText(/shortcut/i)).toHaveValue("base-pricing");
-
-    await user.click(screen.getByRole("button", { name: /save snippet/i }));
-    expect(onCreate.mock.calls[0]?.[0]).toMatchObject({
-      shortcut: "base-pricing",
-    });
+    expect(screen.getByRole("link", { name: /new snippet/i })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/snippets\/new\/?$/),
+    );
+    expect(screen.queryByText(/merge fields/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^body$/i)).not.toBeInTheDocument();
   });
 
   it("surfaces errors from the caller", () => {

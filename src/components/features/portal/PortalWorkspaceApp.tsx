@@ -11,6 +11,8 @@ import { SettingsSectionContent } from "@/components/features/portal/settings/Se
 import { SettingsShell } from "@/components/features/portal/settings/SettingsShell";
 import { SignatureBuilderCreatePage } from "@/components/features/portal/settings/signature-builder/SignatureBuilderCreatePage";
 import { SignatureBuilderEditPage } from "@/components/features/portal/settings/signature-builder/SignatureBuilderEditPage";
+import { SnippetBuilderCreatePage } from "@/components/features/portal/settings/snippet-builder/SnippetBuilderCreatePage";
+import { SnippetBuilderEditPage } from "@/components/features/portal/settings/snippet-builder/SnippetBuilderEditPage";
 import { TemplateBuilderCreatePage } from "@/components/features/portal/settings/template-builder/TemplateBuilderCreatePage";
 import { TemplateBuilderEditPage } from "@/components/features/portal/settings/template-builder/TemplateBuilderEditPage";
 import { TemplateBuilderNewPage } from "@/components/features/portal/settings/template-builder/TemplateBuilderNewPage";
@@ -40,7 +42,9 @@ type ProjectSettingsSurface =
   | "templates/builder"
   | "templates/edit"
   | "signatures/new"
-  | "signatures/edit";
+  | "signatures/edit"
+  | "snippets/new"
+  | "snippets/edit";
 
 function settingsSurface(
   settingsRest: string | undefined,
@@ -61,6 +65,8 @@ function settingsSurface(
     if (rest === "templates/edit") return "templates/edit";
     if (rest === "signatures/new") return "signatures/new";
     if (rest === "signatures/edit") return "signatures/edit";
+    if (rest === "snippets/new") return "snippets/new";
+    if (rest === "snippets/edit") return "snippets/edit";
   }
   if (!rest) return DEFAULT_SETTINGS_SECTION;
   const section = rest.split("/")[0] || DEFAULT_SETTINGS_SECTION;
@@ -294,6 +300,20 @@ export function PortalWorkspaceApp({ pathname }: PortalWorkspaceAppProps) {
     return (
       <SettingsShell>
         <SignatureBuilderEditPage />
+      </SettingsShell>
+    );
+  }
+  if (settingsKind === "snippets/new") {
+    return (
+      <SettingsShell>
+        <SnippetBuilderCreatePage />
+      </SettingsShell>
+    );
+  }
+  if (settingsKind === "snippets/edit") {
+    return (
+      <SettingsShell>
+        <SnippetBuilderEditPage />
       </SettingsShell>
     );
   }

@@ -24,6 +24,7 @@ import {
   parseSignatureDocument,
   signaturePreviewLines,
 } from "@/lib/email-signature-document";
+import { SnippetLibrary } from "@/components/features/portal/settings/snippet-builder/SnippetLibrary";
 import {
   SettingsHeaderAction,
   useHasSettingsHeader,
@@ -271,6 +272,20 @@ export function EmailContentSettings({
     );
   }, [busy, canManage, copy.label, newHref, usesBuilder]);
 
+  if (kind === "snippet") {
+    return (
+      <SnippetLibrary
+        items={items}
+        canManage={canManage}
+        busy={busy}
+        error={error}
+        previewContext={previewContext}
+        onCreate={onCreate}
+        onDelete={onDelete}
+      />
+    );
+  }
+
   return (
     <>
       {kind === "signature" &&
@@ -284,330 +299,336 @@ export function EmailContentSettings({
             {newButton}
           </div>
         ))}
-      <div className="space-y-8 border border-outline-variant/10 bg-surface-container-low p-6 md:p-8">
-      {kind !== "signature" && (
-        <div>
-          <Label>{copy.heading}</Label>
-          {copy.description && (
-            <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
-              {copy.description}{" "}
-              <a
-                href={settingsSectionPath("email-accounts")}
-                className="text-white underline"
-              >
-                A connected mailbox
-              </a>{" "}
-              is required to send replies.
-            </p>
-          )}
-        </div>
-      )}
-
-      {error && (
-        <p className="border border-error/40 bg-error/10 p-4 text-sm text-error">
-          {error}
-        </p>
-      )}
-
-      {kind !== "signature" && (
-        <section>
-          <Label>Merge fields</Label>
-          <p className="mt-2 text-sm text-on-surface-variant">
-            Type these anywhere in a subject or body. They are replaced when the
-            content is inserted into a reply.
-          </p>
-          <ul className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
-            {TEMPLATE_VARIABLES.map((variable) => (
-              <li key={variable.token} className="text-sm">
-                <code className="font-mono text-xs text-white">
-                  {variable.token}
-                </code>
-                <span className="ml-2 text-on-surface-variant">
-                  {variable.description}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <section>
+      <div className="border-outline-variant/10 bg-surface-container-low space-y-8 border p-6 md:p-8">
         {kind !== "signature" && (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Label className="mb-0">Saved {copy.label}s</Label>
-            {newButton}
+          <div>
+            <Label>{copy.heading}</Label>
+            {copy.description && (
+              <p className="text-on-surface-variant mt-2 max-w-2xl text-sm">
+                {copy.description}{" "}
+                <a
+                  href={settingsSectionPath("email-accounts")}
+                  className="text-white underline"
+                >
+                  A connected mailbox
+                </a>{" "}
+                is required to send replies.
+              </p>
+            )}
           </div>
         )}
 
-        <ul
-          className={`divide-y divide-outline-variant/10 border-y border-outline-variant/10${kind === "signature" ? "" : " mt-4"}`}
-        >
-          {items.length === 0 && (
-            <li className="py-4 text-sm text-on-surface-variant">
-              {copy.empty}
-            </li>
-          )}
-          {items.map((entry) => {
-            const renderedSubject = entry.subject
-              ? renderTemplateVariables(entry.subject, context)
-              : "";
-            return (
-              <li key={entry.id} className="py-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="flex flex-wrap items-center gap-2 text-sm text-white">
-                      {entry.name}
-                      {entry.isDefault && (
-                        <span className="border border-outline-variant/30 px-2 py-0.5 font-label text-[9px] uppercase tracking-widest text-outline">
-                          Default
-                        </span>
-                      )}
-                      {entry.shortcut && (
-                        <code className="font-mono text-xs text-outline">
-                          /{entry.shortcut}
-                        </code>
-                      )}
-                    </p>
-                    {entry.subject !== undefined && entry.subject !== "" && (
-                      <p className="mt-1 text-sm text-on-surface-variant">
-                        {entry.subject}
-                      </p>
-                    )}
-                    <p className="mt-1 font-label text-[10px] uppercase tracking-widest text-outline">
-                      Updated {formatUpdated(entry.updatedAt)}
-                    </p>
-                  </div>
+        {error && (
+          <p className="border-error/40 bg-error/10 text-error border p-4 text-sm">
+            {error}
+          </p>
+        )}
 
-                  <div className="flex flex-wrap items-center gap-3">
-                    {kind !== "signature" && (
-                      <Button
-                        type="button"
-                        variant="link"
-                        disabled={busy}
-                        onClick={() =>
-                          setPreviewId((id) =>
-                            id === entry.id ? null : entry.id,
-                          )
-                        }
-                        className={actionClass}
-                      >
-                        Preview
-                      </Button>
-                    )}
-                    {canManage && (
-                      <>
-                        {usesBuilder ? (
-                          <Button
-                            type="button"
-                            variant="link"
-                            disabled={busy}
-                            asChild
-                            className={actionClass}
-                          >
-                            <a href={builderEditPath(entry.id)}>Edit</a>
-                          </Button>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="link"
-                            disabled={busy}
-                            onClick={() =>
-                              openForm(entry.id, draftFromEntry(entry))
-                            }
-                            className={actionClass}
-                          >
-                            Edit
-                          </Button>
+        {kind !== "signature" && (
+          <section>
+            <Label>Merge fields</Label>
+            <p className="text-on-surface-variant mt-2 text-sm">
+              Type these anywhere in a subject or body. They are replaced when
+              the content is inserted into a reply.
+            </p>
+            <ul className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+              {TEMPLATE_VARIABLES.map((variable) => (
+                <li key={variable.token} className="text-sm">
+                  <code className="font-mono text-xs text-white">
+                    {variable.token}
+                  </code>
+                  <span className="text-on-surface-variant ml-2">
+                    {variable.description}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section>
+          {kind !== "signature" && (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Label className="mb-0">Saved {copy.label}s</Label>
+              {newButton}
+            </div>
+          )}
+
+          <ul
+            className={`divide-outline-variant/10 divide-y border-y border-outline-variant/10${kind === "signature" ? "" : "mt-4"}`}
+          >
+            {items.length === 0 && (
+              <li className="text-on-surface-variant py-4 text-sm">
+                {copy.empty}
+              </li>
+            )}
+            {items.map((entry) => {
+              const renderedSubject = entry.subject
+                ? renderTemplateVariables(entry.subject, context)
+                : "";
+              return (
+                <li key={entry.id} className="py-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="flex flex-wrap items-center gap-2 text-sm text-white">
+                        {entry.name}
+                        {entry.isDefault && (
+                          <span className="border-outline-variant/30 font-label text-outline border px-2 py-0.5 text-[9px] tracking-widest uppercase">
+                            Default
+                          </span>
                         )}
+                        {entry.shortcut && (
+                          <code className="text-outline font-mono text-xs">
+                            /{entry.shortcut}
+                          </code>
+                        )}
+                      </p>
+                      {entry.subject !== undefined && entry.subject !== "" && (
+                        <p className="text-on-surface-variant mt-1 text-sm">
+                          {entry.subject}
+                        </p>
+                      )}
+                      <p className="font-label text-outline mt-1 text-[10px] tracking-widest uppercase">
+                        Updated {formatUpdated(entry.updatedAt)}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                      {kind !== "signature" && (
                         <Button
                           type="button"
                           variant="link"
                           disabled={busy}
-                          onClick={() => {
-                            if (usesBuilder) {
-                              void duplicateTemplate(entry);
-                              return;
-                            }
-                            openForm(null, {
-                              ...draftFromEntry(entry),
-                              name: `${entry.name} (copy)`,
-                              shortcut: "",
-                              isDefault: false,
-                            });
-                          }}
+                          onClick={() =>
+                            setPreviewId((id) =>
+                              id === entry.id ? null : entry.id,
+                            )
+                          }
                           className={actionClass}
                         >
-                          Duplicate
+                          Preview
                         </Button>
-                        {onMakeDefault && !entry.isDefault && (
+                      )}
+                      {canManage && (
+                        <>
+                          {usesBuilder ? (
+                            <Button
+                              type="button"
+                              variant="link"
+                              disabled={busy}
+                              asChild
+                              className={actionClass}
+                            >
+                              <a href={builderEditPath(entry.id)}>Edit</a>
+                            </Button>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="link"
+                              disabled={busy}
+                              onClick={() =>
+                                openForm(entry.id, draftFromEntry(entry))
+                              }
+                              className={actionClass}
+                            >
+                              Edit
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            variant="link"
+                            disabled={busy}
+                            onClick={() => {
+                              if (usesBuilder) {
+                                void duplicateTemplate(entry);
+                                return;
+                              }
+                              openForm(null, {
+                                ...draftFromEntry(entry),
+                                name: `${entry.name} (copy)`,
+                                shortcut: "",
+                                isDefault: false,
+                              });
+                            }}
+                            className={actionClass}
+                          >
+                            Duplicate
+                          </Button>
+                          {onMakeDefault && !entry.isDefault && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              disabled={busy}
+                              onClick={() => void onMakeDefault(entry.id)}
+                              className={`${actionClass} text-white`}
+                            >
+                              Make default
+                            </Button>
+                          )}
                           <Button
                             type="button"
                             variant="ghost"
                             disabled={busy}
-                            onClick={() => void onMakeDefault(entry.id)}
-                            className={`${actionClass} text-white`}
+                            onClick={() => confirmDelete(entry)}
+                            className={`${actionClass} text-error hover:text-error`}
                           >
-                            Make default
+                            Delete
                           </Button>
-                        )}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          disabled={busy}
-                          onClick={() => confirmDelete(entry)}
-                          className={`${actionClass} text-error hover:text-error`}
-                        >
-                          Delete
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {kind === "signature" && (
-                  <SignatureSavedPreview entry={entry} context={context} />
-                )}
-
-                {kind !== "signature" && previewId === entry.id && (
-                  <div className="mt-3 border border-outline-variant/20 bg-background/40 p-4">
-                    <p className="font-label text-[10px] uppercase tracking-widest text-outline">
-                      Preview with sample values
-                    </p>
-                    {renderedSubject && (
-                      <p className="mt-2 text-sm text-white">
-                        {renderedSubject}
-                      </p>
-                    )}
-                    <iframe
-                      title={`Preview of ${entry.name}`}
-                      sandbox=""
-                      srcDoc={renderTemplateVariables(
-                        contentBodyToHtml(entry),
-                        context,
+                        </>
                       )}
-                      className="mt-2 h-48 w-full border border-outline-variant/15 bg-white"
-                    />
+                    </div>
                   </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
 
-        {!canManage && (
-          <p className="mt-4 text-sm text-on-surface-variant">
-            You need Manage Email Templates, Signatures And Snippets to add or
-            change saved {copy.label}s.
-          </p>
-        )}
-      </section>
+                  {kind === "signature" && (
+                    <SignatureSavedPreview entry={entry} context={context} />
+                  )}
 
-      {form && !usesBuilder && (
-        <form
-          className="space-y-4 border border-outline-variant/20 bg-background/40 p-4 md:p-6"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void save();
-          }}
-        >
-          <Label className="mb-0">
-            {form.editingId ? `Edit ${copy.label}` : `New ${copy.label}`}
-          </Label>
+                  {kind !== "signature" && previewId === entry.id && (
+                    <div className="border-outline-variant/20 bg-background/40 mt-3 border p-4">
+                      <p className="font-label text-outline text-[10px] tracking-widest uppercase">
+                        Preview with sample values
+                      </p>
+                      {renderedSubject && (
+                        <p className="mt-2 text-sm text-white">
+                          {renderedSubject}
+                        </p>
+                      )}
+                      <iframe
+                        title={`Preview of ${entry.name}`}
+                        sandbox=""
+                        srcDoc={renderTemplateVariables(
+                          contentBodyToHtml(entry),
+                          context,
+                        )}
+                        className="border-outline-variant/15 mt-2 h-48 w-full border bg-white"
+                      />
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="email-content-name">Name</Label>
-              <Input
-                id="email-content-name"
-                value={form.draft.name}
-                onChange={(event) => updateDraft({ name: event.target.value })}
-                disabled={busy}
-                maxLength={EMAIL_CONTENT_LIMITS.name}
-                placeholder={`Internal name for this ${copy.label}`}
-                className="py-2"
-              />
-            </div>
-
-            {kind === "snippet" && (
-              <div>
-                <Label htmlFor="email-content-shortcut">Shortcut</Label>
-                <Input
-                  id="email-content-shortcut"
-                  value={form.draft.shortcut}
-                  onChange={(event) =>
-                    updateDraft({
-                      shortcut: sanitizeShortcutInput(event.target.value),
-                    })
-                  }
-                  disabled={busy}
-                  maxLength={EMAIL_CONTENT_LIMITS.shortcut}
-                  placeholder="hours"
-                  className="py-2"
-                />
-                <p className="mt-1 text-xs text-outline">
-                  Optional. Lowercase letters, numbers, hyphens and underscores.
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <Label>Body</Label>
-            <RichTextEditor
-              key={form.seedKey}
-              ariaLabel="Body"
-              placeholder={copy.bodyPlaceholder}
-              initialHtml={form.seedHtml}
-              disabled={busy}
-              onChange={onBodyChange}
-            />
-          </div>
-
-          {kind === "signature" && (
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="email-content-default"
-                checked={form.draft.isDefault}
-                disabled={busy}
-                onCheckedChange={(checked) =>
-                  updateDraft({ isDefault: checked === true })
-                }
-              />
-              <Label htmlFor="email-content-default" className="mb-0">
-                Use as the account default
-              </Label>
-            </div>
-          )}
-
-          {unknownTokens.length > 0 && (
-            <p className="text-sm text-on-surface-variant">
-              {unknownTokens.map((token) => (
-                <code key={token} className="mr-2 font-mono text-xs text-white">
-                  {token}
-                </code>
-              ))}
-              {unknownTokens.length === 1
-                ? "is not a supported merge field and will be sent exactly as typed."
-                : "are not supported merge fields and will be sent exactly as typed."}
+          {!canManage && (
+            <p className="text-on-surface-variant mt-4 text-sm">
+              You need Manage Email Templates, Signatures And Snippets to add or
+              change saved {copy.label}s.
             </p>
           )}
+        </section>
 
-          <div className="flex flex-wrap gap-3">
-            <Button type="submit" disabled={busy || !canSave}>
-              Save {copy.label}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={busy}
-              onClick={() => setForm(null)}
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      )}
-    </div>
+        {form && !usesBuilder && (
+          <form
+            className="border-outline-variant/20 bg-background/40 space-y-4 border p-4 md:p-6"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void save();
+            }}
+          >
+            <Label className="mb-0">
+              {form.editingId ? `Edit ${copy.label}` : `New ${copy.label}`}
+            </Label>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="email-content-name">Name</Label>
+                <Input
+                  id="email-content-name"
+                  value={form.draft.name}
+                  onChange={(event) =>
+                    updateDraft({ name: event.target.value })
+                  }
+                  disabled={busy}
+                  maxLength={EMAIL_CONTENT_LIMITS.name}
+                  placeholder={`Internal name for this ${copy.label}`}
+                  className="py-2"
+                />
+              </div>
+
+              {kind === "snippet" && (
+                <div>
+                  <Label htmlFor="email-content-shortcut">Shortcut</Label>
+                  <Input
+                    id="email-content-shortcut"
+                    value={form.draft.shortcut}
+                    onChange={(event) =>
+                      updateDraft({
+                        shortcut: sanitizeShortcutInput(event.target.value),
+                      })
+                    }
+                    disabled={busy}
+                    maxLength={EMAIL_CONTENT_LIMITS.shortcut}
+                    placeholder="hours"
+                    className="py-2"
+                  />
+                  <p className="text-outline mt-1 text-xs">
+                    Optional. Lowercase letters, numbers, hyphens and
+                    underscores.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Label>Body</Label>
+              <RichTextEditor
+                key={form.seedKey}
+                ariaLabel="Body"
+                placeholder={copy.bodyPlaceholder}
+                initialHtml={form.seedHtml}
+                disabled={busy}
+                onChange={onBodyChange}
+              />
+            </div>
+
+            {kind === "signature" && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="email-content-default"
+                  checked={form.draft.isDefault}
+                  disabled={busy}
+                  onCheckedChange={(checked) =>
+                    updateDraft({ isDefault: checked === true })
+                  }
+                />
+                <Label htmlFor="email-content-default" className="mb-0">
+                  Use as the account default
+                </Label>
+              </div>
+            )}
+
+            {unknownTokens.length > 0 && (
+              <p className="text-on-surface-variant text-sm">
+                {unknownTokens.map((token) => (
+                  <code
+                    key={token}
+                    className="mr-2 font-mono text-xs text-white"
+                  >
+                    {token}
+                  </code>
+                ))}
+                {unknownTokens.length === 1
+                  ? "is not a supported merge field and will be sent exactly as typed."
+                  : "are not supported merge fields and will be sent exactly as typed."}
+              </p>
+            )}
+
+            <div className="flex flex-wrap gap-3">
+              <Button type="submit" disabled={busy || !canSave}>
+                Save {copy.label}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy}
+                onClick={() => setForm(null)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        )}
+      </div>
     </>
   );
 }
@@ -635,14 +656,16 @@ function SignatureSavedPreview({
     <div
       role="region"
       aria-label={`Preview of ${entry.name}`}
-      className={`mt-3 border border-outline-variant/20 bg-background p-4 text-sm text-white ${layoutClass}`}
+      className={`border-outline-variant/20 bg-background mt-3 border p-4 text-sm text-white ${layoutClass}`}
     >
       {doc.logoUrl ? (
         <img
           src={doc.logoUrl}
           alt=""
           className={
-            doc.layout === "banner" ? "size-6 object-cover" : "size-16 object-cover"
+            doc.layout === "banner"
+              ? "size-6 object-cover"
+              : "size-16 object-cover"
           }
         />
       ) : null}

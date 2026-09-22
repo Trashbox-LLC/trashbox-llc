@@ -9,8 +9,11 @@ import {
   orgSettingsSectionPath,
   resolveOrgSettingsSection,
   settingsSectionPath,
+  isSnippetBuilderPath,
   signatureBuilderEditPath,
   signatureBuilderNewPath,
+  snippetBuilderEditPath,
+  snippetBuilderNewPath,
 } from "./portal-settings";
 import { PORTAL_PATHS } from "./sites";
 
@@ -117,6 +120,16 @@ describe("portal-settings", () => {
     );
     expect(signatureBuilderEditPath("g1")).toBe(
       "/portal/acme/site/settings/signatures/edit/?id=g1",
+    );
+    expect(snippetBuilderNewPath()).toBe(
+      "/portal/acme/site/settings/snippets/new/",
+    );
+    expect(snippetBuilderEditPath("s1")).toBe(
+      "/portal/acme/site/settings/snippets/edit/?id=s1",
+    );
+    expect(isSnippetBuilderPath(snippetBuilderNewPath())).toBe(true);
+    expect(isSnippetBuilderPath("/portal/acme/site/settings/snippets/")).toBe(
+      false,
     );
   });
 

@@ -23,6 +23,7 @@ import {
   sanitizeShortcutInput,
   snippetTriggerAtEnd,
   unknownTemplateVariables,
+  snippetReplyParts,
   withPreviewSamples,
 } from "@/lib/email-content";
 
@@ -47,6 +48,19 @@ describe("renderPreviewTemplate", () => {
     expect(renderPreviewTemplate("Hi {{lead.nickname}}")).toBe(
       "Hi {{lead.nickname}}",
     );
+  });
+});
+
+describe("snippetReplyParts", () => {
+  it("fills the passage and addresses the sample lead", () => {
+    const parts = snippetReplyParts(
+      "See {{lead.first_name}} at {{business.name}}.",
+      { business: { name: "Acme Hauling" } },
+    );
+
+    expect(parts.to).toBe("jordan@example.com");
+    expect(parts.greeting).toBe("Hi Jordan,");
+    expect(parts.body).toBe("See Jordan at Acme Hauling.");
   });
 });
 
