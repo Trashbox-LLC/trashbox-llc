@@ -117,6 +117,43 @@ describe("LeadDetail", () => {
     );
   });
 
+  it("shows the author's name on note hover when they have one", async () => {
+    const user = userEvent.setup();
+    render(
+      <LeadDetail
+        submission={{
+          ...baseSubmission,
+          notes: [
+            {
+              id: "n1",
+              body: "Followed up by email.",
+              authorEmail: "owner@example.com",
+              createdAt: "2026-07-15T14:00:00.000Z",
+            },
+          ],
+        }}
+        members={[
+          {
+            email: "owner@example.com",
+            role: "owner",
+            joinedAt: "2026-01-01T00:00:00.000Z",
+            firstName: "Ezekiel",
+            lastName: "Mohr",
+            emailNotifications: true,
+          },
+        ]}
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    const details = screen.getByRole("complementary", { name: /^details$/i });
+    await user.hover(within(details).getByText("Followed up by email."));
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("Ezekiel Mohr");
+    expect(tooltip).not.toHaveTextContent("owner@example.com");
+  });
+
   it("deletes a note from the note menu", async () => {
     const user = userEvent.setup();
     const onDeleteNote = vi.fn().mockResolvedValue(undefined);

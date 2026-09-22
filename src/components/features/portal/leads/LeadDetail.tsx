@@ -78,6 +78,11 @@ function formatWhen(iso: string) {
   }
 }
 
+function noteAuthorName(authorEmail: string, members: TeamMember[]): string {
+  const member = members.find((item) => item.email === authorEmail);
+  return teamMemberDisplayName(member ?? { email: authorEmail });
+}
+
 function sortLeadMessages(messages: LeadMessage[]): LeadMessage[] {
   return [...messages].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
@@ -545,7 +550,8 @@ export function LeadDetail({
                     className="bg-surface-container-highest text-on-surface border-outline-variant/20 border px-3 py-2 shadow-md"
                     arrowClassName="fill-surface-container-highest"
                   >
-                    {note.authorEmail} · {formatWhen(note.createdAt)}
+                    {noteAuthorName(note.authorEmail, members)} ·{" "}
+                    {formatWhen(note.createdAt)}
                   </TooltipContent>
                 </Tooltip>
                 <DropdownMenu>
