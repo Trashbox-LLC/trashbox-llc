@@ -40,8 +40,8 @@ export function PortalApp({ tab }: PortalAppProps) {
   const auth = useAuth();
   const portal = usePortal();
   const leadTags = useMemo(
-    () => collectLeadTags(portal.items),
-    [portal.items],
+    () => collectLeadTags([{ tags: portal.leadTags }, ...portal.items]),
+    [portal.leadTags, portal.items],
   );
   const [inboxSidebarOpen, setInboxSidebarOpen] = useState(true);
   const [inboxSidebarWidth, setInboxSidebarWidth] = useState(
@@ -265,6 +265,7 @@ export function PortalApp({ tab }: PortalAppProps) {
                     filters={portal.filters}
                     members={portal.members}
                     forms={portal.forms}
+                    tags={leadTags}
                     onFiltersChange={portal.setFilters}
                     onApplyFilters={portal.applyFilters}
                     items={portal.items}

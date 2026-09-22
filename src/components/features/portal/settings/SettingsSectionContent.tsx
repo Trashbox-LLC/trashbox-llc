@@ -20,6 +20,7 @@ import {
   type ApiKeysSettingsInitialState,
 } from "@/components/features/portal/settings/ApiKeysSettings";
 import { GeneralSettings } from "@/components/features/portal/settings/GeneralSettings";
+import { TagsSettings } from "@/components/features/portal/settings/TagsSettings";
 import { PortalSkeleton } from "@/components/features/portal/PortalSkeleton";
 import { useAuth } from "@/lib/auth";
 import { usePortal } from "@/lib/portal";
@@ -144,6 +145,10 @@ export function SettingsSectionContent({
         businessName={portal.account.clientName}
       />
     );
+  }
+
+  if (sectionId === "tags") {
+    return <TagsSettings />;
   }
 
   if (sectionId === "api-keys") {

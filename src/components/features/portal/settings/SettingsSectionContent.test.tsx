@@ -61,6 +61,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
       memberLimit: 5,
       memberCount: 1,
     }),
+    listProjectTags: vi.fn().mockResolvedValue({ tags: ["vip", "follow up"] }),
     listSubmissions: vi.fn().mockResolvedValue({
       clientId: "c1",
       clientName: "Acme",
@@ -164,6 +165,21 @@ describe("SettingsSectionContent", () => {
     );
 
     expect(await screen.findByText(heading)).toBeInTheDocument();
+  });
+
+  it("renders the project tags", async () => {
+    render(
+      <PortalProvider>
+        <SettingsSectionContent sectionId="tags" />
+      </PortalProvider>,
+    );
+
+    expect(
+      await screen.findByRole("button", { name: /remove vip/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /remove follow up/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders placeholders for unfinished project sections", async () => {

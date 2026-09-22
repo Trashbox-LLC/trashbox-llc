@@ -314,6 +314,8 @@ export interface LeadInboxSidebarProps {
   filters: LeadInboxFiltersValue;
   members: TeamMember[];
   forms?: ProjectForm[];
+  /** Project tags. Falls back to tags on the loaded leads. */
+  tags?: string[];
   onFiltersChange: (value: LeadInboxFiltersValue) => void;
   onApplyFilters: () => void;
   items: Submission[];
@@ -334,6 +336,7 @@ export function LeadInboxSidebar({
   filters,
   members,
   forms = [],
+  tags: tagsProp,
   onFiltersChange,
   onApplyFilters,
   items,
@@ -371,7 +374,7 @@ export function LeadInboxSidebar({
               value={filters}
               members={members}
               forms={forms}
-              tags={collectLeadTags(items)}
+              tags={tagsProp ?? collectLeadTags(items)}
               onChange={onFiltersChange}
               onApply={onApplyFilters}
             />

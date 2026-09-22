@@ -815,6 +815,38 @@ export async function deleteApiKey(): Promise<ApiKeyResponse> {
   })) as unknown as ApiKeyResponse;
 }
 
+export async function listProjectTags(): Promise<{ tags: string[] }> {
+  return (await authFetch("/tags")) as { tags: string[] };
+}
+
+export async function createProjectTag(
+  name: string,
+): Promise<{ tags: string[] }> {
+  return (await authFetch("/tags", {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  })) as { tags: string[] };
+}
+
+export async function renameProjectTag(
+  from: string,
+  to: string,
+): Promise<{ tags: string[] }> {
+  return (await authFetch("/tags", {
+    method: "PATCH",
+    body: JSON.stringify({ from, to }),
+  })) as { tags: string[] };
+}
+
+export async function deleteProjectTag(
+  tag: string,
+): Promise<{ tags: string[] }> {
+  return (await authFetch("/tags", {
+    method: "DELETE",
+    body: JSON.stringify({ tag }),
+  })) as { tags: string[] };
+}
+
 export async function listForms(): Promise<FormsListResponse> {
   return (await authFetch("/forms")) as unknown as FormsListResponse;
 }

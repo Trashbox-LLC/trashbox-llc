@@ -15,6 +15,7 @@ import {
   ApiError,
   acceptTeamInvite,
   addSubmissionNote,
+  collectLeadTags,
   deleteSubmissionNote,
   connectMailbox,
   createOrganization,
@@ -28,6 +29,7 @@ import {
   leadStatusOf,
   listForms,
   listLeadMessages,
+  listProjectTags,
   listOrgs,
   listSubmissions,
   openBillingPortal,
@@ -160,6 +162,11 @@ export interface PortalContextValue {
   applyFilters: (next?: LeadInboxFiltersValue) => void;
   members: TeamMember[];
   forms: ProjectForm[];
+  /** Project tag catalog, including tags not yet on a loaded lead. */
+  leadTags: string[];
+  setLeadTags: (tags: string[]) => void;
+  /** Rename or drop a tag on leads already loaded in the inbox. */
+  rewriteLeadTag: (from: string, to: string | null) => void;
   teamRole: TeamRole;
   permissions: Permission[];
   roles: ClientRole[];
@@ -247,6 +254,9 @@ export function StubPortalProvider({
     applyFilters: () => {},
     members: [],
     forms: [],
+    leadTags: [],
+    setLeadTags: () => {},
+    rewriteLeadTag: () => {},
     teamRole: "member",
     permissions: [],
     roles: [],
@@ -322,6 +332,7 @@ export function PortalProvider({
     null,
   );
   const [forms, setForms] = useState<ProjectForm[]>([]);
+  const [leadTags, setLeadTags] = useState<string[]>([]);
   const [teamRole, setTeamRole] = useState<TeamRole>("member");
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [roles, setRoles] = useState<ClientRole[]>([]);
@@ -409,6 +420,7 @@ export function PortalProvider({
       setMembers([]);
       setAccountProfile(null);
       setForms([]);
+      setLeadTags([]);
       setPermissions([]);
       setRoles([]);
       setMessagesById({});
@@ -482,6 +494,7 @@ export function PortalProvider({
           setNextCursor(undefined);
           setMembers([]);
           setForms([]);
+          setLeadTags([]);
           setPermissions([]);
           setRoles([]);
           setMailbox({ connected: false });
@@ -531,6 +544,13 @@ export function PortalProvider({
             })
             .catch(() => {
               if (!cancelled) setForms([]);
+            }),
+          listProjectTags()
+            .then((catalog) => {
+              if (!cancelled) setLeadTags(catalog.tags);
+            })
+            .catch(() => {
+              if (!cancelled) setLeadTags([]);
             }),
           getMailbox()
             .then((box) => {
@@ -660,6 +680,11 @@ export function PortalProvider({
       try {
         const updated = await updateSubmission(id, patch);
         replaceItem(updated);
+        if (updated.tags) {
+          setLeadTags((prev) =>
+            collectLeadTags([{ tags: prev }, { tags: updated.tags }]),
+          );
+        }
       } catch (err) {
         setListError(
           err instanceof ApiError ? err.message : "Failed to update lead",
@@ -1064,6 +1089,25 @@ export function PortalProvider({
     }
   }, []);
 
+  const rewriteLeadTag = useCallback((from: string, to: string | null) => {
+    const source = from.trim().toLowerCase();
+    const target = to?.trim().toLowerCase() || null;
+    if (!source || target === source) return;
+    setItems((prev) =>
+      prev.map((item) => {
+        const tags = item.tags ?? [];
+        if (!tags.some((tag) => tag.toLowerCase() === source)) return item;
+        const next: string[] = [];
+        for (const tag of tags) {
+          const value = tag.toLowerCase() === source ? target : tag;
+          if (!value || next.includes(value)) continue;
+          next.push(value);
+        }
+        return { ...item, tags: next };
+      }),
+    );
+  }, []);
+
   const applyFilters = useCallback((next?: LeadInboxFiltersValue) => {
     setAppliedFilters(next ?? filters);
   }, [filters]);
@@ -1110,6 +1154,9 @@ export function PortalProvider({
       applyFilters,
       members: displayMembers,
       forms,
+      leadTags,
+      setLeadTags,
+      rewriteLeadTag,
       teamRole,
       permissions,
       roles,
@@ -1162,6 +1209,9 @@ export function PortalProvider({
       applyFilters,
       displayMembers,
       forms,
+      leadTags,
+      setLeadTags,
+      rewriteLeadTag,
       teamRole,
       permissions,
       roles,

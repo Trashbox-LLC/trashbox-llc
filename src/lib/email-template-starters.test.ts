@@ -8,6 +8,7 @@ import {
   EMAIL_TEMPLATE_STARTERS,
   EMAIL_TEMPLATE_STARTER_CATEGORIES,
   getStarterById,
+  starterThumbnailImage,
   startersByCategory,
   type EmailTemplateStarterCategory,
 } from "@/lib/email-template-starters";
@@ -93,6 +94,33 @@ describe("EMAIL_TEMPLATE_STARTERS", () => {
     expect(first).toBeDefined();
     expect(getStarterById(first!.id)).toEqual(first);
     expect(getStarterById("missing")).toBeUndefined();
+  });
+
+  it("maps each starter to a gallery thumbnail image", () => {
+    expect(starterThumbnailImage(getStarterById("basic-blank")!)).toBe(
+      "/images/email-templates/blank.webp",
+    );
+    expect(starterThumbnailImage(getStarterById("basic-one-column")!)).toBe(
+      "/images/email-templates/one-column.webp",
+    );
+    expect(starterThumbnailImage(getStarterById("basic-two-column")!)).toBe(
+      "/images/email-templates/two-column.webp",
+    );
+    expect(
+      starterThumbnailImage(getStarterById("basic-two-column-image")!),
+    ).toBe("/images/email-templates/two-column-image.webp");
+    expect(starterThumbnailImage(getStarterById("followup-check-in")!)).toBe(
+      "/images/email-templates/followup.webp",
+    );
+    expect(starterThumbnailImage(getStarterById("welcome-thanks")!)).toBe(
+      "/images/email-templates/welcome.webp",
+    );
+    expect(starterThumbnailImage(getStarterById("quotes-pricing")!)).toBe(
+      "/images/email-templates/quote.webp",
+    );
+    expect(
+      starterThumbnailImage(getStarterById("notification-next-step")!),
+    ).toBe("/images/email-templates/notification.webp");
   });
 
   it("filters by category and returns all for the all filter", () => {
