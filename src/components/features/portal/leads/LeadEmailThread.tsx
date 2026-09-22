@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -749,6 +750,7 @@ export function LeadEmailThread({
   const seededForSignature = useRef<string | null>(null);
   const draftRef = useRef<RichTextValue>({ html: "", text: "" });
   const layoutActiveRef = useRef(false);
+  const transcriptRef = useRef<HTMLDivElement>(null);
 
   const seedHtml = useMemo(
     () => buildSeedHtml(signatures, signatureId, context),
@@ -1058,6 +1060,12 @@ export function LeadEmailThread({
     return groupTimelineByDay(entries);
   }, [formAt, formFrom, formMessage, leadName, messages, showHistory]);
 
+  useLayoutEffect(() => {
+    const node = transcriptRef.current;
+    if (!node) return;
+    node.scrollTop = node.scrollHeight;
+  }, [showTranscript, orderedMessages.length, formMessage]);
+
   return (
     <TooltipProvider delayDuration={200}>
       <div className="flex flex-col gap-3">
@@ -1133,7 +1141,12 @@ export function LeadEmailThread({
         )}
 
         {showTranscript && (
-          <div role="region" aria-label="Message transcript">
+          <div
+            ref={transcriptRef}
+            role="region"
+            aria-label="Message transcript"
+            className="max-h-96 overflow-y-auto"
+          >
             <ConversationStart at={formAt} />
             <ThreadMessage
               author={formSender.name}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MaterialIcon } from "@/components/atoms/MaterialIcon";
 import { Select } from "@/components/atoms/Select";
 import { LeadEmailThreadSection } from "@/components/features/portal/leads/LeadEmailThreadSection";
@@ -31,6 +31,20 @@ import {
   visibleReplyText,
 } from "@/lib/lead-messages";
 import { cn } from "@/lib/utils";
+
+function useStackedLayout() {
+  const [stacked, setStacked] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 1023px)");
+    const update = () => setStacked(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  return stacked;
+}
 
 function titleCase(value: string): string {
   return value
@@ -113,8 +127,10 @@ export function LeadDetail({
   onSendSms,
 }: LeadDetailProps) {
   const [noteDraft, setNoteDraft] = useState("");
-  const [panel, setPanel] = useState<ConversationPanel>("thread");
+  const [panel, setPanel] = useState<ConversationPanel>("historyText");
   const [detailsOpen, setDetailsOpen] = useState(true);
+  const stacked = useStackedLayout();
+  const detailsCollapsed = !detailsOpen && !stacked;
   const status = leadStatusOf(submission);
   const tags = leadTagsOf(submission);
   const notes = leadNotesOf(submission);
@@ -194,54 +210,50 @@ export function LeadDetail({
                       History
                     </button>
                   )}
-                  {hasHistory && (
-                    <button
-                      type="button"
-                      aria-pressed={panel === "historyText"}
-                      onClick={() => selectPanel("historyText")}
-                      className={cn(
-                        "text-sm transition-colors",
-                        panel === "historyText"
-                          ? "border-b border-white text-white"
-                          : "text-outline hover:text-white",
-                      )}
-                    >
-                      History 2
-                    </button>
-                  )}
                   <button
                     type="button"
+                    aria-label="Email"
+                    aria-pressed={panel === "historyText"}
+                    onClick={() => selectPanel("historyText")}
+                    className={cn(
+                      "inline-flex size-7 items-center justify-center transition-colors",
+                      panel === "historyText"
+                        ? "border-b border-white text-white"
+                        : "text-outline hover:text-white",
+                    )}
+                  >
+                    <MaterialIcon name="mail" className="text-lg" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Text"
+                    className="text-outline inline-flex size-7 items-center justify-center"
+                  >
+                    <MaterialIcon name="sms" className="text-lg" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Phone"
+                    className="text-outline inline-flex size-7 items-center justify-center"
+                  >
+                    <MaterialIcon name="call" className="text-lg" />
+                  </button>
+                  {!stacked && (
+                  <button
+                    type="button"
+                    aria-label="Details"
                     aria-pressed={detailsOpen}
                     onClick={() => setDetailsOpen((open) => !open)}
                     className={cn(
-                      "inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-sm transition-colors duration-300",
+                      "hidden size-7 items-center justify-center rounded-md transition-colors duration-300 lg:inline-flex",
                       detailsOpen
                         ? "bg-white/10 text-white"
                         : "text-outline hover:bg-white/5 hover:text-white",
                     )}
                   >
-                    <span className="relative grid size-5 place-items-center">
-                      <MaterialIcon
-                        name="right_panel_close"
-                        className={cn(
-                          "col-start-1 row-start-1 text-lg transition-all duration-300",
-                          detailsOpen
-                            ? "scale-100 opacity-100"
-                            : "scale-75 opacity-0",
-                        )}
-                      />
-                      <MaterialIcon
-                        name="right_panel_open"
-                        className={cn(
-                          "col-start-1 row-start-1 text-lg transition-all duration-300",
-                          detailsOpen
-                            ? "scale-75 opacity-0"
-                            : "scale-100 opacity-100",
-                        )}
-                      />
-                    </span>
-                    Details
+                    <MaterialIcon name="info" className="text-lg" />
                   </button>
+                  )}
                 </div>
               </header>
               <p className="text-outline flex flex-wrap items-center gap-x-3 gap-y-1 px-6 pt-3 pb-4 text-xs">
@@ -301,13 +313,13 @@ export function LeadDetail({
       </section>
 
       <div
-        aria-hidden={!detailsOpen}
-        inert={!detailsOpen ? true : undefined}
+        aria-hidden={detailsCollapsed}
+        inert={detailsCollapsed ? true : undefined}
         className={cn(
           "min-w-0 overflow-hidden transition-[width,max-height,opacity,margin] duration-300 ease-out",
-          detailsOpen
-            ? "mt-3 max-h-[120rem] opacity-100 lg:mt-0 lg:ml-3 lg:w-80"
-            : "mt-0 max-h-0 opacity-0 lg:ml-0 lg:w-0 lg:max-h-none",
+          detailsCollapsed
+            ? "mt-0 max-h-0 opacity-0 lg:ml-0 lg:w-0 lg:max-h-none"
+            : "mt-3 max-h-[120rem] opacity-100 lg:mt-0 lg:ml-3 lg:w-80",
         )}
       >
       <aside
@@ -334,14 +346,16 @@ export function LeadDetail({
               indicatorClassName: LEAD_STATUS_DOT_CLASS[s],
             }))}
           />
+          {!stacked && (
           <button
             type="button"
             aria-label="Close details"
             onClick={() => setDetailsOpen(false)}
-            className="text-outline hover:text-white inline-flex size-7 shrink-0 items-center justify-center rounded-md"
+            className="text-outline hover:text-white hidden size-7 shrink-0 items-center justify-center rounded-md lg:inline-flex"
           >
             <MaterialIcon name="close" className="text-lg" />
           </button>
+          )}
           </div>
         </div>
         <div className="mt-5 grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3 text-sm leading-5">

@@ -86,7 +86,30 @@ describe("LeadDetail", () => {
     );
   });
 
-  it("shows earlier messages as text from history 2", async () => {
+  it("shows earlier messages as text from history 2", () => {
+    render(
+      <LeadDetail
+        submission={baseSubmission}
+        members={[]}
+        messages={[outboundReply, laterReply]}
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+      />,
+    );
+
+    const transcript = screen.getByRole("region", { name: /message transcript/i });
+    expect(screen.getByRole("button", { name: /^email$/i })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(within(transcript).getByText("Thanks for reaching out")).toBeInTheDocument();
+    expect(
+      within(transcript).getByText("Sounds good, when can we start?"),
+    ).toBeInTheDocument();
+    expect(within(transcript).getByText("Your mom as a website")).toBeInTheDocument();
+  });
+
+  it("leaves the email thread in place from text and phone", async () => {
     const user = userEvent.setup();
     render(
       <LeadDetail
@@ -98,16 +121,16 @@ describe("LeadDetail", () => {
       />,
     );
 
+    await user.click(screen.getByRole("button", { name: /^text$/i }));
+    await user.click(screen.getByRole("button", { name: /^phone$/i }));
+
     expect(
-      screen.queryByRole("region", { name: /message transcript/i }),
-    ).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /history 2/i }));
-    const transcript = screen.getByRole("region", { name: /message transcript/i });
-    expect(within(transcript).getByText("Thanks for reaching out")).toBeInTheDocument();
-    expect(
-      within(transcript).getByText("Sounds good, when can we start?"),
+      screen.getByRole("region", { name: /message transcript/i }),
     ).toBeInTheDocument();
-    expect(within(transcript).getByText("Your mom as a website")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^email$/i })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
   it("hides the details panel and brings it back", async () => {
@@ -153,6 +176,43 @@ describe("LeadDetail", () => {
         "Followed up by email.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("keeps details open on a narrow screen without a toggle", () => {
+    const matchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query.includes("max-width"),
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    try {
+      render(
+        <LeadDetail
+          submission={baseSubmission}
+          members={[]}
+          onUpdate={vi.fn()}
+          onAddNote={vi.fn()}
+        />,
+      );
+
+      expect(
+        screen.queryByRole("button", { name: /^details$/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /close details/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("complementary", { name: /^details$/i }),
+      ).toBeInTheDocument();
+    } finally {
+      window.matchMedia = matchMedia;
+    }
   });
 
   it("hides the quoted earlier email on the latest reply", () => {
