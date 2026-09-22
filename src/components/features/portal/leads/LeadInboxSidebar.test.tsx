@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { Submission } from "@/lib/api";
@@ -117,45 +117,6 @@ describe("LeadInboxSidebar", () => {
 
     await user.click(screen.getByRole("button", { name: /grace hopper/i }));
     expect(onSelect).toHaveBeenCalledWith("s2");
-  });
-
-  it("assigns a lead from the card dropdown without selecting it", async () => {
-    const user = userEvent.setup();
-    const onSelect = vi.fn();
-    const onAssign = vi.fn();
-    const members = [
-      {
-        email: "sales@example.com",
-        role: "member" as const,
-        joinedAt: "2026-01-02T00:00:00.000Z",
-        name: "Sam Sales",
-        emailNotifications: true,
-      },
-    ];
-
-    render(
-      <LeadInboxSidebar
-        open
-        onOpenChange={vi.fn()}
-        {...baseProps}
-        members={members}
-        onSelect={onSelect}
-        onAssign={onAssign}
-      />,
-    );
-
-    const graceCard = screen
-      .getByRole("button", { name: /grace hopper/i })
-      .closest("li");
-    expect(graceCard).toBeTruthy();
-
-    await user.click(
-      within(graceCard!).getByRole("button", { name: /assigned to/i }),
-    );
-    await user.click(screen.getByRole("option", { name: /sam sales/i }));
-
-    expect(onAssign).toHaveBeenCalledWith("s2", "sales@example.com");
-    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it("calls onLoadMore when load more is clicked", async () => {

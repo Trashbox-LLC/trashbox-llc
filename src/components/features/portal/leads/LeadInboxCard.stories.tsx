@@ -41,7 +41,6 @@ const meta = {
     active: false,
     replyCount: 0,
     members,
-    onAssign: fn(),
     onSelect: fn(),
   },
 } satisfies Meta<typeof LeadInboxCard>;
@@ -54,14 +53,6 @@ export const Default: Story = {};
 export const Active: Story = {
   args: {
     active: true,
-  },
-};
-
-export const WithAssignee: Story = {
-  args: {
-    assignedTo: "owner@example.com",
-    status: "contacted",
-    replyCount: 2,
   },
 };
 
@@ -96,14 +87,12 @@ export const StackedManyReplies: Story = {
 export const Won: Story = {
   args: {
     status: "won",
-    assignedTo: "sales@example.com",
   },
 };
 
 export const Activity: Story = {
   args: {
     variant: "activity",
-    onAssign: undefined,
   },
 };
 
@@ -111,6 +100,5 @@ export const ActivityActive: Story = {
   args: {
     variant: "activity",
     active: true,
-    onAssign: undefined,
   },
 };

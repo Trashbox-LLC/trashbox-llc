@@ -74,7 +74,6 @@ const meta = {
     items,
     selectedId: "s1",
     onSelect: fn(),
-    onAssign: fn(),
     listBusy: false,
     listError: null,
     hasMore: true,

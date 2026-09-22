@@ -274,10 +274,6 @@ export function PortalApp({ tab }: PortalAppProps) {
                     listError={portal.listError}
                     hasMore={Boolean(portal.nextCursor)}
                     onLoadMore={() => void portal.loadMore()}
-                    onAssign={(submissionId, assignedTo) =>
-                      portal.onLeadUpdate({ assignedTo }, submissionId)
-                    }
-                    assignBusy={portal.crmBusy}
                     width={inboxSidebarWidth}
                     resizing={inboxResizing}
                   />

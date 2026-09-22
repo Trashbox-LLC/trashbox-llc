@@ -1,12 +1,10 @@
 "use client";
 
 import type { CSSProperties, JSX } from "react";
-import { Select } from "@/components/atoms/Select";
 import { LeadStatusBadge } from "@/components/features/portal/leads/LeadStatusBadge";
 import { Button } from "@/components/ui/button";
 import {
   assigneeIdentity,
-  teamMemberDisplayName,
   type LeadStatus,
   type TeamMember,
 } from "@/lib/api";
@@ -32,16 +30,22 @@ function formatWhen(iso: string): string {
   }
 }
 
-function AssigneeEmail({
-  assignedTo,
-  members,
-}: {
-  assignedTo: string;
-  members: TeamMember[];
-}) {
-  const email = assigneeIdentity(assignedTo, members).email;
-  if (!email) return null;
-  return <span className="text-outline min-w-0 truncate">{email}</span>;
+/** Side-list date: "Sep 14", first letter only. */
+export function formatInboxCardDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+/** "Edward Moore" → "EM". A single name uses its first two letters. */
+export function contactInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 function AssigneeName({
@@ -75,9 +79,6 @@ export interface LeadInboxCardProps {
   replyCount?: number;
   assignedTo?: string | null;
   members?: TeamMember[];
-  /** When set (with members), renders an assignee dropdown on list cards. */
-  onAssign?: (assignedTo: string | null) => void;
-  assignBusy?: boolean;
   /**
    * "list" is the vertical master-list card (default). "activity" is the
    * compact horizontal card used in the Recent Activity rail.
@@ -102,8 +103,6 @@ export function LeadInboxCard({
   replyCount = 0,
   assignedTo,
   members = [],
-  onAssign,
-  assignBusy = false,
   variant = "list",
   stacked = false,
   onSelect,
@@ -154,7 +153,6 @@ export function LeadInboxCard({
 
   const depth = stacked ? inboxCardStackDepth(replyCount) : 1;
   const behind = depth - 1;
-  const showAssigneeSelect = Boolean(onAssign);
 
   const card = (
     <div
@@ -181,75 +179,44 @@ export function LeadInboxCard({
         onClick={onSelect}
         data-stack-depth={stacked ? depth : undefined}
         aria-pressed={active}
-        className="relative z-10 h-auto w-full flex-col items-stretch justify-start rounded-none px-5 pt-4 pb-2 text-left font-normal tracking-normal whitespace-normal text-inherit normal-case hover:bg-transparent"
+        className="relative z-10 h-auto w-full flex-col items-stretch justify-start rounded-none px-5 py-4 text-left font-normal tracking-normal whitespace-normal text-inherit normal-case hover:bg-transparent"
       >
-        <div className="flex items-center justify-between gap-3">
-          <p className="font-headline text-sm font-bold text-white">
-            {senderName}
-          </p>
-          <LeadStatusBadge status={status} />
-        </div>
-        <p className="text-outline mt-1 text-xs">{senderEmail}</p>
-        {formName ? (
-          <p className="font-label text-outline mt-2 text-[10px] tracking-widest uppercase">
-            {formName}
-          </p>
-        ) : null}
-      </Button>
-
-      <div
-        data-testid="inbox-card-footer"
-        className="relative z-20 flex items-center justify-between gap-3 px-5 pb-4"
-      >
-        <p className="font-label text-outline min-w-0 truncate text-[10px] tracking-widest uppercase">
-          {formatWhen(submittedAt)}
-        </p>
-        <div className="flex min-w-0 items-center justify-end gap-2">
-          {replyCount > 0 && (
-            <p
-              data-testid="inbox-card-replies"
-              className="text-on-surface shrink-0 text-sm font-semibold tabular-nums"
-            >
-              {replyCount} {replyCount === 1 ? "reply" : "replies"}
-            </p>
-          )}
-          {showAssigneeSelect && (
-            <div className="flex min-w-0 items-baseline justify-end gap-2 text-sm">
-              <Select
-                aria-label="Assigned to"
-                variant="soft"
-                listboxAlign="end"
-                value={assignedTo ?? ""}
-                disabled={assignBusy}
-                className="min-w-0 max-w-[8.5rem] shrink"
-                onChange={(next) => onAssign?.(next ? next : null)}
-                options={[
-                  { value: "", label: "Unassigned" },
-                  ...members.map((member) => {
-                    const name = teamMemberDisplayName(member);
-                    return {
-                      value: member.email,
-                      label: name,
-                      menuLabel:
-                        name === member.email
-                          ? member.email
-                          : `${name} (${member.email})`,
-                    };
-                  }),
-                ]}
-              />
-              {assignedTo ? (
-                <AssigneeEmail assignedTo={assignedTo} members={members} />
-              ) : null}
+        <div className="flex items-start gap-3">
+          <span
+            aria-hidden="true"
+            className="bg-surface-container-highest flex size-8 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
+          >
+            {contactInitials(senderName)}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-headline text-sm font-bold text-white">
+                {senderName}
+              </p>
+              <LeadStatusBadge status={status} />
             </div>
-          )}
-          {!showAssigneeSelect && assignedTo && (
-            <p className="min-w-0 truncate text-sm">
-              <AssigneeName assignedTo={assignedTo} members={members} />
-            </p>
-          )}
+            <p className="text-outline mt-1 text-xs">{senderEmail}</p>
+            {formName ? (
+              <p className="font-label text-outline mt-2 text-[10px] tracking-widest uppercase">
+                {formName}
+              </p>
+            ) : null}
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <p className="text-outline min-w-0 truncate text-xs">
+                {formatInboxCardDate(submittedAt)}
+              </p>
+              {replyCount > 0 && (
+                <p
+                  data-testid="inbox-card-replies"
+                  className="text-on-surface shrink-0 text-sm font-semibold tabular-nums"
+                >
+                  {replyCount} {replyCount === 1 ? "reply" : "replies"}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      </Button>
     </div>
   );
 

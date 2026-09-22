@@ -323,12 +323,6 @@ export interface LeadInboxSidebarProps {
   listError: string | null;
   hasMore?: boolean;
   onLoadMore?: () => void;
-  /** Assign / unassign a lead from the inbox card dropdown. */
-  onAssign?: (
-    submissionId: string,
-    assignedTo: string | null,
-  ) => void | Promise<void>;
-  assignBusy?: boolean;
   /** Sidebar width in px. */
   width?: number;
   /** Disable width transition while the email-pane handle is dragging. */
@@ -349,8 +343,6 @@ export function LeadInboxSidebar({
   listError,
   hasMore = false,
   onLoadMore,
-  onAssign,
-  assignBusy = false,
   width: widthProp = INBOX_SIDEBAR_DEFAULT_WIDTH,
   resizing = false,
 }: LeadInboxSidebarProps): JSX.Element {
@@ -422,15 +414,6 @@ export function LeadInboxSidebar({
                       status={leadStatusOf(item)}
                       active={active}
                       replyCount={item.messageCount ?? 0}
-                      assignedTo={item.assignedTo}
-                      members={members}
-                      assignBusy={assignBusy}
-                      onAssign={
-                        onAssign
-                          ? (assignedTo) =>
-                              void onAssign(item.submissionId, assignedTo)
-                          : undefined
-                      }
                       onSelect={() => onSelect(item.submissionId)}
                     />
                   </li>

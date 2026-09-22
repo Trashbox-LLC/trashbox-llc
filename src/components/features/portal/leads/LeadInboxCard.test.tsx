@@ -1,29 +1,41 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { TeamMember } from "@/lib/api";
 import {
+  contactInitials,
+  formatInboxCardDate,
   inboxCardStackDepth,
   LeadInboxCard,
 } from "./LeadInboxCard";
 
-const members: TeamMember[] = [
-  {
-    email: "owner@example.com",
-    role: "owner",
-    joinedAt: "2026-01-01T00:00:00.000Z",
-    firstName: "Olivia",
-    lastName: "Owner",
-    emailNotifications: true,
-  },
-  {
-    email: "sales@example.com",
-    role: "member",
-    joinedAt: "2026-01-02T00:00:00.000Z",
-    name: "Sam Sales",
-    emailNotifications: true,
-  },
-];
+describe("formatInboxCardDate", () => {
+  it("uses a short month and day, with only the first letter capitalized", () => {
+    const formatted = formatInboxCardDate("2026-09-14T18:00:00.000Z");
+
+    expect(formatted).toMatch(/^[A-Z][a-z]{2} \d{1,2}$/);
+    expect(formatted).not.toMatch(/\d{4}|am|pm/i);
+    expect(formatted).not.toBe(formatted.toUpperCase());
+  });
+
+  it("returns the original value when the date cannot be parsed", () => {
+    expect(formatInboxCardDate("not-a-date")).toBe("not-a-date");
+  });
+});
+
+describe("contactInitials", () => {
+  it("uses the first and last initials of a contact name", () => {
+    expect(contactInitials("Edward Moore")).toBe("EM");
+    expect(contactInitials("edward moore")).toBe("EM");
+  });
+
+  it("uses the first two letters of a single name", () => {
+    expect(contactInitials("Ada")).toBe("AD");
+  });
+
+  it("uses a placeholder when the name is blank", () => {
+    expect(contactInitials("  ")).toBe("?");
+  });
+});
 
 describe("inboxCardStackDepth", () => {
   it("is a single card when there are no replies", () => {
@@ -88,112 +100,19 @@ describe("LeadInboxCard", () => {
     );
   });
 
-  it("places replies to the left of the assignee dropdown", () => {
-    render(
-      <LeadInboxCard
-        {...base}
-        replyCount={2}
-        assignedTo="owner@example.com"
-        members={members}
-        onAssign={vi.fn()}
-      />,
-    );
-
-    const footerRight = screen.getByTestId("inbox-card-replies").parentElement;
-    expect(footerRight).toBeTruthy();
-    const children = Array.from(footerRight!.children);
-    expect(children[0]).toHaveAttribute("data-testid", "inbox-card-replies");
-    expect(children[1]).toHaveTextContent("Olivia Owner");
-  });
-
   it("hides reply count when there are no replies", () => {
     render(<LeadInboxCard {...base} replyCount={0} />);
 
     expect(screen.queryByTestId("inbox-card-replies")).not.toBeInTheDocument();
   });
 
-  it("shows name on the trigger and name with email in the dropdown", async () => {
-    const user = userEvent.setup();
+  it("does not show assignment on the list card", () => {
+    render(<LeadInboxCard {...base} assignedTo="owner@example.com" />);
 
-    render(
-      <LeadInboxCard
-        {...base}
-        assignedTo="owner@example.com"
-        members={members}
-        onAssign={vi.fn()}
-      />,
-    );
-
-    const assignee = screen.getByRole("button", { name: /assigned to/i });
-    expect(assignee).toHaveTextContent("Olivia Owner");
-    expect(assignee).not.toHaveTextContent("owner@example.com");
-    expect(screen.getByText("owner@example.com")).toBeInTheDocument();
-    expect(assignee.querySelector(".truncate")).toBeTruthy();
-
-    await user.click(assignee);
-    const listbox = screen.getByRole("listbox");
-    expect(listbox.className).toMatch(/\bright-0\b/);
+    expect(screen.queryByText("owner@example.com")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("option", {
-        name: /olivia owner \(owner@example\.com\)/i,
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("option", {
-        name: /sam sales \(sales@example\.com\)/i,
-      }),
-    ).toBeInTheDocument();
-  });
-
-  it("shows Unassigned when no assignee is set", () => {
-    render(
-      <LeadInboxCard {...base} members={members} onAssign={vi.fn()} />,
-    );
-
-    expect(
-      screen.getByRole("button", { name: /assigned to/i }),
-    ).toHaveTextContent("Unassigned");
-  });
-
-  it("calls onAssign from the dropdown without selecting the lead", async () => {
-    const user = userEvent.setup();
-    const onSelect = vi.fn();
-    const onAssign = vi.fn();
-
-    render(
-      <LeadInboxCard
-        {...base}
-        assignedTo={null}
-        members={members}
-        onSelect={onSelect}
-        onAssign={onAssign}
-      />,
-    );
-
-    await user.click(screen.getByRole("button", { name: /assigned to/i }));
-    await user.click(screen.getByRole("option", { name: /sam sales/i }));
-
-    expect(onAssign).toHaveBeenCalledWith("sales@example.com");
-    expect(onSelect).not.toHaveBeenCalled();
-  });
-
-  it("can clear assignment to Unassigned", async () => {
-    const user = userEvent.setup();
-    const onAssign = vi.fn();
-
-    render(
-      <LeadInboxCard
-        {...base}
-        assignedTo="owner@example.com"
-        members={members}
-        onAssign={onAssign}
-      />,
-    );
-
-    await user.click(screen.getByRole("button", { name: /assigned to/i }));
-    await user.click(screen.getByRole("option", { name: /unassigned/i }));
-
-    expect(onAssign).toHaveBeenCalledWith(null);
+      screen.queryByRole("button", { name: /assigned to/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows no stack layers without replies when stacked", () => {
