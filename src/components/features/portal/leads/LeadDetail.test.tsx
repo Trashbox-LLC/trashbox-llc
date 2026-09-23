@@ -743,6 +743,53 @@ describe("LeadDetail", () => {
     ).toBeInTheDocument();
   });
 
+  it("picks a number from the text and phone actions when the contact has several", async () => {
+    const user = userEvent.setup();
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    render(
+      <LeadDetail
+        submission={{
+          ...baseSubmission,
+          senderPhone: "+14255550182",
+          contactId: "con_1",
+        }}
+        contactPhones={["+14255550182", "+14255550199"]}
+        members={[]}
+        mailboxConnected
+        smsFromPhone="+18005550100"
+        onUpdate={onUpdate}
+        onAddNote={vi.fn()}
+        onSendMessage={vi.fn()}
+        onSendSms={vi.fn()}
+      />,
+    );
+
+    const details = screen.getByRole("complementary", { name: /^details$/i });
+    expect(within(details).getByText("(425) 555-0182")).toBeInTheDocument();
+    expect(within(details).getByText("(425) 555-0199")).toBeInTheDocument();
+    expect(within(details).queryByRole("radio")).not.toBeInTheDocument();
+    expect(within(details).queryByRole("link")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^text$/i }));
+    const textMenu = screen.getByRole("menu");
+    const textChoices = within(textMenu).getAllByRole("menuitem");
+    expect(textChoices).toHaveLength(2);
+    expect(textChoices[0]).toHaveAttribute("aria-current", "true");
+    expect(textChoices[1]).not.toHaveAttribute("aria-current", "true");
+
+    await user.click(textChoices[1]!);
+    expect(onUpdate).toHaveBeenCalledWith({ senderPhone: "+14255550199" });
+    expect(screen.getByRole("button", { name: /^text$/i })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    await user.click(screen.getByRole("button", { name: /^phone$/i }));
+    const phoneMenu = screen.getByRole("menu");
+    expect(within(phoneMenu).getAllByRole("menuitem")).toHaveLength(2);
+    expect(screen.queryByRole("link", { name: /^phone$/i })).not.toBeInTheDocument();
+  });
+
   it("keeps addresses and assignment in the details panel", () => {
     render(
       <LeadDetail

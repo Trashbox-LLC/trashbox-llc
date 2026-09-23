@@ -23,6 +23,7 @@ import {
   createProject,
   disconnectMailbox,
   getAccount,
+  getContact,
   getAccountProfile,
   getMailbox,
   getSmsStatus,
@@ -173,6 +174,8 @@ export interface PortalContextValue {
   rewriteLeadTag: (from: string, to: string | null) => void;
   /** Copy a contact's current phone onto their open conversations. */
   applyContactPhone: (contactId: string, phone: string | null) => void;
+  /** Phones on the contact linked to the open lead. */
+  contactPhones: string[];
   teamRole: TeamRole;
   permissions: Permission[];
   roles: ClientRole[];
@@ -266,6 +269,7 @@ export function StubPortalProvider({
     setLeadTagColors: () => {},
     rewriteLeadTag: () => {},
     applyContactPhone: () => {},
+    contactPhones: [],
     teamRole: "member",
     permissions: [],
     roles: [],
@@ -358,6 +362,7 @@ export function PortalProvider({
   const [channelsById, setChannelsById] = useState<
     Record<string, MessageChannel[]>
   >({});
+  const [contactPhones, setContactPhones] = useState<string[]>([]);
   const [sms, setSms] = useState<SmsStatusResponse | null>(null);
   const [portalPath, setPortalPath] = useState(() =>
     typeof window === "undefined" ? "" : window.location.pathname,
@@ -688,6 +693,7 @@ export function PortalProvider({
         status?: LeadStatus;
         tags?: LeadTag[];
         assignedTo?: string | null;
+        senderPhone?: string;
       },
       submissionId?: string,
     ) => {
@@ -1139,6 +1145,25 @@ export function PortalProvider({
 
   const selected = items.find((s) => s.submissionId === selectedId) ?? null;
   const leadMessages = selectedId ? (messagesById[selectedId] ?? []) : [];
+  const selectedContactId = selected?.contactId ?? null;
+
+  useEffect(() => {
+    if (!selectedContactId) {
+      setContactPhones([]);
+      return;
+    }
+    let cancelled = false;
+    void getContact(selectedContactId)
+      .then((detail) => {
+        if (!cancelled) setContactPhones(detail.contact.phones);
+      })
+      .catch(() => {
+        if (!cancelled) setContactPhones([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedContactId, portalPath]);
   const isOwner = teamRole === "owner";
   const checkPermission = useCallback(
     (permission: Permission) =>
@@ -1185,6 +1210,7 @@ export function PortalProvider({
       setLeadTagColors,
       rewriteLeadTag,
       applyContactPhone,
+      contactPhones,
       teamRole,
       permissions,
       roles,
@@ -1243,6 +1269,7 @@ export function PortalProvider({
       setLeadTagColors,
       rewriteLeadTag,
       applyContactPhone,
+      contactPhones,
       teamRole,
       permissions,
       roles,

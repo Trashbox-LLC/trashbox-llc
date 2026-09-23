@@ -44,12 +44,91 @@ import {
   type TeamMember,
 } from "@/lib/api";
 import {
+  contactPhoneChoices,
   formSubmissionMessage,
   leadContactLabel,
   visibleReplyText,
 } from "@/lib/lead-messages";
 import { formatPhoneDisplay } from "@/lib/phone";
 import { cn } from "@/lib/utils";
+
+function PhoneNumberMenu({
+  label,
+  icon,
+  pressed,
+  phones,
+  activePhone,
+  busy,
+  intent,
+  onPick,
+}: {
+  label: string;
+  icon: string;
+  pressed?: boolean;
+  phones: string[];
+  activePhone: string;
+  busy: boolean;
+  intent: "call" | "text";
+  onPick: (phone: string) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label={label}
+          aria-pressed={pressed}
+          className={cn(
+            "inline-flex size-7 items-center justify-center transition-colors",
+            pressed ? "text-white" : "text-outline hover:text-white",
+          )}
+        >
+          <MaterialIcon
+            name={icon}
+            className={cn("text-lg", icon === "sms" && "translate-y-[2px]")}
+          />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="border-outline-variant/20 bg-surface-container-high text-on-surface z-[100]"
+      >
+        {phones.map((phone) => {
+          const selected = phone === activePhone;
+          return (
+            <DropdownMenuItem
+              key={phone}
+              aria-current={selected ? "true" : undefined}
+              disabled={busy}
+              onSelect={() => onPick(phone)}
+              {...(intent === "call" ? { asChild: true } : {})}
+            >
+              {intent === "call" ? (
+                <a href={`tel:${phone}`} className="flex items-center gap-2">
+                  <MaterialIcon
+                    name="check"
+                    aria-hidden="true"
+                    className={cn("text-base", !selected && "invisible")}
+                  />
+                  {formatPhoneDisplay(phone)}
+                </a>
+              ) : (
+                <>
+                  <MaterialIcon
+                    name="check"
+                    aria-hidden="true"
+                    className={cn("text-base", !selected && "invisible")}
+                  />
+                  {formatPhoneDisplay(phone)}
+                </>
+              )}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function useStackedLayout() {
   const [stacked, setStacked] = useState(false);
@@ -116,6 +195,8 @@ interface LeadDetailProps {
   availableChannels?: MessageChannel[];
   /** Project's sending number in E.164, shown as the text sender. */
   smsFromPhone?: string;
+  /** Every phone on the linked contact, in E.164. */
+  contactPhones?: string[];
   /** Storybook/tests: seed the composer library without hitting the API. */
   composerLibrary?: LeadComposerLibrary;
   /** Tags already used on other leads, offered when adding one. */
@@ -126,6 +207,7 @@ interface LeadDetailProps {
     status?: LeadStatus;
     tags?: LeadTag[];
     assignedTo?: string | null;
+    senderPhone?: string;
   }) => Promise<void>;
   onAddNote: (body: string) => Promise<void>;
   onDeleteNote?: (noteId: string) => Promise<void>;
@@ -149,6 +231,7 @@ export function LeadDetail({
   messageError = null,
   availableChannels = ["email"],
   smsFromPhone,
+  contactPhones = [],
   composerLibrary,
   availableTags = [],
   tagColors,
@@ -172,9 +255,11 @@ export function LeadDetail({
   const tags = leadTagsOf(submission);
   const notes = leadNotesOf(submission);
   const contactLabel = leadContactLabel(submission);
-  const phoneLabel = submission.senderPhone?.trim()
-    ? formatPhoneDisplay(submission.senderPhone.trim())
-    : null;
+  const phoneChoices = contactPhoneChoices(
+    contactPhones,
+    submission.senderPhone,
+  );
+  const activePhone = submission.senderPhone?.trim() || "";
   const orderedMessages = sortLeadMessages(messages);
   const latestMessage =
     orderedMessages.length > 0
@@ -290,6 +375,24 @@ export function LeadDetail({
                   >
                     <MaterialIcon name="mail" className="text-lg" />
                   </button>
+                  {phoneChoices.length > 1 ? (
+                    <PhoneNumberMenu
+                      label="Text"
+                      icon="sms"
+                      pressed={panel === "historyText" && channel === "sms"}
+                      phones={phoneChoices}
+                      activePhone={activePhone}
+                      busy={busy}
+                      intent="text"
+                      onPick={(phone) => {
+                        if (phone !== activePhone) {
+                          void onUpdate({ senderPhone: phone });
+                        }
+                        setChannel("sms");
+                        setPanel("historyText");
+                      }}
+                    />
+                  ) : (
                   <button
                     type="button"
                     aria-label="Text"
@@ -307,9 +410,24 @@ export function LeadDetail({
                   >
                     <MaterialIcon name="sms" className="translate-y-[2px] text-lg" />
                   </button>
-                  {submission.senderPhone?.trim() ? (
+                  )}
+                  {phoneChoices.length > 1 ? (
+                    <PhoneNumberMenu
+                      label="Phone"
+                      icon="call"
+                      phones={phoneChoices}
+                      activePhone={activePhone}
+                      busy={busy}
+                      intent="call"
+                      onPick={(phone) => {
+                        if (phone !== activePhone) {
+                          void onUpdate({ senderPhone: phone });
+                        }
+                      }}
+                    />
+                  ) : activePhone ? (
                     <a
-                      href={`tel:${submission.senderPhone.trim()}`}
+                      href={`tel:${activePhone}`}
                       aria-label="Phone"
                       className="text-outline hover:text-white inline-flex size-7 items-center justify-center"
                     >
@@ -406,7 +524,7 @@ export function LeadDetail({
           fromAddress={fromAddress}
           fromOptions={fromOptions}
           availableChannels={availableChannels}
-          leadPhone={submission.senderPhone}
+          leadPhone={activePhone || undefined}
           channel={channel}
           onChannelChange={(next) => {
             setChannel(next);
@@ -642,9 +760,19 @@ export function LeadDetail({
               </dd>
             </div>
           ) : null}
-          <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3">
+          <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-start gap-x-3">
             <dt className="text-outline">Phone</dt>
-            <dd className="min-w-0 break-all text-white">{phoneLabel ?? "—"}</dd>
+            <dd className="min-w-0 text-white">
+              {phoneChoices.length === 0 ? (
+                "—"
+              ) : (
+                <ul className="space-y-1">
+                  {phoneChoices.map((phone) => (
+                    <li key={phone}>{formatPhoneDisplay(phone)}</li>
+                  ))}
+                </ul>
+              )}
+            </dd>
           </div>
           {fromAddress ? (
             <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-baseline gap-x-3">

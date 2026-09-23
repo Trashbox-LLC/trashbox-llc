@@ -188,6 +188,19 @@ export const WithHtmlEmail: Story = {
   },
 };
 
+export const SeveralPhones: Story = {
+  args: {
+    submission: {
+      ...baseSubmission,
+      senderPhone: "+14255550182",
+      contactId: "con_1",
+    },
+    contactPhones: ["+14255550182", "+14255550199"],
+    smsFromPhone: "+18005550100",
+    onSendSms: fn().mockResolvedValue(undefined),
+  },
+};
+
 export const Busy: Story = {
   args: {
     busy: true,

@@ -23,6 +23,25 @@ export function leadContactLabel(submission: {
 }
 
 /**
+ * Numbers to offer on a lead. The contact's list comes first; the number the
+ * conversation already uses stays available when it is not on that list.
+ */
+export function contactPhoneChoices(
+  phones: string[],
+  selected?: string,
+): string[] {
+  const choices: string[] = [];
+  for (const raw of phones) {
+    const phone = raw.trim();
+    if (!phone || choices.includes(phone)) continue;
+    choices.push(phone);
+  }
+  const current = selected?.trim();
+  if (current && !choices.includes(current)) choices.unshift(current);
+  return choices;
+}
+
+/**
  * Copy a contact's current phone onto the leads that belong to them.
  * A blank phone clears the number so the conversation stops offering a text.
  */

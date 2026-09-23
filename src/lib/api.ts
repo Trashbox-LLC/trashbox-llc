@@ -533,6 +533,7 @@ export async function updateSubmission(
     status?: LeadStatus;
     tags?: LeadTag[];
     assignedTo?: string | null;
+    senderPhone?: string;
   },
 ): Promise<Submission> {
   return (await authFetch(`/submissions/${encodeURIComponent(submissionId)}`, {

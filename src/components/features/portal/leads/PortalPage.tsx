@@ -357,6 +357,7 @@ export function PortalApp({ tab }: PortalAppProps) {
                                 ] ?? ["email"]
                               }
                               smsFromPhone={portal.sms?.phoneNumber}
+                              contactPhones={portal.contactPhones}
                               availableTags={leadTags}
                               tagColors={portal.leadTagColors}
                               onUpdate={portal.onLeadUpdate}

@@ -6,6 +6,7 @@ import {
   leadMessageTimelineLabels,
   messageSenderPresentation,
   applyContactPhoneToLeads,
+  contactPhoneChoices,
   resolveComposerChannel,
   visibleReplyText,
 } from "@/lib/lead-messages";
@@ -169,6 +170,21 @@ function lead(overrides: Partial<Submission> = {}): Submission {
     ...overrides,
   };
 }
+
+describe("contactPhoneChoices", () => {
+  it("lists each of the contact's numbers once", () => {
+    expect(
+      contactPhoneChoices(["+14255550182", " +14255550182 ", "+14255550199"]),
+    ).toEqual(["+14255550182", "+14255550199"]);
+  });
+
+  it("keeps the conversation's number when the contact does not have it", () => {
+    expect(contactPhoneChoices(["+14255550199"], "+14255550182")).toEqual([
+      "+14255550182",
+      "+14255550199",
+    ]);
+  });
+});
 
 describe("applyContactPhoneToLeads", () => {
   it("puts the contact's number on that contact's conversations", () => {
