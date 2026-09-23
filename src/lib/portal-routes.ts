@@ -7,6 +7,7 @@ import { PORTAL_BASE, PORTAL_PATHS } from "@/lib/sites";
 export const RESERVED_ORG_SLUGS = new Set([
   "login",
   "signup",
+  "join",
   "confirm",
   "forgot-password",
   "orgs",

@@ -17,6 +17,7 @@ describe("slugifyPortalSegment", () => {
 describe("parsePortalWorkspacePath", () => {
   it("returns null for auth and org picker", () => {
     expect(parsePortalWorkspacePath("/portal/login/")).toBeNull();
+    expect(parsePortalWorkspacePath("/portal/join/")).toBeNull();
     expect(parsePortalWorkspacePath("/portal/orgs/")).toBeNull();
     for (const reserved of RESERVED_ORG_SLUGS) {
       expect(parsePortalWorkspacePath(`/portal/${reserved}/`)).toBeNull();
