@@ -1,13 +1,34 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Select } from "@/components/atoms/Select";
+import { MaterialIcon } from "@/components/atoms/MaterialIcon";
+import { Select, type SelectOption } from "@/components/atoms/Select";
 import { ContactAvatar } from "@/components/features/portal/contacts/ContactAvatar";
 import { type ContactFormValues } from "@/components/features/portal/contacts/contact-display";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { teamMemberDisplayName, type TeamMember } from "@/lib/api";
+import { PHONE_LABELS, nextPhoneLabel } from "@/lib/phone-labels";
+
+function phoneLabelTitle(label: string): string {
+  const trimmed = label.trim();
+  if (!trimmed) return "Phone";
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
+function phoneLabelOptions(current: string): SelectOption[] {
+  const known = new Set<string>(PHONE_LABELS);
+  const options = PHONE_LABELS.map((label) => ({
+    value: label,
+    label: phoneLabelTitle(label),
+  }));
+  const extra = current.trim().toLowerCase();
+  if (extra && !known.has(extra)) {
+    return [{ value: extra, label: phoneLabelTitle(extra) }, ...options];
+  }
+  return options;
+}
 
 /**
  * Grouped card of rows, the way a phone contact editor reads: an inset rounded
@@ -85,7 +106,7 @@ export function ContactForm({
 
   const identified =
     values.emails.trim() !== "" ||
-    values.phones.trim() !== "" ||
+    values.phones.some((phone) => phone.number.trim() !== "") ||
     values.firstName.trim() !== "" ||
     values.lastName.trim() !== "" ||
     values.company.trim() !== "";
@@ -95,7 +116,7 @@ export function ContactForm({
     [values.firstName.trim(), values.lastName.trim()].filter(Boolean).join(" ") ||
     values.company.trim() ||
     values.emails.trim().split(/[\n,]/)[0]?.trim() ||
-    values.phones.trim().split(/[\n,]/)[0]?.trim() ||
+    values.phones.find((phone) => phone.number.trim())?.number.trim() ||
     "";
 
   return (
@@ -168,16 +189,72 @@ export function ContactForm({
           />
           <p className="text-outline pb-2 text-xs">One per line</p>
         </FieldRow>
-        <FieldRow label="Phone" htmlFor="contact-phones" align="start">
-          <Textarea
-            id="contact-phones"
-            rows={2}
-            value={values.phones}
-            onChange={(e) => set("phones", e.target.value)}
-            placeholder="+1 555 123 4567"
-            className="placeholder:text-outline min-h-0 resize-y border-0 bg-transparent px-0 py-2.5 text-sm shadow-none focus-visible:ring-0"
-          />
-          <p className="text-outline pb-2 text-xs">One per line</p>
+        <FieldRow label="Phone" htmlFor="contact-phone-0" align="start">
+          <div className="flex w-full flex-col gap-2 py-2">
+            {values.phones.map((phone, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Select
+                  id={index === 0 ? "contact-phone-0" : undefined}
+                  aria-label={`Phone label ${index + 1}`}
+                  variant="inline"
+                  value={phone.label.trim().toLowerCase() || "phone"}
+                  options={phoneLabelOptions(phone.label)}
+                  onChange={(label) =>
+                    set(
+                      "phones",
+                      values.phones.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, label } : item,
+                      ),
+                    )
+                  }
+                />
+                <Input
+                  aria-label={`Phone number ${index + 1}`}
+                  value={phone.number}
+                  onChange={(e) =>
+                    set(
+                      "phones",
+                      values.phones.map((item, itemIndex) =>
+                        itemIndex === index
+                          ? { ...item, number: e.target.value }
+                          : item,
+                      ),
+                    )
+                  }
+                  placeholder="+1 555 123 4567"
+                  className={rowInputClass}
+                />
+                <button
+                  type="button"
+                  aria-label={`Remove phone ${index + 1}`}
+                  onClick={() =>
+                    set(
+                      "phones",
+                      values.phones.filter((_, itemIndex) => itemIndex !== index),
+                    )
+                  }
+                  className="text-outline hover:text-white"
+                >
+                  <MaterialIcon name="close" className="text-base" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() =>
+                set("phones", [
+                  ...values.phones,
+                  {
+                    number: "",
+                    label: nextPhoneLabel(values.phones.map((phone) => phone.label)),
+                  },
+                ])
+              }
+              className="text-primary w-fit text-sm"
+            >
+              Add phone
+            </button>
+          </div>
         </FieldRow>
       </FieldGroup>
 

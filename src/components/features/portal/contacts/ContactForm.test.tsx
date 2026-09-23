@@ -38,6 +38,37 @@ describe("ContactForm", () => {
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
   });
 
+  it("adds the next unused label when a phone is added", async () => {
+    const values = {
+      ...emptyContactForm(),
+      phones: [{ number: "+15551234567", label: "phone" }],
+    };
+    const handlers = setup({ values });
+    await userEvent.click(screen.getByRole("button", { name: /add phone/i }));
+    expect(handlers.onChange).toHaveBeenCalledWith({
+      ...values,
+      phones: [
+        { number: "+15551234567", label: "phone" },
+        { number: "", label: "mobile" },
+      ],
+    });
+  });
+
+  it("keeps the number when its label changes", async () => {
+    const values = {
+      ...emptyContactForm(),
+      firstName: "Sam",
+      phones: [{ number: "+15551234567", label: "phone" }],
+    };
+    const handlers = setup({ values });
+    await userEvent.click(screen.getByRole("button", { name: /phone label 1/i }));
+    await userEvent.click(screen.getByRole("option", { name: /^home$/i }));
+    expect(handlers.onChange).toHaveBeenCalledWith({
+      ...values,
+      phones: [{ number: "+15551234567", label: "home" }],
+    });
+  });
+
   it("allows submitting once an email is present", () => {
     setup({ values: { ...emptyContactForm(), emails: "sam@example.com" } });
     expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();

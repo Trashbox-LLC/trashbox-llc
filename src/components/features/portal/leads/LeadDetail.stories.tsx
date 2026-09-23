@@ -195,7 +195,10 @@ export const SeveralPhones: Story = {
       senderPhone: "+14255550182",
       contactId: "con_1",
     },
-    contactPhones: ["+14255550182", "+14255550199"],
+    contactPhones: [
+      { number: "+14255550182", label: "phone" },
+      { number: "+14255550199", label: "home" },
+    ],
     smsFromPhone: "+18005550100",
     onSendSms: fn().mockResolvedValue(undefined),
   },

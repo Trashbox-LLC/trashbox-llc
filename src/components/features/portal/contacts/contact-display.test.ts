@@ -155,7 +155,17 @@ describe("contactToForm", () => {
       }),
     );
     expect(form.emails).toBe("a@example.com\nb@example.com");
-    expect(form.phones).toBe("+15551234567");
+    expect(form.phones).toEqual([{ number: "+15551234567", label: "phone" }]);
+  });
+
+  it("keeps a stored phone label", () => {
+    const form = contactToForm(
+      contact({
+        phones: ["+15551234567"],
+        phoneLabels: ["mobile"],
+      }),
+    );
+    expect(form.phones).toEqual([{ number: "+15551234567", label: "mobile" }]);
   });
 
   it("joins tags with a comma", () => {
@@ -183,10 +193,23 @@ describe("contactFormToInput", () => {
     const input = contactFormToInput({
       ...blank,
       emails: "a@example.com\nb@example.com",
-      phones: "555-123-4567",
+      phones: [{ number: "555-123-4567", label: "mobile" }],
     });
     expect(input.emails).toEqual(["a@example.com", "b@example.com"]);
     expect(input.phones).toEqual(["555-123-4567"]);
+    expect(input.phoneLabels).toEqual(["mobile"]);
+  });
+
+  it("drops a phone row that has no number", () => {
+    const input = contactFormToInput({
+      ...blank,
+      phones: [
+        { number: "", label: "phone" },
+        { number: "555-123-4567", label: "home" },
+      ],
+    });
+    expect(input.phones).toEqual(["555-123-4567"]);
+    expect(input.phoneLabels).toEqual(["home"]);
   });
 
   it("splits tags on commas", () => {
@@ -241,6 +264,7 @@ describe("contactFormToInput", () => {
       website: "https://acme.test",
       emails: ["sam@example.com"],
       phones: ["+15551234567"],
+      phoneLabels: ["phone"],
       tags: ["vip"],
       ownerEmail: "rep@example.com",
     });

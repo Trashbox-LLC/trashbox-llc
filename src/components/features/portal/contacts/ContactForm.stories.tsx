@@ -76,7 +76,7 @@ export const Editing: Story = {
       address: "1 Mill Lane, London",
       website: "https://analytical.example",
       emails: "ada@example.com\nada.lovelace@work.example",
-      phones: "+15551234567",
+      phones: [{ number: "+15551234567", label: "phone" }],
       tags: "vip, referral",
       ownerEmail: "sales@example.com",
     },

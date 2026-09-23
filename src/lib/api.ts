@@ -1279,6 +1279,8 @@ export interface ContactInput {
   website?: string;
   emails: string[];
   phones: string[];
+  /** Label for each phone, aligned with `phones`. */
+  phoneLabels?: string[];
   tags: string[];
   ownerEmail: string | null;
   customFields?: Record<string, string>;

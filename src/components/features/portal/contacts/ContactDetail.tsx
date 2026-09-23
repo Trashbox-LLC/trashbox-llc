@@ -17,6 +17,7 @@ import {
   type TeamMember,
 } from "@/lib/api";
 import { formatPhoneDisplay } from "@/lib/phone";
+import { labeledContactPhones } from "@/lib/phone-labels";
 import { cn } from "@/lib/utils";
 
 const labelClass =
@@ -304,13 +305,14 @@ export function ContactDetail({
             <p className="text-outline text-sm">None</p>
           ) : (
             <ul className="space-y-1">
-              {contact.phones.map((phone) => (
-                <li key={phone} className="text-sm">
+              {labeledContactPhones(contact).map((phone) => (
+                <li key={phone.number} className="flex items-baseline gap-2 text-sm">
+                  <span className="text-outline capitalize">{phone.label}</span>
                   <a
-                    href={`tel:${phone}`}
+                    href={`tel:${phone.number}`}
                     className="text-white underline-offset-4 hover:underline"
                   >
-                    {formatPhoneDisplay(phone)}
+                    {formatPhoneDisplay(phone.number)}
                   </a>
                 </li>
               ))}

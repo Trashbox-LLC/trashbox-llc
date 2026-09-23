@@ -50,6 +50,7 @@ import {
   visibleReplyText,
 } from "@/lib/lead-messages";
 import { formatPhoneDisplay } from "@/lib/phone";
+import type { ContactPhone } from "@/lib/phone-labels";
 import { cn } from "@/lib/utils";
 
 function PhoneNumberMenu({
@@ -65,7 +66,7 @@ function PhoneNumberMenu({
   label: string;
   icon: string;
   pressed?: boolean;
-  phones: string[];
+  phones: ContactPhone[];
   activePhone: string;
   busy: boolean;
   intent: "call" | "text";
@@ -94,33 +95,32 @@ function PhoneNumberMenu({
         className="border-outline-variant/20 bg-surface-container-high text-on-surface z-[100]"
       >
         {phones.map((phone) => {
-          const selected = phone === activePhone;
+          const selected = phone.number === activePhone;
+          const choice = (
+            <>
+              <MaterialIcon
+                name="check"
+                aria-hidden="true"
+                className={cn("text-base", !selected && "invisible")}
+              />
+              <span className="capitalize">{phone.label}</span>
+              <span>{formatPhoneDisplay(phone.number)}</span>
+            </>
+          );
           return (
             <DropdownMenuItem
-              key={phone}
+              key={phone.number}
               aria-current={selected ? "true" : undefined}
               disabled={busy}
-              onSelect={() => onPick(phone)}
+              onSelect={() => onPick(phone.number)}
               {...(intent === "call" ? { asChild: true } : {})}
             >
               {intent === "call" ? (
-                <a href={`tel:${phone}`} className="flex items-center gap-2">
-                  <MaterialIcon
-                    name="check"
-                    aria-hidden="true"
-                    className={cn("text-base", !selected && "invisible")}
-                  />
-                  {formatPhoneDisplay(phone)}
+                <a href={`tel:${phone.number}`} className="flex items-center gap-2">
+                  {choice}
                 </a>
               ) : (
-                <>
-                  <MaterialIcon
-                    name="check"
-                    aria-hidden="true"
-                    className={cn("text-base", !selected && "invisible")}
-                  />
-                  {formatPhoneDisplay(phone)}
-                </>
+                <span className="flex items-center gap-2">{choice}</span>
               )}
             </DropdownMenuItem>
           );
@@ -195,8 +195,8 @@ interface LeadDetailProps {
   availableChannels?: MessageChannel[];
   /** Project's sending number in E.164, shown as the text sender. */
   smsFromPhone?: string;
-  /** Every phone on the linked contact, in E.164. */
-  contactPhones?: string[];
+  /** Every phone on the linked contact. */
+  contactPhones?: ContactPhone[];
   /** Storybook/tests: seed the composer library without hitting the API. */
   composerLibrary?: LeadComposerLibrary;
   /** Tags already used on other leads, offered when adding one. */
@@ -768,7 +768,10 @@ export function LeadDetail({
               ) : (
                 <ul className="space-y-1">
                   {phoneChoices.map((phone) => (
-                    <li key={phone}>{formatPhoneDisplay(phone)}</li>
+                    <li key={phone.number} className="flex items-baseline gap-2">
+                      <span className="text-outline capitalize">{phone.label}</span>
+                      <span>{formatPhoneDisplay(phone.number)}</span>
+                    </li>
                   ))}
                 </ul>
               )}

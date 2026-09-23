@@ -174,14 +174,26 @@ function lead(overrides: Partial<Submission> = {}): Submission {
 describe("contactPhoneChoices", () => {
   it("lists each of the contact's numbers once", () => {
     expect(
-      contactPhoneChoices(["+14255550182", " +14255550182 ", "+14255550199"]),
-    ).toEqual(["+14255550182", "+14255550199"]);
+      contactPhoneChoices([
+        { number: "+14255550182", label: "phone" },
+        { number: " +14255550182 ", label: "mobile" },
+        { number: "+14255550199", label: "home" },
+      ]),
+    ).toEqual([
+      { number: "+14255550182", label: "phone" },
+      { number: "+14255550199", label: "home" },
+    ]);
   });
 
   it("keeps the conversation's number when the contact does not have it", () => {
-    expect(contactPhoneChoices(["+14255550199"], "+14255550182")).toEqual([
-      "+14255550182",
-      "+14255550199",
+    expect(
+      contactPhoneChoices(
+        [{ number: "+14255550199", label: "mobile" }],
+        "+14255550182",
+      ),
+    ).toEqual([
+      { number: "+14255550182", label: "phone" },
+      { number: "+14255550199", label: "mobile" },
     ]);
   });
 });

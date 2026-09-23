@@ -1,4 +1,5 @@
 import type { Contact, ContactInput } from "@/lib/api";
+import { labeledContactPhones, type ContactPhone } from "@/lib/phone-labels";
 import { formatPhoneDisplay } from "@/lib/phone";
 
 export function contactInitials(displayName: string): string {
@@ -69,7 +70,7 @@ export interface ContactFormValues {
   address: string;
   website: string;
   emails: string;
-  phones: string;
+  phones: ContactPhone[];
   tags: string;
   ownerEmail: string;
 }
@@ -83,7 +84,7 @@ export function contactToForm(contact: Contact): ContactFormValues {
     address: contact.address || "",
     website: contact.website || "",
     emails: contact.emails.join("\n"),
-    phones: contact.phones.join("\n"),
+    phones: labeledContactPhones(contact),
     tags: contact.tags.join(", "),
     ownerEmail: contact.ownerEmail || "",
   };
@@ -98,7 +99,7 @@ export function emptyContactForm(): ContactFormValues {
     address: "",
     website: "",
     emails: "",
-    phones: "",
+    phones: [],
     tags: "",
     ownerEmail: "",
   };
@@ -112,6 +113,12 @@ export function contactFormToInput(
   values: ContactFormValues,
 ): Partial<ContactInput> {
   const text = (value: string) => value.trim() || undefined;
+  const phones = values.phones
+    .map((phone) => ({
+      number: phone.number.trim(),
+      label: phone.label.trim() || "phone",
+    }))
+    .filter((phone) => phone.number);
 
   return {
     ...(text(values.firstName) ? { firstName: text(values.firstName) } : {}),
@@ -121,7 +128,8 @@ export function contactFormToInput(
     ...(text(values.address) ? { address: text(values.address) } : {}),
     ...(text(values.website) ? { website: text(values.website) } : {}),
     emails: parseIdentityList(values.emails),
-    phones: parseIdentityList(values.phones),
+    phones: phones.map((phone) => phone.number),
+    phoneLabels: phones.map((phone) => phone.label),
     tags: parseIdentityList(values.tags),
     ownerEmail: text(values.ownerEmail) ?? null,
   };

@@ -11,6 +11,7 @@ import {
 } from "react";
 import type { LeadInboxFiltersValue } from "@/components/features/portal/leads/LeadInboxFilters";
 import { applyContactPhoneToLeads } from "@/lib/lead-messages";
+import { labeledContactPhones, type ContactPhone } from "@/lib/phone-labels";
 import { toast } from "@/components/ui/sonner";
 import {
   ApiError,
@@ -175,7 +176,7 @@ export interface PortalContextValue {
   /** Copy a contact's current phone onto their open conversations. */
   applyContactPhone: (contactId: string, phone: string | null) => void;
   /** Phones on the contact linked to the open lead. */
-  contactPhones: string[];
+  contactPhones: ContactPhone[];
   teamRole: TeamRole;
   permissions: Permission[];
   roles: ClientRole[];
@@ -362,7 +363,7 @@ export function PortalProvider({
   const [channelsById, setChannelsById] = useState<
     Record<string, MessageChannel[]>
   >({});
-  const [contactPhones, setContactPhones] = useState<string[]>([]);
+  const [contactPhones, setContactPhones] = useState<ContactPhone[]>([]);
   const [sms, setSms] = useState<SmsStatusResponse | null>(null);
   const [portalPath, setPortalPath] = useState(() =>
     typeof window === "undefined" ? "" : window.location.pathname,
@@ -1155,7 +1156,7 @@ export function PortalProvider({
     let cancelled = false;
     void getContact(selectedContactId)
       .then((detail) => {
-        if (!cancelled) setContactPhones(detail.contact.phones);
+        if (!cancelled) setContactPhones(labeledContactPhones(detail.contact));
       })
       .catch(() => {
         if (!cancelled) setContactPhones([]);

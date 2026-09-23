@@ -5,6 +5,10 @@ import {
   type MessageChannel,
   type Submission,
 } from "@/lib/api";
+import {
+  defaultPhoneLabel,
+  type ContactPhone,
+} from "@/lib/phone-labels";
 import { formatPhoneDisplay } from "@/lib/phone";
 
 /**
@@ -27,17 +31,22 @@ export function leadContactLabel(submission: {
  * conversation already uses stays available when it is not on that list.
  */
 export function contactPhoneChoices(
-  phones: string[],
+  phones: ContactPhone[],
   selected?: string,
-): string[] {
-  const choices: string[] = [];
-  for (const raw of phones) {
-    const phone = raw.trim();
-    if (!phone || choices.includes(phone)) continue;
-    choices.push(phone);
+): ContactPhone[] {
+  const choices: ContactPhone[] = [];
+  for (const phone of phones) {
+    const number = phone.number.trim();
+    if (!number || choices.some((item) => item.number === number)) continue;
+    choices.push({
+      number,
+      label: phone.label.trim() || defaultPhoneLabel(choices.length),
+    });
   }
   const current = selected?.trim();
-  if (current && !choices.includes(current)) choices.unshift(current);
+  if (current && !choices.some((item) => item.number === current)) {
+    choices.unshift({ number: current, label: defaultPhoneLabel(0) });
+  }
   return choices;
 }
 

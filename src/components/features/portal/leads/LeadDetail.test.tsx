@@ -753,7 +753,10 @@ describe("LeadDetail", () => {
           senderPhone: "+14255550182",
           contactId: "con_1",
         }}
-        contactPhones={["+14255550182", "+14255550199"]}
+        contactPhones={[
+          { number: "+14255550182", label: "phone" },
+          { number: "+14255550199", label: "home" },
+        ]}
         members={[]}
         mailboxConnected
         smsFromPhone="+18005550100"
@@ -767,6 +770,7 @@ describe("LeadDetail", () => {
     const details = screen.getByRole("complementary", { name: /^details$/i });
     expect(within(details).getByText("(425) 555-0182")).toBeInTheDocument();
     expect(within(details).getByText("(425) 555-0199")).toBeInTheDocument();
+    expect(within(details).getByText("home")).toBeInTheDocument();
     expect(within(details).queryByRole("radio")).not.toBeInTheDocument();
     expect(within(details).queryByRole("link")).not.toBeInTheDocument();
 
@@ -776,6 +780,7 @@ describe("LeadDetail", () => {
     expect(textChoices).toHaveLength(2);
     expect(textChoices[0]).toHaveAttribute("aria-current", "true");
     expect(textChoices[1]).not.toHaveAttribute("aria-current", "true");
+    expect(textChoices[1]).toHaveAccessibleName(/home/i);
 
     await user.click(textChoices[1]!);
     expect(onUpdate).toHaveBeenCalledWith({ senderPhone: "+14255550199" });
