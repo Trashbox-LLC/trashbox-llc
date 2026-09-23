@@ -3,6 +3,7 @@ import {
   teamMemberDisplayName,
   type LeadMessage,
   type MessageChannel,
+  type Submission,
 } from "@/lib/api";
 import { formatPhoneDisplay } from "@/lib/phone";
 
@@ -19,6 +20,28 @@ export function leadContactLabel(submission: {
   const phone = submission.senderPhone?.trim();
   if (phone) return formatPhoneDisplay(phone);
   return null;
+}
+
+/**
+ * Copy a contact's current phone onto the leads that belong to them.
+ * A blank phone clears the number so the conversation stops offering a text.
+ */
+export function applyContactPhoneToLeads(
+  leads: Submission[],
+  contactId: string,
+  phone: string | null,
+): Submission[] {
+  const next = phone?.trim() || undefined;
+  return leads.map((lead) => {
+    if (lead.contactId !== contactId) return lead;
+    if ((lead.senderPhone?.trim() || undefined) === next) return lead;
+    if (!next) {
+      const rest = { ...lead };
+      delete rest.senderPhone;
+      return rest;
+    }
+    return { ...lead, senderPhone: next };
+  });
 }
 
 export interface ComposerChannelOptions {

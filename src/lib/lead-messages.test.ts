@@ -5,10 +5,11 @@ import {
   leadContactLabel,
   leadMessageTimelineLabels,
   messageSenderPresentation,
+  applyContactPhoneToLeads,
   resolveComposerChannel,
   visibleReplyText,
 } from "@/lib/lead-messages";
-import type { LeadMessage } from "@/lib/api";
+import type { LeadMessage, Submission } from "@/lib/api";
 
 function message(overrides: Partial<LeadMessage> = {}): LeadMessage {
   return {
@@ -154,6 +155,63 @@ describe("leadContactLabel", () => {
 
   it("reports nothing when the lead has neither", () => {
     expect(leadContactLabel({ senderEmail: "  " })).toBeNull();
+  });
+});
+
+function lead(overrides: Partial<Submission> = {}): Submission {
+  return {
+    clientId: "c1",
+    submissionId: "sub_1",
+    senderName: "Ada",
+    senderEmail: "ada@example.test",
+    message: "Hello",
+    submittedAt: "2026-01-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+describe("applyContactPhoneToLeads", () => {
+  it("puts the contact's number on that contact's conversations", () => {
+    const updated = applyContactPhoneToLeads(
+      [
+        lead({ submissionId: "theirs", contactId: "con_1" }),
+        lead({ submissionId: "someone", contactId: "con_2" }),
+      ],
+      "con_1",
+      "+14255550182",
+    );
+
+    expect(updated.find((item) => item.submissionId === "theirs")?.senderPhone).toBe(
+      "+14255550182",
+    );
+    expect(
+      updated.find((item) => item.submissionId === "someone")?.senderPhone,
+    ).toBeUndefined();
+  });
+
+  it("replaces a conversation number that no longer matches", () => {
+    const updated = applyContactPhoneToLeads(
+      [
+        lead({
+          contactId: "con_1",
+          senderPhone: "+15550000000",
+        }),
+      ],
+      "con_1",
+      "+14255550182",
+    );
+
+    expect(updated[0]?.senderPhone).toBe("+14255550182");
+  });
+
+  it("clears the conversation number when the contact has none", () => {
+    const updated = applyContactPhoneToLeads(
+      [lead({ contactId: "con_1", senderPhone: "+14255550182" })],
+      "con_1",
+      null,
+    );
+
+    expect(updated[0]?.senderPhone).toBeUndefined();
   });
 });
 

@@ -193,6 +193,8 @@ export interface Submission {
   senderEmail: string;
   /** E.164 contact phone, when known. */
   senderPhone?: string;
+  /** Address-book contact this conversation belongs to. */
+  contactId?: string;
   /** Lead agreed to be contacted by text. */
   smsConsent?: boolean;
   message: string;

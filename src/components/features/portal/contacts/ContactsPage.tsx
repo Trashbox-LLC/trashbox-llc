@@ -254,13 +254,14 @@ export function ContactsPage({
     try {
       const res = await updateContact(id, contactFormToInput(form));
       patchDetail(res.contact);
+      portal.applyContactPhone(id, res.contact.phones[0] ?? null);
       setMode("view");
     } catch (err) {
       setFormError(messageOf(err, "Failed to save the contact"));
     } finally {
       setFormBusy(false);
     }
-  }, [detail, form, patchDetail]);
+  }, [detail, form, patchDetail, portal]);
 
   const onOwnerChange = useCallback(
     async (ownerEmail: string | null) => {

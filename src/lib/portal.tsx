@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { LeadInboxFiltersValue } from "@/components/features/portal/leads/LeadInboxFilters";
+import { applyContactPhoneToLeads } from "@/lib/lead-messages";
 import { toast } from "@/components/ui/sonner";
 import {
   ApiError,
@@ -170,6 +171,8 @@ export interface PortalContextValue {
   setLeadTagColors: (colors: Record<string, string>) => void;
   /** Rename or drop a tag on leads already loaded in the inbox. */
   rewriteLeadTag: (from: string, to: string | null) => void;
+  /** Copy a contact's current phone onto their open conversations. */
+  applyContactPhone: (contactId: string, phone: string | null) => void;
   teamRole: TeamRole;
   permissions: Permission[];
   roles: ClientRole[];
@@ -262,6 +265,7 @@ export function StubPortalProvider({
     leadTagColors: {},
     setLeadTagColors: () => {},
     rewriteLeadTag: () => {},
+    applyContactPhone: () => {},
     teamRole: "member",
     permissions: [],
     roles: [],
@@ -1103,6 +1107,13 @@ export function PortalProvider({
     }
   }, []);
 
+  const applyContactPhone = useCallback(
+    (contactId: string, phone: string | null) => {
+      setItems((prev) => applyContactPhoneToLeads(prev, contactId, phone));
+    },
+    [],
+  );
+
   const rewriteLeadTag = useCallback((from: string, to: string | null) => {
     const source = from.trim().toLowerCase();
     const target = to?.trim().toLowerCase() || null;
@@ -1173,6 +1184,7 @@ export function PortalProvider({
       leadTagColors,
       setLeadTagColors,
       rewriteLeadTag,
+      applyContactPhone,
       teamRole,
       permissions,
       roles,
@@ -1230,6 +1242,7 @@ export function PortalProvider({
       leadTagColors,
       setLeadTagColors,
       rewriteLeadTag,
+      applyContactPhone,
       teamRole,
       permissions,
       roles,
