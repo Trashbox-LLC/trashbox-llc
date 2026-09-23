@@ -779,7 +779,9 @@ describe("LeadEmailThread", () => {
       expect(screen.getByTitle("Layout preview")).toBeInTheDocument();
     });
     const srcDoc = screen.getByTitle("Layout preview").getAttribute("srcdoc") ?? "";
-    expect(srcDoc).toContain("Just checking in on your recent inquiry");
+    expect(srcDoc).toContain(
+      "just checking in on your note to Acme Hauling",
+    );
     expect(srcDoc).toContain("Ada");
   });
 
