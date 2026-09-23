@@ -97,9 +97,17 @@ export function SettingsSectionContent({
   }
 
   if (sectionId === "email-accounts") {
+    if (!portal.isOwner) {
+      return (
+        <p className="text-on-surface-variant">
+          Only the owner can manage email accounts.
+        </p>
+      );
+    }
+
     return (
       <MailboxSettings
-        canManage={portal.hasPermission("manage_sender_display_names")}
+        canManage
         mailbox={portal.mailbox}
         busy={portal.mailboxBusy}
         error={portal.mailboxError}

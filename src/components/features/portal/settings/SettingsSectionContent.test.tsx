@@ -87,7 +87,7 @@ vi.mock("@/components/atoms/FadeIn", () => ({
 }));
 
 import { useAuth } from "@/lib/auth";
-import { getAccount } from "@/lib/api";
+import { getAccount, getMailbox } from "@/lib/api";
 
 describe("SettingsSectionContent", () => {
   beforeEach(() => {
@@ -191,6 +191,50 @@ describe("SettingsSectionContent", () => {
     expect(screen.queryByText(/merge fields/i)).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /^close$/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("lets the owner open email accounts when no mailbox is connected", async () => {
+    render(
+      <PortalProvider>
+        <SettingsSectionContent sectionId="email-accounts" />
+      </PortalProvider>,
+    );
+
+    expect(
+      await screen.findByRole("button", { name: /connect google workspace/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides a connected mailbox from anyone who is not the owner", async () => {
+    vi.mocked(getAccount).mockResolvedValueOnce({
+      linked: true,
+      email: "member@example.com",
+      clientName: "Acme",
+      tier: "team",
+      active: true,
+      hasBilling: true,
+      hasApiKey: true,
+      role: "member",
+      submissionsUsed: 25,
+      submissionLimit: 5000,
+    });
+    vi.mocked(getMailbox).mockResolvedValueOnce({
+      connected: true,
+      provider: "gmail",
+      email: "sales@example.com",
+    });
+
+    render(
+      <PortalProvider>
+        <SettingsSectionContent sectionId="email-accounts" />
+      </PortalProvider>,
+    );
+
+    expect(await screen.findByText(/only the owner/i)).toBeInTheDocument();
+    expect(screen.queryByText("sales@example.com")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /disconnect/i }),
     ).not.toBeInTheDocument();
   });
 

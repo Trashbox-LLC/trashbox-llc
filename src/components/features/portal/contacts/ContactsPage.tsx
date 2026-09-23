@@ -442,7 +442,9 @@ export function ContactsPage({
           smsOptedOut={loaded.smsOptedOut}
           onSendMessage={onSendMessage}
           onConfigureSms={() => openSettings("text-messaging")}
-          onConfigureEmail={() => openSettings("email-accounts")}
+          onConfigureEmail={
+            portal.isOwner ? () => openSettings("email-accounts") : undefined
+          }
           onEdit={() => {
             setForm(contactToForm(loaded.contact));
             setFormError(null);

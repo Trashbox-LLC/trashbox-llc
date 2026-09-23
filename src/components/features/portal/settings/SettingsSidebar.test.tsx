@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { StubPortalProvider } from "@/lib/portal";
 import { SettingsSidebar } from "./SettingsSidebar";
 
 const usePathname = vi.fn(() => "/portal/settings/email-accounts/");
@@ -54,6 +55,33 @@ describe("SettingsSidebar", () => {
     await user.click(communication);
     expect(communication).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("link", { name: /email accounts/i })).toBeInTheDocument();
+  });
+
+  it("hides email accounts from anyone who is not the owner", () => {
+    render(
+      <StubPortalProvider value={{ ready: true, isOwner: false }}>
+        <SettingsSidebar />
+      </StubPortalProvider>,
+    );
+
+    expect(
+      screen.queryByRole("link", { name: /email accounts/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /text messaging/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows email accounts to the owner", () => {
+    render(
+      <StubPortalProvider value={{ ready: true, isOwner: true }}>
+        <SettingsSidebar />
+      </StubPortalProvider>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /email accounts/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders without crashing when pathname is null", () => {

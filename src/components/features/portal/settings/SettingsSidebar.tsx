@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { MaterialIcon } from "@/components/atoms/MaterialIcon";
 import { PortalLink } from "@/components/features/portal/PortalLink";
 import { Button } from "@/components/ui/button";
+import { useOptionalPortal } from "@/lib/portal";
 import { subscribePortalNavigate } from "@/lib/portal-routes";
 import {
   getSettingsSection,
@@ -38,7 +39,16 @@ interface SettingsSidebarProps {
 export function SettingsSidebar({ scope = "project" }: SettingsSidebarProps) {
   const nextPath = usePathname() ?? "";
   const [pathname, setPathname] = useState(nextPath);
-  const nav = settingsNavForScope(scope);
+  const portal = useOptionalPortal();
+  const nav = settingsNavForScope(scope)
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) =>
+          item.id !== "email-accounts" || !portal || portal.isOwner,
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
 
   useEffect(() => {
     const win = window.location.pathname;

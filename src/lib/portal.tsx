@@ -1274,3 +1274,8 @@ export function usePortal(): PortalContextValue {
   if (!ctx) throw new Error("usePortal must be used within PortalProvider");
   return ctx;
 }
+
+/** Portal state when a provider is present. Settings chrome can render without one. */
+export function useOptionalPortal(): PortalContextValue | null {
+  return useContext(PortalContext);
+}
