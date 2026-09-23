@@ -281,6 +281,30 @@ export const TextOnly: Story = {
   },
 };
 
+export const TextWithoutContactPhone: Story = {
+  args: {
+    mailboxConnected: true,
+    fromAddress: "sales@example.com",
+    channel: "sms",
+    showTranscript: true,
+    availableChannels: ["email", "sms"],
+    smsFromPhone: "+18005550100",
+    onSendSms: fn().mockResolvedValue(undefined),
+  },
+};
+
+export const TextWithoutAccountPhone: Story = {
+  args: {
+    mailboxConnected: true,
+    fromAddress: "sales@example.com",
+    channel: "sms",
+    showTranscript: true,
+    availableChannels: ["email", "sms"],
+    leadPhone: "+14255550182",
+    onSendSms: fn().mockResolvedValue(undefined),
+  },
+};
+
 export const TextThread: Story = {
   args: {
     mailboxConnected: true,

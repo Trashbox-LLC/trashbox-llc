@@ -268,14 +268,43 @@ describe("LeadDetail", () => {
     );
   });
 
-  it("asks for a phone number on the text thread", async () => {
+  it("keeps a disabled text editor when the contact has no phone", async () => {
     const user = userEvent.setup();
     render(
       <LeadDetail
         submission={baseSubmission}
         members={[]}
+        mailboxConnected
+        availableChannels={["email", "sms"]}
+        smsFromPhone="+18005550100"
         onUpdate={vi.fn()}
         onAddNote={vi.fn()}
+        onSendMessage={vi.fn()}
+        onSendSms={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /^text$/i }));
+
+    expect(screen.getByRole("textbox", { name: /text message/i })).toBeDisabled();
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /get started with sms/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers text setup when the account has no sending number", async () => {
+    const user = userEvent.setup();
+    render(
+      <LeadDetail
+        submission={{ ...baseSubmission, senderPhone: "+14255550182" }}
+        members={[]}
+        mailboxConnected
+        availableChannels={["email", "sms"]}
+        onUpdate={vi.fn()}
+        onAddNote={vi.fn()}
+        onSendMessage={vi.fn()}
+        onSendSms={vi.fn()}
       />,
     );
 
@@ -283,13 +312,9 @@ describe("LeadDetail", () => {
 
     expect(
       screen.getByRole("link", { name: /get started with sms/i }),
-    ).toHaveAttribute(
-      "href",
-      expect.stringContaining("text-messaging"),
-    );
-    expect(
-      screen.queryByRole("textbox", { name: /^reply$/i }),
-    ).not.toBeInTheDocument();
+    ).toHaveAttribute("href", expect.stringContaining("text-messaging"));
+    expect(screen.getByRole("textbox", { name: /text message/i })).toBeDisabled();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("calls the lead phone number", () => {

@@ -13,6 +13,10 @@ export interface LeadSmsComposerProps {
   /** Project's sending number in E.164. */
   fromPhone?: string;
   busy?: boolean;
+  /** Keep the field visible but block typing and sending. */
+  disabled?: boolean;
+  /** Short note shown with the field, such as a missing contact number. */
+  notice?: string;
   /** Drop the outer card when a parent already frames the composer. */
   embedded?: boolean;
   onSend: (text: string) => Promise<void>;
@@ -22,6 +26,8 @@ export function LeadSmsComposer({
   toPhone,
   fromPhone,
   busy = false,
+  disabled = false,
+  notice,
   embedded = false,
   onSend,
 }: LeadSmsComposerProps) {
@@ -30,10 +36,11 @@ export function LeadSmsComposer({
 
   const body = draft.trim();
   const segments = smsSegmentCount(body);
-  const disabled = busy || sending || body.length === 0;
+  const locked = disabled || busy || sending;
+  const sendDisabled = locked || body.length === 0;
 
   async function submit() {
-    if (disabled) return;
+    if (sendDisabled) return;
     setSending(true);
     try {
       await onSend(body);
@@ -56,26 +63,36 @@ export function LeadSmsComposer({
 
   if (embedded) {
     return (
-      <div className="flex items-center gap-2 border-t border-white/20 px-4 py-3">
-        <input
-          type="text"
-          aria-label="Text message"
-          value={draft}
-          maxLength={MAX_SMS_BODY_LENGTH}
-          disabled={busy || sending}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={onKeyDown}
-          className="border-white/15 text-on-surface placeholder:text-outline h-10 min-w-0 flex-1 rounded-lg border bg-transparent px-3 text-sm outline-none disabled:opacity-60"
-        />
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={disabled}
-          onClick={() => void submit()}
-          className="font-label text-background hover:text-background shrink-0 rounded bg-white font-medium shadow-sm hover:bg-white/90"
-        >
-          Send text
-        </Button>
+      <div className="border-t border-white/20">
+        {notice && (
+          <p
+            role="status"
+            className="text-outline mx-4 mt-3 rounded-lg border border-white/15 px-3 py-2 text-sm"
+          >
+            {notice}
+          </p>
+        )}
+        <div className="flex items-center gap-2 px-4 py-3">
+          <input
+            type="text"
+            aria-label="Text message"
+            value={draft}
+            maxLength={MAX_SMS_BODY_LENGTH}
+            disabled={locked}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={onKeyDown}
+            className="border-white/15 text-on-surface placeholder:text-outline h-10 min-w-0 flex-1 rounded-lg border bg-transparent px-3 text-sm outline-none disabled:opacity-60"
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={sendDisabled}
+            onClick={() => void submit()}
+            className="font-label text-background hover:text-background shrink-0 rounded bg-white font-medium shadow-sm hover:bg-white/90"
+          >
+            Send text
+          </Button>
+        </div>
       </div>
     );
   }
@@ -115,7 +132,7 @@ export function LeadSmsComposer({
         aria-label="Text message"
         value={draft}
         maxLength={MAX_SMS_BODY_LENGTH}
-        disabled={busy || sending}
+        disabled={locked}
         rows={4}
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={onKeyDown}
@@ -143,7 +160,7 @@ export function LeadSmsComposer({
         <Button
           type="button"
           variant="secondary"
-          disabled={disabled}
+          disabled={sendDisabled}
           onClick={() => void submit()}
           className="font-label text-background hover:text-background rounded bg-white font-medium shadow-sm hover:bg-white/90"
         >

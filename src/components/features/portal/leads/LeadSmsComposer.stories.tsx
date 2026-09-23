@@ -29,6 +29,14 @@ export const Sending: Story = {
   args: { busy: true },
 };
 
+export const Unavailable: Story = {
+  args: {
+    embedded: true,
+    disabled: true,
+    notice: "No phone number on this contact",
+  },
+};
+
 export const InternationalNumber: Story = {
   args: { toPhone: "+442079460958" },
 };

@@ -93,4 +93,12 @@ describe("LeadSmsComposer", () => {
 
     expect(screen.getByRole("button", { name: /send text/i })).toBeDisabled();
   });
+
+  it("stays locked when texting is unavailable", () => {
+    const { onSend } = setup({ disabled: true });
+
+    expect(screen.getByRole("textbox", { name: /text message/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /send text/i })).toBeDisabled();
+    expect(onSend).not.toHaveBeenCalled();
+  });
 });

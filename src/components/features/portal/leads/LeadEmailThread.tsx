@@ -663,7 +663,7 @@ export interface LeadEmailThreadProps {
   fromOptions?: FromIdentityOption[];
   /** Channels the API says are sendable for this lead. Defaults to email. */
   availableChannels?: MessageChannel[];
-  /** Lead's phone in E.164, required to compose a text. */
+  /** Lead's phone in E.164. The text field stays visible without it. */
   leadPhone?: string;
   /** Conversation and composer channel. Unset shows every message. */
   channel?: MessageChannel;
@@ -1230,19 +1230,7 @@ export function LeadEmailThread({
           <p className="text-error mt-4 text-sm">{error}</p>
         )}
         </div>
-        {viewingText && leadPhone && onSendSms && (
-          <>
-            {error && <p className="text-error px-6 pt-3 text-sm">{error}</p>}
-            <LeadSmsComposer
-              toPhone={leadPhone}
-              fromPhone={smsFromPhone}
-              busy={busy}
-              embedded
-              onSend={onSendSms}
-            />
-          </>
-        )}
-        {viewingText && !(leadPhone?.trim() && onSendSms) && (
+        {viewingText && !smsFromPhone?.trim() && (
           <div className="flex flex-col items-center gap-4 border-t border-white/20 px-4 py-8">
             <div
               aria-hidden="true"
@@ -1275,6 +1263,26 @@ export function LeadEmailThread({
               </a>
             </Button>
           </div>
+        )}
+        {viewingText && (
+          <>
+            {error && <p className="text-error px-6 pt-3 text-sm">{error}</p>}
+            <LeadSmsComposer
+              toPhone={leadPhone?.trim() || ""}
+              fromPhone={smsFromPhone}
+              busy={busy}
+              disabled={
+                !onSendSms || !leadPhone?.trim() || !smsFromPhone?.trim()
+              }
+              notice={
+                leadPhone?.trim()
+                  ? undefined
+                  : "No phone number on this contact"
+              }
+              embedded
+              onSend={onSendSms ?? (async () => {})}
+            />
+          </>
         )}
         </div>
 

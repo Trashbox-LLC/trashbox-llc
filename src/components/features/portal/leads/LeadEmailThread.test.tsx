@@ -1021,6 +1021,52 @@ describe("LeadEmailThread channels", () => {
     expect(screen.getByRole("textbox", { name: /reply/i })).toBeInTheDocument();
   });
 
+  it("keeps a disabled text editor when the contact has no phone", () => {
+    renderConnected({
+      ...smsProps,
+      channel: "sms",
+      leadPhone: undefined,
+      onSendSms: vi.fn(),
+    });
+
+    expect(screen.getByRole("textbox", { name: /text message/i })).toBeDisabled();
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /get started with sms/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers text setup only when the account has no sending number", () => {
+    renderConnected({
+      ...smsProps,
+      channel: "sms",
+      smsFromPhone: undefined,
+      onSendSms: vi.fn(),
+    });
+
+    expect(
+      screen.getByRole("link", { name: /get started with sms/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /text message/i })).toBeDisabled();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("shows setup and the missing contact number together", () => {
+    renderConnected({
+      ...smsProps,
+      channel: "sms",
+      leadPhone: "  ",
+      smsFromPhone: undefined,
+      onSendSms: vi.fn(),
+    });
+
+    expect(
+      screen.getByRole("link", { name: /get started with sms/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /text message/i })).toBeDisabled();
+  });
+
   it("labels a texted history entry by phone number", () => {
     renderConnected({
       messages: [
