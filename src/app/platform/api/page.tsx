@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { FadeIn } from "@/components/atoms/FadeIn";
-import { API_DOCS_URL, PORTAL_PATHS } from "@/lib/sites";
+import { marketingMetadata } from "@/lib/seo";
+import { API_DOCS_URL, PLATFORM_PATHS, PORTAL_PATHS } from "@/lib/sites";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = marketingMetadata({
   title: "Trashbox CRM API",
   description:
     "Send website form leads into Trashbox CRM with a simple API key.",
-};
+  path: PLATFORM_PATHS.api,
+});
 
 const example = `const response = await fetch("https://api.trashbox.io/submit", {
   method: "POST",
@@ -27,21 +29,24 @@ export default function PortalApiPage() {
   return (
     <div>
       <FadeIn>
-        <p className="mb-6 font-label text-xs uppercase tracking-[0.4em] text-outline">API</p>
-        <h1 className="max-w-3xl font-headline text-4xl font-bold tracking-tighter text-white md:text-6xl">
+        <p className="font-label text-outline mb-6 text-xs tracking-[0.4em] uppercase">
+          API
+        </p>
+        <h1 className="font-headline max-w-3xl text-4xl font-bold tracking-tighter text-white md:text-6xl">
           Capture leads from any site.
         </h1>
-        <p className="mt-6 max-w-xl text-lg text-on-surface-variant">
-          Connect your contact forms to Trashbox CRM with one endpoint. New inquiries show up as
-          leads you can message, reply to, and follow up with templates.
+        <p className="text-on-surface-variant mt-6 max-w-xl text-lg">
+          Connect your contact forms to Trashbox CRM with one endpoint. New
+          inquiries show up as leads you can message, reply to, and follow up
+          with templates.
         </p>
-        <p className="mt-4 max-w-xl text-base text-on-surface-variant">
-          POST JSON to <code className="text-white">/submit</code> with your API key. Restrict
-          allowed origins so the key only works from your domains.
+        <p className="text-on-surface-variant mt-4 max-w-xl text-base">
+          POST JSON to <code className="text-white">/submit</code> with your API
+          key. Restrict allowed origins so the key only works from your domains.
         </p>
       </FadeIn>
 
-      <pre className="mt-12 overflow-x-auto border border-outline-variant/10 bg-surface-container-low p-6 font-mono text-xs leading-relaxed text-on-surface-variant md:text-sm">
+      <pre className="border-outline-variant/10 bg-surface-container-low text-on-surface-variant mt-12 overflow-x-auto border p-6 font-mono text-xs leading-relaxed md:text-sm">
         <code>{example}</code>
       </pre>
 
@@ -50,13 +55,13 @@ export default function PortalApiPage() {
           href={API_DOCS_URL}
           target="_blank"
           rel="noreferrer"
-          className="bg-primary px-8 py-4 font-headline text-xs font-bold uppercase tracking-widest text-on-primary transition-opacity hover:opacity-80"
+          className="bg-primary font-headline text-on-primary px-8 py-4 text-xs font-bold tracking-widest uppercase transition-opacity hover:opacity-80"
         >
           Open API docs
         </a>
         <a
           href={PORTAL_PATHS.login}
-          className="border border-outline-variant/30 px-8 py-4 font-headline text-xs font-bold uppercase tracking-widest text-white transition-colors hover:border-white"
+          className="border-outline-variant/30 font-headline border px-8 py-4 text-xs font-bold tracking-widest text-white uppercase transition-colors hover:border-white"
         >
           Get an API key
         </a>

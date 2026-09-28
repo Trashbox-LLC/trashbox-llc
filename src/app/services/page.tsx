@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
 import { ServicesPage } from "@/components/features/marketing/ServicesPage";
+import { marketingMetadata } from "@/lib/seo";
+import { SERVICE_PATHS } from "@/lib/sites";
 
-export const metadata: Metadata = {
-  title: "Services",
+export const metadata: Metadata = marketingMetadata({
+  title: "Websites, apps, and systems",
   description:
     "Websites, web applications, systems, mobile apps, and AI integration—one-off builds and ongoing development from Trashbox LLC.",
-  openGraph: {
-    title: "Trashbox LLC - Services",
-    description:
-      "Start a project with Trashbox LLC across websites, apps, systems, and intelligent workflows.",
-  },
-};
+  path: SERVICE_PATHS.hub,
+});
 
 export default function Page() {
   return <ServicesPage />;

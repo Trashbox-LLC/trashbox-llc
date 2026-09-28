@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import { PortalHeader } from "@/components/features/portal/PortalHeader";
 import { PortalRouteOutlet } from "@/components/features/portal/PortalRouteOutlet";
 import { PortalProvider } from "@/lib/portal";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function PortalLayout({
   children,

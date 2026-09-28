@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { FadeIn } from "@/components/atoms/FadeIn";
-import { API_DOCS_URL, PORTAL_PATHS } from "@/lib/sites";
+import { marketingMetadata } from "@/lib/seo";
+import { API_DOCS_URL, PLATFORM_PATHS, PORTAL_PATHS } from "@/lib/sites";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = marketingMetadata({
   title: "Trashbox CRM Documentation",
   description:
     "Accounts, teams, lead capture, templates, and billing for Trashbox CRM.",
-};
+  path: PLATFORM_PATHS.documentation,
+});
 
 const sections = [
   {
@@ -39,15 +41,15 @@ export default function PortalDocumentationPage() {
   return (
     <div>
       <FadeIn>
-        <p className="mb-6 font-label text-xs uppercase tracking-[0.4em] text-outline">
+        <p className="font-label text-outline mb-6 text-xs tracking-[0.4em] uppercase">
           Documentation
         </p>
-        <h1 className="max-w-3xl font-headline text-4xl font-bold tracking-tighter text-white md:text-6xl">
+        <h1 className="font-headline max-w-3xl text-4xl font-bold tracking-tighter text-white md:text-6xl">
           How Trashbox CRM fits together.
         </h1>
-        <p className="mt-6 max-w-xl text-lg text-on-surface-variant">
-          A quick guide for owners focused on lead generation and retention. For request and
-          response schemas, use the live OpenAPI docs.
+        <p className="text-on-surface-variant mt-6 max-w-xl text-lg">
+          A quick guide for owners focused on lead generation and retention. For
+          request and response schemas, use the live OpenAPI docs.
         </p>
       </FadeIn>
 
@@ -55,10 +57,12 @@ export default function PortalDocumentationPage() {
         {sections.map((section) => (
           <section
             key={section.title}
-            className="border border-outline-variant/10 bg-surface-container-low p-8"
+            className="border-outline-variant/10 bg-surface-container-low border p-8"
           >
-            <h2 className="font-headline text-2xl font-bold text-white">{section.title}</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-on-surface-variant">
+            <h2 className="font-headline text-2xl font-bold text-white">
+              {section.title}
+            </h2>
+            <p className="text-on-surface-variant mt-3 max-w-2xl text-sm leading-relaxed">
               {section.body}
             </p>
           </section>
@@ -70,13 +74,13 @@ export default function PortalDocumentationPage() {
           href={API_DOCS_URL}
           target="_blank"
           rel="noreferrer"
-          className="bg-primary px-8 py-4 font-headline text-xs font-bold uppercase tracking-widest text-on-primary transition-opacity hover:opacity-80"
+          className="bg-primary font-headline text-on-primary px-8 py-4 text-xs font-bold tracking-widest uppercase transition-opacity hover:opacity-80"
         >
           OpenAPI reference
         </a>
         <a
           href={PORTAL_PATHS.login}
-          className="border border-outline-variant/30 px-8 py-4 font-headline text-xs font-bold uppercase tracking-widest text-white transition-colors hover:border-white"
+          className="border-outline-variant/30 font-headline border px-8 py-4 text-xs font-bold tracking-widest text-white uppercase transition-colors hover:border-white"
         >
           Login
         </a>

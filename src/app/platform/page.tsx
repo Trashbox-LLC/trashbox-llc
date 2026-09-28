@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/features/marketing/JsonLd";
 import { PlatformOverview } from "@/components/features/marketing/PlatformOverview";
+import { crmJsonLd, marketingMetadata } from "@/lib/seo";
+import { PLATFORM_PATHS } from "@/lib/sites";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = marketingMetadata({
   title: "Trashbox CRM",
   description:
     "Trashbox CRM for customer retention and lead generation—email templates, messaging, lead management, and secure teams.",
-  openGraph: {
-    title: "Trashbox LLC - Trashbox CRM",
-  },
-};
+  path: PLATFORM_PATHS.hub,
+});
 
 export default function PlatformHubPage() {
-  return <PlatformOverview />;
+  return (
+    <>
+      <JsonLd data={crmJsonLd()} />
+      <PlatformOverview />
+    </>
+  );
 }

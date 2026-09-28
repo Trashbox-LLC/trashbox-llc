@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
 import { Manrope, Space_Grotesk } from "next/font/google";
+import { JsonLd } from "@/components/features/marketing/JsonLd";
 import { AuthProvider } from "@/lib/auth";
 import { MarketingLayout } from "@/components/features/marketing/MarketingLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { MATERIAL_SYMBOLS_STYLESHEET } from "@/lib/material-symbols";
+import {
+  HOME_DESCRIPTION,
+  HOME_TITLE,
+  SITE_ORIGIN,
+  organizationJsonLd,
+  websiteJsonLd,
+} from "@/lib/seo";
 import "@/styles/globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -19,12 +27,12 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_ORIGIN),
   title: {
-    default: "Trashbox LLC",
+    default: HOME_TITLE,
     template: "%s — Trashbox LLC",
   },
-  description:
-    "Trashbox LLC builds high-fidelity digital products through focused engineering, product strategy, and editorial design systems.",
+  description: HOME_DESCRIPTION,
   manifest: "/site.webmanifest",
   icons: {
     icon: [
@@ -36,6 +44,11 @@ export const metadata: Metadata = {
   openGraph: {
     siteName: "Trashbox LLC",
     type: "website",
+    locale: "en_US",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
@@ -63,6 +76,8 @@ export default function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${manrope.variable} font-body antialiased`}
       >
+        <JsonLd data={organizationJsonLd()} />
+        <JsonLd data={websiteJsonLd()} />
         <AuthProvider>
           <MarketingLayout>{children}</MarketingLayout>
           <Toaster />
