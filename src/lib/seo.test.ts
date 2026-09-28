@@ -9,9 +9,11 @@ import {
   indexablePaths,
   marketingMetadata,
   organizationJsonLd,
+  portfolioJsonLd,
   robotsPolicy,
   serviceJsonLd,
 } from "./seo";
+import { PORTFOLIO_SITES } from "./portfolio";
 
 describe("public site URLs", () => {
   it("uses the www host that production already redirects to", () => {
@@ -28,6 +30,7 @@ describe("public site URLs", () => {
       expect.arrayContaining([
         "/",
         "/about/",
+        "/work/",
         "/services/",
         "/services/websites/",
         "/platform/",
@@ -108,8 +111,20 @@ describe("structured data", () => {
     });
 
     expect(data["@type"]).toBe("Service");
-    expect(data.url).toBe("https://hbox.io/services/websites/");
+    expect(data.url).toBe("https://www.trashbox.io/services/websites/");
     expect(data).not.toHaveProperty("offers");
+  });
+
+  it("lists the built websites without inventing reviews", () => {
+    const data = portfolioJsonLd(PORTFOLIO_SITES);
+
+    expect(data["@type"]).toBe("CollectionPage");
+    expect(data.url).toBe("https://www.trashbox.io/work/");
+    expect(data.mainEntity.itemListElement.map((item) => item.url)).toEqual(
+      PORTFOLIO_SITES.map((site) => site.href),
+    );
+    expect(data).not.toHaveProperty("aggregateRating");
+    expect(data).not.toHaveProperty("review");
   });
 
   it("lists the published CRM plan prices", () => {

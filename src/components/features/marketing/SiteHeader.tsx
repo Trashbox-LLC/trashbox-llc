@@ -117,9 +117,10 @@ export function SiteHeader() {
     };
   }, [open]);
 
-  useEffect(() => {
-    if (!open) setServicesOpen(false);
-  }, [open]);
+  function closeMenu() {
+    setOpen(false);
+    setServicesOpen(false);
+  }
 
   function isActive(href: string, exact?: boolean) {
     if (exact) return pathname === href;
@@ -192,6 +193,9 @@ export function SiteHeader() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              <Link href="/work" className={navLinkClass(isActive("/work"))}>
+                Work
+              </Link>
               <Link href="/about" className={navLinkClass(isActive("/about"))}>
                 About
               </Link>
@@ -208,7 +212,10 @@ export function SiteHeader() {
                 className="text-white md:hidden"
                 aria-expanded={open}
                 aria-label={open ? "Close menu" : "Open menu"}
-                onClick={() => setOpen((v) => !v)}
+                onClick={() => {
+                  setOpen((value) => !value);
+                  setServicesOpen(false);
+                }}
               >
                 <MenuToggleIcon open={open} />
               </Button>
@@ -221,7 +228,7 @@ export function SiteHeader() {
           data-open={open ? "true" : "false"}
           aria-hidden={!open}
           className={cn(
-            "grid bg-background transition-[grid-template-rows] duration-300 ease-out md:hidden",
+            "bg-background grid transition-[grid-template-rows] duration-300 ease-out md:hidden",
             open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
           )}
         >
@@ -241,7 +248,7 @@ export function SiteHeader() {
                 href="/"
                 tabIndex={open ? undefined : -1}
                 className={navLinkClass(isActive("/", true))}
-                onClick={() => setOpen(false)}
+                onClick={closeMenu}
               >
                 Home
               </Link>
@@ -270,7 +277,7 @@ export function SiteHeader() {
                           href={item.href}
                           tabIndex={open && servicesOpen ? undefined : -1}
                           className="font-headline text-sm tracking-tight text-white/60 uppercase transition-colors hover:text-white"
-                          onClick={() => setOpen(false)}
+                          onClick={closeMenu}
                         >
                           {item.label}
                         </Link>
@@ -281,10 +288,18 @@ export function SiteHeader() {
               </div>
 
               <Link
+                href="/work"
+                tabIndex={open ? undefined : -1}
+                className={navLinkClass(isActive("/work"))}
+                onClick={closeMenu}
+              >
+                Work
+              </Link>
+              <Link
                 href="/about"
                 tabIndex={open ? undefined : -1}
                 className={navLinkClass(isActive("/about"))}
-                onClick={() => setOpen(false)}
+                onClick={closeMenu}
               >
                 About
               </Link>
@@ -293,7 +308,7 @@ export function SiteHeader() {
                 <Link
                   href={SERVICE_PATHS.contact}
                   tabIndex={open ? undefined : -1}
-                  onClick={() => setOpen(false)}
+                  onClick={closeMenu}
                 >
                   Contact
                 </Link>

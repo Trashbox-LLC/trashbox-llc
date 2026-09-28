@@ -122,6 +122,14 @@ describe("SiteHeader", () => {
     expect(panel).not.toHaveClass("inset-0");
 
     expect(
+      screen.getAllByRole("link", { name: /^work$/i }).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      screen
+        .getAllByRole("link", { name: /^work$/i })
+        .every((link) => link.getAttribute("href") === "/work"),
+    ).toBe(true);
+    expect(
       screen.getAllByRole("link", { name: /^about$/i }).length,
     ).toBeGreaterThanOrEqual(1);
     expect(

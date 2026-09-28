@@ -21,6 +21,7 @@ const ORGANIZATION_ID = `${SITE_ORIGIN}/#organization`;
 const MARKETING_PATHS = [
   "/",
   "/about/",
+  "/work/",
   SERVICE_PATHS.hub,
   SERVICE_PATHS.websites,
   SERVICE_PATHS.webApplications,
@@ -136,6 +137,28 @@ export function websiteJsonLd() {
     url: absoluteUrl("/"),
     publisher: { "@id": ORGANIZATION_ID },
     description: HOME_DESCRIPTION,
+  };
+}
+
+export function portfolioJsonLd(
+  sites: readonly { name: string; href: string }[],
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Work",
+    description: "Websites built by Trashbox LLC.",
+    url: absoluteUrl("/work"),
+    isPartOf: { "@id": `${SITE_ORIGIN}/#website` },
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: sites.map((site, index) => ({
+        "@type": "ListItem" as const,
+        position: index + 1,
+        name: site.name,
+        url: site.href,
+      })),
+    },
   };
 }
 
