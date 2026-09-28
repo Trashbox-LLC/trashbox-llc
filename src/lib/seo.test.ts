@@ -108,7 +108,7 @@ describe("structured data", () => {
     });
 
     expect(data["@type"]).toBe("Service");
-    expect(data.url).toBe("https://www.trashbox.io/services/websites/");
+    expect(data.url).toBe("https://hbox.io/services/websites/");
     expect(data).not.toHaveProperty("offers");
   });
 
