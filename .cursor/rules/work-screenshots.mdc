@@ -1,0 +1,7 @@
+---
+description: Capture portfolio homepage screenshots for the work carousel
+globs: public/images/work/**,src/lib/portfolio.ts
+alwaysApply: false
+---
+
+Capture each portfolio homepage at a 1440 by 900 viewport with device scale 2, so the file is 2880 by 1800. Wait 2 seconds after the page loads before taking the shot. Save webp at quality 100 in public/images/work and refresh the blur placeholder in src/lib/portfolio.ts.
