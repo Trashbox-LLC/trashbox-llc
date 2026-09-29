@@ -76,7 +76,7 @@ describe("portfolio coverflow", () => {
     expect(outer).not.toBeNull();
     if (!neighbor || !outer) return;
 
-    expect(neighbor.start).toBeLessThan(0.5);
+    expect(neighbor.start).toBe(0.5);
     expect(neighbor.end).toBe(outer.start);
     expect(coverflowHitSpan(-1)).toEqual(neighbor);
     expect(0.5 + outer.start * cardWidth).toBeGreaterThan(1);

@@ -17,6 +17,8 @@ import {
 
 const DRAG_THRESHOLD_PX = 48;
 const AUTO_ADVANCE_MS = 6000;
+/** Matches the front card's translateZ under the stage perspective. */
+const FRONT_HIT_SCALE = 120 / (120 - 140 * 0.055);
 
 const SIDE_DELTAS = [-2, -1, 1, 2] as const;
 
@@ -55,7 +57,7 @@ export function WorkCarousel() {
     previous: INITIAL_PORTFOLIO_INDEX,
   });
   const rootRef = useRef<HTMLElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
   const suppressClick = useRef(false);
   const dragStart = useRef<number | null>(null);
   const advanceTimer = useRef<number | null>(null);
@@ -104,8 +106,8 @@ export function WorkCarousel() {
 
   useEffect(() => {
     const root = rootRef.current;
-    const stage = stageRef.current;
-    if (!root || !stage) return;
+    const frame = frameRef.current;
+    if (!root || !frame) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
@@ -124,14 +126,21 @@ export function WorkCarousel() {
         return;
       }
       dragStart.current = event.clientX;
-      stage.setPointerCapture(event.pointerId);
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      const start = dragStart.current;
+      if (start === null) return;
+      if (Math.abs(event.clientX - start) < DRAG_THRESHOLD_PX) return;
+      if (frame.hasPointerCapture?.(event.pointerId)) return;
+      frame.setPointerCapture(event.pointerId);
     };
 
     const finishSwipe = (event: PointerEvent) => {
       const start = dragStart.current;
       dragStart.current = null;
-      if (stage.hasPointerCapture?.(event.pointerId)) {
-        stage.releasePointerCapture(event.pointerId);
+      if (frame.hasPointerCapture?.(event.pointerId)) {
+        frame.releasePointerCapture(event.pointerId);
       }
       if (start === null) return;
       const deltaX = event.clientX - start;
@@ -154,7 +163,8 @@ export function WorkCarousel() {
 
     startAdvanceRef.current();
     root.addEventListener("keydown", onKeyDown);
-    stage.addEventListener("pointerdown", onPointerDown);
+    frame.addEventListener("pointerdown", onPointerDown);
+    frame.addEventListener("pointermove", onPointerMove);
     const onPointerCancel = () => {
       dragStart.current = null;
     };
@@ -163,18 +173,19 @@ export function WorkCarousel() {
       event.preventDefault();
     };
 
-    stage.addEventListener("pointerup", finishSwipe);
-    stage.addEventListener("pointercancel", onPointerCancel);
-    stage.addEventListener("click", onClickCapture, true);
-    stage.addEventListener("dragstart", onDragStart);
+    frame.addEventListener("pointerup", finishSwipe);
+    frame.addEventListener("pointercancel", onPointerCancel);
+    frame.addEventListener("click", onClickCapture, true);
+    frame.addEventListener("dragstart", onDragStart);
     return () => {
       clearAdvance();
       root.removeEventListener("keydown", onKeyDown);
-      stage.removeEventListener("pointerdown", onPointerDown);
-      stage.removeEventListener("pointerup", finishSwipe);
-      stage.removeEventListener("pointercancel", onPointerCancel);
-      stage.removeEventListener("click", onClickCapture, true);
-      stage.removeEventListener("dragstart", onDragStart);
+      frame.removeEventListener("pointerdown", onPointerDown);
+      frame.removeEventListener("pointermove", onPointerMove);
+      frame.removeEventListener("pointerup", finishSwipe);
+      frame.removeEventListener("pointercancel", onPointerCancel);
+      frame.removeEventListener("click", onClickCapture, true);
+      frame.removeEventListener("dragstart", onDragStart);
     };
   }, [count]);
 
@@ -187,10 +198,12 @@ export function WorkCarousel() {
       aria-label="Websites"
       className="relative flex w-full flex-1 flex-col"
     >
-      <div className="relative min-h-[min(36vw,calc(100dvh-16rem))] w-full flex-1">
+      <div
+        ref={frameRef}
+        className="relative min-h-[min(36vw,calc(100dvh-16rem))] w-full flex-1 touch-pan-y"
+      >
         <div
-          ref={stageRef}
-          className="absolute inset-0 touch-pan-y [transform-style:preserve-3d]"
+          className="absolute inset-0 [transform-style:preserve-3d]"
           style={{ perspective: "120vw", perspectiveOrigin: "50% 46%" }}
         >
           {PORTFOLIO_SITES.map((site, index) => {
@@ -214,7 +227,7 @@ export function WorkCarousel() {
                   rotate: `y ${pose.rotate}deg`,
                   scale: String(pose.scale),
                   visibility: pose.hidden ? "hidden" : "visible",
-                  pointerEvents: pose.hidden ? "none" : "auto",
+                  pointerEvents: pose.hidden || selected ? "none" : "auto",
                 }}
               >
                 <div className={cn(!selected && "brightness-[0.78]")}>
@@ -223,16 +236,6 @@ export function WorkCarousel() {
                     eager={index === INITIAL_PORTFOLIO_INDEX}
                   />
                 </div>
-                {selected ? (
-                  <a
-                    href={site.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    draggable={false}
-                    aria-label={`Visit ${site.name}`}
-                    className="pointer-events-auto absolute inset-0 select-none [-webkit-user-drag:none]"
-                  />
-                ) : null}
               </div>
             );
           })}
@@ -255,6 +258,17 @@ export function WorkCarousel() {
             );
           })}
         </div>
+        <a
+          href={current.href}
+          target="_blank"
+          rel="noreferrer"
+          draggable={false}
+          aria-label={`Visit ${current.name}`}
+          className="pointer-events-auto absolute top-1/2 left-1/2 z-30 aspect-[16/10] w-[min(78vw,calc((100dvh-22rem)*1.4))] select-none [-webkit-user-drag:none]"
+          style={{
+            transform: `translate(-50%, -50%) scale(${FRONT_HIT_SCALE})`,
+          }}
+        />
       </div>
 
       <div className="mt-6 text-center md:mt-10" aria-live="polite">

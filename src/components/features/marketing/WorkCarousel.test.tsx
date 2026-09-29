@@ -91,6 +91,26 @@ describe("WorkCarousel", () => {
     ).toHaveAttribute("href", "https://salus-integrative-health.vercel.app/");
   });
 
+  it("keeps a small movement on the front image as a click", () => {
+    render(<WorkCarousel />);
+    const link = screen.getByRole("link", { name: /visit lacelle pastries/i });
+    const capture = vi.spyOn(
+      link.parentElement as HTMLElement,
+      "setPointerCapture",
+    );
+
+    fireEvent.pointerDown(link, { clientX: 200, pointerId: 1 });
+    fireEvent.pointerUp(link, { clientX: 210, pointerId: 1 });
+    const click = new MouseEvent("click", { bubbles: true, cancelable: true });
+    link.dispatchEvent(click);
+
+    expect(capture).not.toHaveBeenCalled();
+    expect(click.defaultPrevented).toBe(false);
+    expect(
+      screen.getByRole("link", { name: /visit lacelle pastries/i }),
+    ).toBeInTheDocument();
+  });
+
   it("turns to the next site when the fan is swiped left", () => {
     render(<WorkCarousel />);
     const fan = screen.getByRole("link", { name: /visit lacelle pastries/i });
