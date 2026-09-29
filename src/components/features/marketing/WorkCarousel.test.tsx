@@ -1,5 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import {
+  act,
+  createEvent,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { vi } from "vitest";
 import { WorkCarousel } from "./WorkCarousel";
 
 describe("WorkCarousel", () => {
@@ -48,6 +55,21 @@ describe("WorkCarousel", () => {
     expect(screen.getByText("01 / 06")).toBeInTheDocument();
   });
 
+  it("selects the side image that was pressed when the press also moves", () => {
+    render(<WorkCarousel />);
+    const salus = screen.getByRole("button", {
+      name: /salus integrative health/i,
+    });
+
+    fireEvent.pointerDown(salus, { clientX: 320, pointerId: 1 });
+    fireEvent.pointerUp(salus, { clientX: 220, pointerId: 1 });
+    fireEvent.click(salus);
+
+    expect(
+      screen.getByRole("link", { name: /visit salus integrative health/i }),
+    ).toBeInTheDocument();
+  });
+
   it("selects a visible side site and wraps backward from the first", async () => {
     const user = userEvent.setup();
     render(<WorkCarousel />);
@@ -67,6 +89,56 @@ describe("WorkCarousel", () => {
     expect(
       screen.getByRole("link", { name: /visit salus integrative health/i }),
     ).toHaveAttribute("href", "https://salus-integrative-health.vercel.app/");
+  });
+
+  it("turns to the next site when the fan is swiped left", () => {
+    render(<WorkCarousel />);
+    const fan = screen.getByRole("link", { name: /visit lacelle pastries/i });
+
+    fireEvent.pointerDown(fan, { clientX: 240, pointerId: 1 });
+    fireEvent.pointerUp(fan, { clientX: 80, pointerId: 1 });
+
+    expect(
+      screen.getByRole("link", { name: /visit rj inspections/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("turns the fan when the front image is dragged and does not open the site", () => {
+    render(<WorkCarousel />);
+    const link = screen.getByRole("link", { name: /visit lacelle pastries/i });
+    const drag = createEvent.dragStart(link, {
+      bubbles: true,
+      cancelable: true,
+    });
+
+    fireEvent.pointerDown(link, { clientX: 240, clientY: 30, pointerId: 1 });
+    fireEvent(link, drag);
+    fireEvent.pointerUp(link, { clientX: 80, clientY: 34, pointerId: 1 });
+
+    const click = new MouseEvent("click", { bubbles: true, cancelable: true });
+    screen
+      .getByRole("link", { name: /visit rj inspections/i })
+      .dispatchEvent(click);
+
+    expect(drag.defaultPrevented).toBe(true);
+    expect(click.defaultPrevented).toBe(true);
+  });
+
+  it("advances to the next site on its own", () => {
+    vi.useFakeTimers();
+    try {
+      render(<WorkCarousel />);
+
+      act(() => {
+        vi.advanceTimersByTime(6000);
+      });
+
+      expect(
+        screen.getByRole("link", { name: /visit rj inspections/i }),
+      ).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("changes site with the arrow keys", async () => {

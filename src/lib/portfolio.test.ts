@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   INITIAL_PORTFOLIO_INDEX,
   PORTFOLIO_SITES,
+  coverflowHitSpan,
   coverflowOffset,
   coverflowPose,
   portfolioPositionLabel,
@@ -64,6 +65,21 @@ describe("portfolio coverflow", () => {
     expect(coverflowPose(-2).shift).toBe(-outer.shift);
     expect(coverflowPose(-2).rotate).toBe(-outer.rotate);
     expect(parked.hidden).toBe(true);
+  });
+
+  it("gives a narrow screen's visible side to the neighboring card", () => {
+    const cardWidth = 0.78;
+    const neighbor = coverflowHitSpan(1);
+    const outer = coverflowHitSpan(2);
+
+    expect(neighbor).not.toBeNull();
+    expect(outer).not.toBeNull();
+    if (!neighbor || !outer) return;
+
+    expect(neighbor.start).toBeLessThan(0.5);
+    expect(neighbor.end).toBe(outer.start);
+    expect(coverflowHitSpan(-1)).toEqual(neighbor);
+    expect(0.5 + outer.start * cardWidth).toBeGreaterThan(1);
   });
 
   it("labels the active position", () => {

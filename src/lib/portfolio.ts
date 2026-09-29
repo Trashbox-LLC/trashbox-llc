@@ -106,6 +106,23 @@ export function coverflowPose(delta: number): CoverflowPose {
   };
 }
 
+/**
+ * Clickable span of a side card, in card-widths measured outward from the
+ * stage center. The neighbor overlaps the front card slightly so its visible
+ * edge stays pressable. The outer card starts where that neighbor ends.
+ */
+export function coverflowHitSpan(
+  delta: number,
+): { start: number; end: number } | null {
+  const distance = Math.abs(delta);
+  if (distance !== 1 && distance !== 2) return null;
+
+  const outer = coverflowPose(2);
+  const outerInner = outer.shift / 100 - outer.scale / 2;
+  if (distance === 1) return { start: 0.42, end: outerInner };
+  return { start: outerInner, end: outerInner + 2 };
+}
+
 export function portfolioPositionLabel(active: number, count: number): string {
   const current = String(active + 1).padStart(2, "0");
   const total = String(count).padStart(2, "0");
