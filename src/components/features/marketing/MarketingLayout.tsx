@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SiteFooter } from "@/components/features/marketing/SiteFooter";
 import { SiteHeader } from "@/components/features/marketing/SiteHeader";
+import { SplashScreen } from "@/components/features/marketing/SplashScreen";
 import {
   isPortalWorkspacePath,
   subscribePortalNavigate,
@@ -18,6 +19,7 @@ type MarketingLayoutProps = {
 export function MarketingLayout({ children }: MarketingLayoutProps) {
   const nextPath = usePathname();
   const [pathname, setPathname] = useState(nextPath);
+  const [splashDismissed, setSplashDismissed] = useState(false);
 
   useEffect(() => {
     const win = window.location.pathname;
@@ -27,15 +29,30 @@ export function MarketingLayout({ children }: MarketingLayoutProps) {
     return subscribePortalNavigate(setPathname);
   }, [nextPath]);
 
-  if (isPortalPath(pathname) || isPlatformPath(pathname)) {
+  useEffect(() => {
+    if (isPortalPath(pathname)) setSplashDismissed(true);
+  }, [pathname]);
+
+  if (isPortalPath(pathname)) {
     return <div className="flex min-h-dvh flex-col">{children}</div>;
   }
 
-  return (
+  const shell = isPlatformPath(pathname) ? (
+    <div className="flex min-h-dvh flex-col">{children}</div>
+  ) : (
     <div className="flex min-h-dvh flex-col">
       <SiteHeader />
       <main className="flex-1">{children}</main>
       <SiteFooter />
     </div>
+  );
+
+  return (
+    <>
+      {splashDismissed ? null : (
+        <SplashScreen onDone={() => setSplashDismissed(true)} />
+      )}
+      {shell}
+    </>
   );
 }

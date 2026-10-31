@@ -180,6 +180,74 @@
 }
 
 /* Native search clear uses the OS accent (often blue); replace with muted outline X. */
+/* Opening splash: grey outlined mark fills from the bottom, then the screen wipes up. */
+html:has(.splash-screen) {
+  overflow: hidden;
+}
+
+.splash-logo-grey {
+  opacity: 0.22;
+}
+
+.splash-logo-fill {
+  clip-path: inset(100% 0 0 0);
+  animation: splash-fill 1.7s cubic-bezier(0.65, 0, 0.35, 1) 0.3s forwards;
+}
+
+.splash-mark {
+  animation: splash-mark-out 1s cubic-bezier(0.76, 0, 0.24, 1) 2s forwards;
+}
+
+.splash-screen {
+  clip-path: inset(0 0 0 0);
+  animation: splash-leave 1s cubic-bezier(0.76, 0, 0.24, 1) 2s forwards;
+}
+
+.splash-screen-persist,
+.splash-screen-persist .splash-mark {
+  animation: none;
+}
+
+.splash-screen-persist .splash-logo-fill {
+  animation: splash-fill 1.7s cubic-bezier(0.65, 0, 0.35, 1) 0.3s infinite
+    alternate;
+}
+
+@keyframes splash-fill {
+  from {
+    clip-path: inset(100% 0 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes splash-mark-out {
+  to {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+@keyframes splash-leave {
+  from {
+    clip-path: inset(0 0 0 0);
+  }
+  to {
+    clip-path: inset(0 0 100% 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-screen {
+    display: none !important;
+  }
+
+  html:has(.splash-screen) {
+    overflow: auto;
+  }
+}
+
 .search-clear-muted::-webkit-search-cancel-button {
   -webkit-appearance: none !important;
   appearance: none !important;

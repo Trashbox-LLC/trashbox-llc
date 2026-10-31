@@ -33,6 +33,50 @@ describe("MarketingLayout", () => {
     expect(screen.getByText("Content")).toBeInTheDocument();
   });
 
+  it("shows a loading screen on the public site until it finishes", () => {
+    render(
+      <MarketingLayout>
+        <p>Content</p>
+      </MarketingLayout>,
+    );
+
+    expect(screen.getByRole("status", { name: "Loading" })).toBeInTheDocument();
+  });
+
+  it("does not replay the loading screen after opening the portal", () => {
+    usePathname.mockReturnValue("/portal/inbox/");
+    const { rerender } = render(
+      <MarketingLayout>
+        <p>Portal content</p>
+      </MarketingLayout>,
+    );
+
+    usePathname.mockReturnValue("/");
+    rerender(
+      <MarketingLayout>
+        <p>Content</p>
+      </MarketingLayout>,
+    );
+
+    expect(
+      screen.queryByRole("status", { name: "Loading" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("omits the loading screen on portal routes", () => {
+    usePathname.mockReturnValue("/portal/inbox/");
+
+    render(
+      <MarketingLayout>
+        <p>Portal content</p>
+      </MarketingLayout>,
+    );
+
+    expect(
+      screen.queryByRole("status", { name: "Loading" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("omits marketing chrome on portal routes", () => {
     usePathname.mockReturnValue("/portal/inbox/");
 
