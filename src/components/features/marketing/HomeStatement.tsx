@@ -46,12 +46,11 @@ export function HomeStatement() {
         style={{ opacity: 0.15, transform: "translateY(80px) scale(0.94)" }}
       >
         <Image
-          src="/images/trashbox-logo-white.png"
+          src="/images/trashbox-logo-colored.svg"
           alt="Trashbox LLC"
-          width={480}
-          height={120}
-          className="mb-12 h-16 w-auto md:mb-14 md:h-24 lg:h-28"
-          priority
+          width={1024}
+          height={1024}
+          className="mb-10 size-36 md:mb-12 md:size-48 lg:size-56"
         />
         <h2 className="font-headline text-5xl font-bold leading-tight tracking-tighter text-white md:text-7xl lg:text-8xl">
           Hire us for a single project.

@@ -252,12 +252,11 @@ export function PortalHeader() {
                 aria-label="Trashbox home"
               >
                 <Image
-                  src="/images/trashbox-logo-white.png"
+                  src="/images/trashbox-logo-outlined.svg"
                   alt=""
-                  width={96}
-                  height={24}
-                  className="h-5"
-                  style={{ width: "auto" }}
+                  width={1024}
+                  height={1024}
+                  className="size-11"
                   priority
                 />
               </PortalLink>
@@ -268,12 +267,11 @@ export function PortalHeader() {
                 aria-label="Trashbox home"
               >
                 <Image
-                  src="/images/trashbox-logo-white.png"
+                  src="/images/trashbox-logo-outlined.svg"
                   alt=""
-                  width={96}
-                  height={24}
-                  className="h-5"
-                  style={{ width: "auto" }}
+                  width={1024}
+                  height={1024}
+                  className="size-11"
                   priority
                 />
               </Link>

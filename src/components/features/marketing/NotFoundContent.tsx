@@ -9,12 +9,11 @@ export function NotFoundContent() {
       <main className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_50%,#1c1b1b_0%,#131313_100%)] px-6 pb-16 md:px-24">
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-5">
           <Image
-            src="/images/404-ghost-logo.png"
+            src="/images/trashbox-logo-outlined.svg"
             alt=""
-            width={800}
-            height={800}
-            className="max-w-4xl w-[80vw] grayscale brightness-50"
-            decoding="async"
+            width={1024}
+            height={1024}
+            className="w-[80vw] max-w-4xl"
           />
         </div>
 

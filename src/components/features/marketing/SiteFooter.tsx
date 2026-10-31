@@ -15,12 +15,11 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-screen-2xl flex-col items-center justify-between gap-6 md:flex-row">
         <Link href="/" className="inline-flex items-center" aria-label="Trashbox LLC home">
           <Image
-            src="/images/trashbox-logo-white.png"
+            src="/images/trashbox-logo-outlined.svg"
             alt="Trashbox LLC logo"
-            width={128}
-            height={32}
-            className="h-8"
-            style={{ width: "auto" }}
+            width={1024}
+            height={1024}
+            className="size-16"
           />
         </Link>
         <div className="flex flex-wrap justify-center gap-8">

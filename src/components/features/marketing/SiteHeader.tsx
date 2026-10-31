@@ -155,12 +155,11 @@ export function SiteHeader() {
               aria-label="Trashbox LLC home"
             >
               <Image
-                src="/images/trashbox-logo-white.png"
+                src="/images/trashbox-logo-colored.svg"
                 alt="Trashbox LLC logo"
-                width={160}
-                height={40}
-                className="h-9 md:h-10"
-                style={{ width: "auto" }}
+                width={1024}
+                height={1024}
+                className="size-16 md:size-20"
                 priority
               />
             </Link>
