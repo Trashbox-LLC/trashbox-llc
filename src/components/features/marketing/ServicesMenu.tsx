@@ -61,13 +61,29 @@ function ServiceLinks({
 export function ServicesMenu({
   pathname,
   onNavigate,
+  open,
 }: {
   pathname: string;
   onNavigate: () => void;
+  open: boolean;
 }) {
   return (
-    <div className="w-max border border-white/15 bg-black/40 py-2 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-      <ServiceLinks pathname={pathname} onNavigate={onNavigate} />
+    <div
+      className={cn(
+        "w-max border py-2 shadow-[0_16px_40px_rgba(0,0,0,0.35)] transition-[background-color,border-color,box-shadow,backdrop-filter] duration-200 ease-out motion-reduce:transition-none",
+        open
+          ? "border-white/15 bg-black/40 backdrop-blur-xl"
+          : "border-transparent bg-black/0 shadow-none backdrop-blur-[0px]",
+      )}
+    >
+      <div
+        className={cn(
+          "transition-opacity duration-200 ease-out motion-reduce:transition-none",
+          open ? "opacity-100" : "opacity-0",
+        )}
+      >
+        <ServiceLinks pathname={pathname} onNavigate={onNavigate} />
+      </div>
     </div>
   );
 }

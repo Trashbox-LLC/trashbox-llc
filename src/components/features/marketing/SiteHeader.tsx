@@ -362,13 +362,14 @@ export function SiteHeader() {
                   onBlur={onServicesBlur}
                   className={cn(
                     "absolute top-full left-0 z-50 hidden pt-3 md:block",
-                    "transition duration-200 ease-out motion-reduce:transition-none",
-                    servicesOpen
-                      ? "pointer-events-auto translate-y-0 opacity-100"
-                      : "pointer-events-none -translate-y-1 opacity-0",
+                    servicesOpen ? "pointer-events-auto" : "pointer-events-none",
                   )}
                 >
-                  <ServicesMenu pathname={pathname} onNavigate={closeMenu} />
+                  <ServicesMenu
+                    pathname={pathname}
+                    onNavigate={closeMenu}
+                    open={servicesOpen}
+                  />
                 </div>
               </div>
 
