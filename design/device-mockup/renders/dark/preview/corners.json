@@ -1,0 +1,48 @@
+{
+  "canvas": {
+    "width": 960,
+    "height": 720
+  },
+  "laptop": {
+    "aspect": 1.5447,
+    "corners": {
+      "topLeft": [
+        320.82,
+        106.66
+      ],
+      "topRight": [
+        681.8,
+        105.01
+      ],
+      "bottomRight": [
+        710.87,
+        336.92
+      ],
+      "bottomLeft": [
+        340.19,
+        352.23
+      ]
+    }
+  },
+  "phone": {
+    "aspect": 0.4612,
+    "corners": {
+      "topLeft": [
+        234.15,
+        254.56
+      ],
+      "topRight": [
+        334.39,
+        250.68
+      ],
+      "bottomRight": [
+        342.4,
+        473.57
+      ],
+      "bottomLeft": [
+        242.64,
+        482.32
+      ]
+    }
+  }
+}

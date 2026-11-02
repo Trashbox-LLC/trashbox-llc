@@ -9,7 +9,7 @@ describe("HomeHero", () => {
   it("renders hero items hidden before the entrance animation runs", () => {
     render(<HomeHero />);
 
-    const heading = screen.getByRole("heading", { name: "Trashbox LLC" });
+    const heading = screen.getByRole("heading", { name: "Trashbox Studios" });
     const tagline = screen.getByText(/businesses of every size/i);
     const ctaGroup = screen
       .getByRole("link", { name: /Work With Us/i })

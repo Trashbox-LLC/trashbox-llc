@@ -13,10 +13,12 @@ const heroItemStyle = {
 } as const;
 
 const DEVICES = {
-  src: "/images/home/devices-mockup.png",
+  src: "/images/home/devices-hero.webp",
   alt: "Texas Covenant Home Inspections website on a laptop beside the Calorie & Protein Tracker",
-  width: 1024,
-  height: 682,
+  width: 2000,
+  height: 1960,
+  blurDataURL:
+    "data:image/webp;base64,UklGRpAAAABXRUJQVlA4IIQAAAAQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JZwAAUpHt/C1GFPvcghYwAAD+8ZyyUID1dfDZ2kZTFykdxHHllARTkxwp9ncCwJThN7Tso4vJtVPcmaEFIC32PWujKHtTtALvq7z2EvTZ9d5/XHTsWlzv108muBadtEacUV6l7xEAcs2wAAA=",
 } as const;
 
 export function HomeHero() {
@@ -61,57 +63,43 @@ export function HomeHero() {
 
   return (
     <section className="relative flex min-h-dvh items-center justify-center overflow-hidden px-5 pt-36 pb-28 sm:px-8">
-      <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_42%,_#1c1b1b_0%,_#131313_100%)]" />
+      <div className="absolute inset-0 z-0 bg-[#050505]" />
       <div
         ref={heroRef}
-        className="relative z-10 mx-auto w-full max-w-6xl text-center"
+        className="relative z-10 mx-auto w-full max-w-7xl text-center"
       >
         <h1
           data-hero-item
           style={heroItemStyle}
           className="font-headline text-xs font-bold tracking-[0.42em] text-white uppercase sm:text-sm"
         >
-          Trashbox LLC
+          Trashbox Studios
         </h1>
 
         <div
           data-hero-item
           style={heroItemStyle}
-          className="relative mx-auto mt-3 w-[min(100%,56rem,calc((100dvh-26rem)*1.28))] sm:mt-4"
+          className="relative mx-auto mt-3 w-[min(100%,64rem)] sm:mt-4"
         >
           <Image
             src={DEVICES.src}
             alt={DEVICES.alt}
             width={DEVICES.width}
             height={DEVICES.height}
-            unoptimized
+            placeholder="blur"
+            blurDataURL={DEVICES.blurDataURL}
             priority
+            loading="eager"
             fetchPriority="high"
-            className="relative z-10 h-auto w-full"
+            className="h-auto w-full"
             style={{ height: "auto" }}
           />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute top-[86%] left-1/2 z-0 h-[162%] w-[112%] -translate-x-1/2"
-          >
-            <div className="absolute inset-0 overflow-hidden blur-[5px] [mask-image:linear-gradient(to_bottom,rgba(0,0,0,0.7)_0%,rgba(0,0,0,0.42)_22%,rgba(0,0,0,0.18)_55%,transparent_90%)] [-webkit-mask-image:linear-gradient(to_bottom,rgba(0,0,0,0.7)_0%,rgba(0,0,0,0.42)_22%,rgba(0,0,0,0.18)_55%,transparent_90%)]">
-              <Image
-                src={DEVICES.src}
-                alt=""
-                width={DEVICES.width}
-                height={DEVICES.height}
-                unoptimized
-                className="h-auto w-full"
-                style={{ height: "auto", transform: "scaleY(-1)" }}
-              />
-            </div>
-          </div>
         </div>
 
         <p
           data-hero-item
           style={heroItemStyle}
-          className="text-on-surface-variant relative z-10 mx-auto mt-6 max-w-2xl text-base leading-relaxed font-light sm:mt-7 sm:text-lg"
+          className="text-on-surface-variant relative z-10 mx-auto -mt-8 max-w-2xl text-base leading-relaxed font-light sm:-mt-48 sm:text-lg"
         >
           Websites, apps, and systems for businesses of every size—built to look
           sharp, work hard, and grow with you.

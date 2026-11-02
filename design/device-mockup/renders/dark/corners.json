@@ -1,0 +1,84 @@
+{
+  "canvas": {
+    "width": 3840,
+    "height": 2880
+  },
+  "laptop": {
+    "aspect": 1.5447,
+    "corners": {
+      "topLeft": [
+        1150.14,
+        453.47
+      ],
+      "topRight": [
+        2597.41,
+        459.56
+      ],
+      "bottomRight": [
+        2713.02,
+        1378.76
+      ],
+      "bottomLeft": [
+        1219.9,
+        1426.65
+      ]
+    },
+    "reflectionCorners": {
+      "topLeft": [
+        1164.9,
+        2513.73
+      ],
+      "topRight": [
+        2585.11,
+        2409.89
+      ],
+      "bottomRight": [
+        2711.49,
+        1584.39
+      ],
+      "bottomLeft": [
+        1221.34,
+        1645.31
+      ]
+    }
+  },
+  "phone": {
+    "aspect": 0.4612,
+    "corners": {
+      "topLeft": [
+        887.78,
+        929.68
+      ],
+      "topRight": [
+        1270.75,
+        922.07
+      ],
+      "bottomRight": [
+        1299.03,
+        1774.61
+      ],
+      "bottomLeft": [
+        916.18,
+        1800.14
+      ]
+    },
+    "reflectionCorners": {
+      "topLeft": [
+        904.64,
+        2676.17
+      ],
+      "topRight": [
+        1281.14,
+        2633.35
+      ],
+      "bottomRight": [
+        1299.28,
+        1817.03
+      ],
+      "bottomLeft": [
+        916.59,
+        1843.47
+      ]
+    }
+  }
+}
