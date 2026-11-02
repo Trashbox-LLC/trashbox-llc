@@ -92,7 +92,7 @@ export function HomeScrollShowcase() {
       className="relative overflow-hidden bg-background"
       aria-label="What we build"
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-8 pt-32 md:px-12 md:pt-40">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-8 pt-20 md:px-12 md:pt-24">
         <div className="mx-auto flex max-w-screen-2xl flex-col items-center gap-6">
           <h2 className="text-center font-headline text-3xl font-bold tracking-tight text-white md:text-5xl">
             What we build

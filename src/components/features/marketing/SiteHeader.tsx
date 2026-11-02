@@ -131,18 +131,19 @@ export function SiteHeader() {
             className="bg-background/75 pointer-events-none absolute inset-0 border-b border-white/10 backdrop-blur-xl"
             style={{ opacity: 0 }}
           />
-          <div className="relative mx-auto flex max-w-screen-2xl items-center justify-between px-6 py-5 md:px-8 md:py-6">
+          <div className="relative mx-auto flex max-w-screen-2xl items-center justify-between px-6 py-2 md:px-8">
             <Link
               href="/"
-              className="inline-flex items-center"
+              className="relative inline-flex h-[35.6px] w-[37.5px] shrink-0 md:h-[43.3px] md:w-[45.7px]"
               aria-label="Trashbox LLC home"
             >
+              {/* The SVG canvas is padded. Size the drawn mark, not the empty canvas. */}
               <Image
                 src="/images/trashbox-logo-colored.svg"
                 alt="Trashbox LLC logo"
                 width={1024}
                 height={1024}
-                className="size-16 md:size-20"
+                className="absolute top-1/2 left-1/2 h-[46px] w-[46px] max-w-none -translate-x-1/2 -translate-y-1/2 md:h-14 md:w-14"
                 priority
               />
             </Link>
