@@ -62,7 +62,7 @@ export function HomeHero() {
   );
 
   return (
-    <section className="relative min-h-dvh px-5 pt-24 pb-28 sm:px-8 sm:pt-20">
+    <section className="relative min-h-dvh px-5 pt-24 pb-28 sm:px-8 sm:pt-20 md:pb-48 lg:pb-72">
       <div className="absolute inset-0 z-0 bg-[#050505]" />
       <div
         ref={heroRef}
@@ -108,12 +108,16 @@ export function HomeHero() {
         <p
           data-hero-item
           style={heroItemStyle}
-          className="text-on-surface-variant relative z-10 mx-auto -mt-8 max-w-2xl text-base leading-relaxed font-light sm:-mt-48 sm:text-lg"
+          className="text-on-surface-variant relative z-10 mx-auto -mt-28 max-w-2xl text-base leading-relaxed font-light sm:-mt-56 md:-mt-72 lg:-mt-96 sm:text-lg"
         >
           Websites, apps, and systems for businesses of every size—built to look
           sharp, work hard, and grow with you.
         </p>
-        <div data-hero-item style={heroItemStyle} className="relative z-10 mt-6">
+        <div
+          data-hero-item
+          style={heroItemStyle}
+          className="relative z-10 mt-6"
+        >
           <Link
             href="/services#contact"
             className="font-headline inline-flex rounded-md bg-white px-5 py-2.5 text-sm font-medium tracking-tight text-black transition-transform hover:scale-[1.02] active:scale-95"
