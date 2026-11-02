@@ -275,7 +275,7 @@ export function SiteHeader() {
     closeServices();
   }
 
-  function onBarLeave(event: MouseEvent<HTMLDivElement>) {
+  function onServicesLeave(event: MouseEvent<HTMLDivElement>) {
     const next = event.relatedTarget;
     if (next instanceof Node && event.currentTarget.contains(next)) return;
     closeServices();
@@ -291,11 +291,7 @@ export function SiteHeader() {
   return (
     <nav className="fixed top-0 z-50 w-full">
       <div ref={navRef} style={headerEnterStyle}>
-        <div
-          ref={barRef}
-          onMouseLeave={onBarLeave}
-          className={cn("relative", open && "bg-background")}
-        >
+        <div ref={barRef} className={cn("relative", open && "bg-background")}>
           <div
             ref={scrimRef}
             data-header-scrim
@@ -334,7 +330,7 @@ export function SiteHeader() {
                 <TabMark current={isActive("/", true)} />
               </Link>
 
-              <div className="relative">
+              <div className="relative" onMouseLeave={onServicesLeave}>
                 <button
                   ref={servicesButtonRef}
                   type="button"

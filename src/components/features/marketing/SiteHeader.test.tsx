@@ -184,21 +184,36 @@ describe("SiteHeader", () => {
     ).toHaveAttribute("href", expect.stringMatching(/\/platform\/?$/));
   });
 
-  it("closes the services menu when the pointer leaves the header", async () => {
+  it("closes the services menu when the pointer leaves Services for the rest of the header", async () => {
     const user = userEvent.setup();
     render(<SiteHeader />);
 
-    await user.hover(screen.getByRole("button", { name: /^services$/i }));
+    const services = screen.getByRole("button", { name: /^services$/i });
+    await user.hover(services);
     expect(screen.getByRole("link", { name: /^websites$/i })).toBeInTheDocument();
 
-    const bar = screen
-      .getByRole("navigation")
-      .querySelector("[data-header-scrim]")?.parentElement as HTMLElement;
-    fireEvent.mouseLeave(bar, { relatedTarget: document.body });
+    fireEvent.mouseLeave(services.parentElement as HTMLElement, {
+      relatedTarget: screen.getByRole("link", { name: /^work$/i }),
+    });
 
     expect(
       screen.queryByRole("link", { name: /^websites$/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps the services menu open while the pointer is on the menu", async () => {
+    const user = userEvent.setup();
+    render(<SiteHeader />);
+
+    const services = screen.getByRole("button", { name: /^services$/i });
+    await user.hover(services);
+    const websites = screen.getByRole("link", { name: /^websites$/i });
+
+    fireEvent.mouseLeave(services.parentElement as HTMLElement, {
+      relatedTarget: websites,
+    });
+
+    expect(websites).toBeInTheDocument();
   });
 
   it("closes the services menu on Escape", async () => {
