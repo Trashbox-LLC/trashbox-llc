@@ -62,7 +62,7 @@ export function HomeHero() {
   );
 
   return (
-    <section className="relative min-h-dvh px-5 pt-32 pb-28 sm:px-8 sm:pt-36">
+    <section className="relative min-h-dvh px-5 pt-24 pb-28 sm:px-8 sm:pt-20">
       <div className="absolute inset-0 z-0 bg-[#050505]" />
       <div
         ref={heroRef}
@@ -78,7 +78,7 @@ export function HomeHero() {
         <h1
           data-hero-item
           style={heroItemStyle}
-          className="font-headline mt-4 text-[clamp(1.7rem,4.6vw,4.75rem)] leading-[1.05] font-bold tracking-tight text-balance text-white sm:mt-5"
+          className="font-headline mt-2 text-[clamp(1.7rem,4.6vw,4.75rem)] leading-[1.05] font-bold tracking-tight text-balance text-white sm:mt-3"
         >
           <span className="block">Made for professionals.</span>
           <span className="block">Built by professionals.</span>
@@ -88,7 +88,7 @@ export function HomeHero() {
           data-hero-item
           data-header-scrim-target
           style={heroItemStyle}
-          className="relative mx-auto mt-3 w-[min(100%,64rem)] sm:mt-4"
+          className="relative mx-auto mt-1 w-[min(100%,56rem)] sm:mt-2"
         >
           <Image
             src={DEVICES.src}
