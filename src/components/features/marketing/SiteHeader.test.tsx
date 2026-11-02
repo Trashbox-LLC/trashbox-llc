@@ -119,6 +119,15 @@ describe("SiteHeader", () => {
     });
     expect(scrim.style.opacity).toBe("1");
   });
+  it("calls the site number from the header", () => {
+    render(<SiteHeader />);
+
+    expect(screen.getByRole("link", { name: "714-586-1630" })).toHaveAttribute(
+      "href",
+      "tel:+17145861630",
+    );
+  });
+
   it("opens a Services dropdown with offering and CRM links", async () => {
     const user = userEvent.setup();
     render(<SiteHeader />);

@@ -16,7 +16,11 @@ import {
 import { cn } from "@/lib/utils";
 import { gsap } from "@/lib/gsap-client";
 import { headerScrimOpacity } from "@/lib/site-header-scrim";
-import { SERVICE_PATHS } from "@/lib/sites";
+import {
+  CONTACT_PHONE_DISPLAY,
+  CONTACT_PHONE_TEL,
+  SERVICE_PATHS,
+} from "@/lib/sites";
 
 const serviceItems = [
   { href: SERVICE_PATHS.websites, label: "Websites" },
@@ -38,7 +42,7 @@ const headerEnterStyle = {
 
 function navLinkClass(active: boolean) {
   return cn(
-    "font-headline tracking-tight text-sm uppercase transition-colors",
+    "font-headline tracking-tight text-sm transition-colors",
     active
       ? "border-b-2 border-white pb-1 font-bold text-white"
       : "text-white/60 hover:text-white",
@@ -167,7 +171,7 @@ export function SiteHeader() {
                     <DropdownMenuItem key={item.label} asChild>
                       <Link
                         href={item.href}
-                        className="font-headline text-sm tracking-tight uppercase"
+                        className="font-headline text-sm tracking-tight"
                       >
                         {item.label}
                       </Link>
@@ -184,8 +188,17 @@ export function SiteHeader() {
               </Link>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button asChild className="hidden py-2 active:scale-95 md:inline-flex">
+            <div className="flex items-center gap-5">
+              <a
+                href={CONTACT_PHONE_TEL}
+                className="font-headline hidden text-sm tracking-tight text-white/60 transition-colors hover:text-white md:inline"
+              >
+                {CONTACT_PHONE_DISPLAY}
+              </a>
+              <Button
+                asChild
+                className="hidden py-2 tracking-tight normal-case active:scale-95 md:inline-flex"
+              >
                 <Link href={SERVICE_PATHS.contact}>Contact</Link>
               </Button>
               <Button
@@ -259,7 +272,7 @@ export function SiteHeader() {
                           key={item.label}
                           href={item.href}
                           tabIndex={open && servicesOpen ? undefined : -1}
-                          className="font-headline text-sm tracking-tight text-white/60 uppercase transition-colors hover:text-white"
+                          className="font-headline text-sm tracking-tight text-white/60 transition-colors hover:text-white"
                           onClick={closeMenu}
                         >
                           {item.label}
@@ -287,7 +300,7 @@ export function SiteHeader() {
                 About
               </Link>
 
-              <Button asChild className="mt-4">
+              <Button asChild className="mt-4 tracking-tight normal-case">
                 <Link
                   href={SERVICE_PATHS.contact}
                   tabIndex={open ? undefined : -1}
