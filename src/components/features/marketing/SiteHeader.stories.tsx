@@ -30,6 +30,22 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
+export const OverHeroImage: Story = {
+  decorators: [
+    (Story) => (
+      <div className="min-h-[160vh] bg-[#050505]">
+        <Story />
+        <div className="px-8 pt-48">
+          <div
+            data-header-scrim-target
+            className="mx-auto h-[40vh] max-w-4xl bg-white/15"
+          />
+        </div>
+      </div>
+    ),
+  ],
+};
+
 export const MobileMenuOpen: Story = {
   parameters: {
     viewport: {

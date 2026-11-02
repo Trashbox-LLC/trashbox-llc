@@ -1,6 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { setForceHideSiteHeader } from "@/lib/site-header-visibility";
 import { SiteHeader } from "./SiteHeader";
 
 vi.mock("@gsap/react", () => ({
@@ -15,17 +14,14 @@ describe("SiteHeader", () => {
   it("hides before paint so the entrance animation does not flash then snap", () => {
     render(<SiteHeader />);
 
-    expect(screen.getByRole("navigation")).toHaveAttribute(
-      "data-hidden",
-      "false",
-    );
+    expect(screen.getByRole("navigation")).not.toHaveClass("-translate-y-full");
     expect(screen.getByRole("navigation").firstElementChild).toHaveStyle({
       opacity: "0",
       transform: "translateY(-16px)",
     });
   });
 
-  it("hides on scroll down and returns on scroll up", () => {
+  it("stays at the top while scrolling down and back up", () => {
     let scrollY = 0;
     Object.defineProperty(window, "scrollY", {
       configurable: true,
@@ -43,29 +39,85 @@ describe("SiteHeader", () => {
       scrollY = 200;
       window.dispatchEvent(new Event("scroll"));
     });
-    expect(nav).toHaveAttribute("data-hidden", "true");
+    expect(nav).toBeVisible();
+    expect(nav).not.toHaveClass("-translate-y-full");
 
     act(() => {
       scrollY = 60;
       window.dispatchEvent(new Event("scroll"));
     });
-    expect(nav).toHaveAttribute("data-hidden", "false");
+    expect(nav).toBeVisible();
+    expect(nav).not.toHaveClass("-translate-y-full");
   });
 
-  it("stays hidden while a page section forces the header away", () => {
-    setForceHideSiteHeader(false);
+  it("fades the background in as the hero image moves under the header", () => {
+    render(
+      <>
+        <SiteHeader />
+        <div data-header-scrim-target />
+      </>,
+    );
+
+    const scrim = screen
+      .getByRole("navigation")
+      .querySelector("[data-header-scrim]") as HTMLElement;
+    const bar = scrim.parentElement as HTMLElement;
+    const media = document.querySelector(
+      "[data-header-scrim-target]",
+    ) as HTMLElement;
+    let mediaTop = 180;
+
+    const spy = vi
+      .spyOn(Element.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: Element) {
+        if (this === bar) return new DOMRect(0, 0, 200, 100);
+        if (this === media) return new DOMRect(0, mediaTop, 200, 400);
+        return new DOMRect();
+      });
+
+    act(() => {
+      window.dispatchEvent(new Event("scroll"));
+    });
+    expect(scrim.style.opacity).toBe("0");
+
+    mediaTop = 50;
+    act(() => {
+      window.dispatchEvent(new Event("scroll"));
+    });
+    expect(scrim.style.opacity).toBe("0.5");
+
+    mediaTop = -10;
+    act(() => {
+      window.dispatchEvent(new Event("scroll"));
+    });
+    expect(scrim.style.opacity).toBe("1");
+
+    spy.mockRestore();
+  });
+
+  it("shows the background after leaving the top of a page without a hero image", () => {
+    let scrollY = 0;
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      get: () => scrollY,
+    });
+
     render(<SiteHeader />);
-    const nav = screen.getByRole("navigation");
+    const scrim = screen
+      .getByRole("navigation")
+      .querySelector("[data-header-scrim]") as HTMLElement;
 
     act(() => {
-      setForceHideSiteHeader(true);
+      scrollY = 0;
+      window.dispatchEvent(new Event("scroll"));
     });
-    expect(nav).toHaveAttribute("data-hidden", "true");
+    expect(scrim.style.opacity).toBe("0");
 
     act(() => {
-      setForceHideSiteHeader(false);
+      scrollY = 40;
+      window.dispatchEvent(new Event("scroll"));
     });
-    expect(nav).toHaveAttribute("data-hidden", "false");
+    expect(scrim.style.opacity).toBe("1");
   });
   it("opens a Services dropdown with offering and CRM links", async () => {
     const user = userEvent.setup();

@@ -15,10 +15,10 @@ const heroItemStyle = {
 const DEVICES = {
   src: "/images/home/devices-hero.webp",
   alt: "Texas Covenant Home Inspections website on a laptop beside the Calorie & Protein Tracker",
-  width: 2000,
-  height: 1960,
+  width: 2462,
+  height: 2413,
   blurDataURL:
-    "data:image/webp;base64,UklGRpAAAABXRUJQVlA4IIQAAAAQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JZwAAUpHt/C1GFPvcghYwAAD+8ZyyUID1dfDZ2kZTFykdxHHllARTkxwp9ncCwJThN7Tso4vJtVPcmaEFIC32PWujKHtTtALvq7z2EvTZ9d5/XHTsWlzv108muBadtEacUV6l7xEAcs2wAAA=",
+    "data:image/webp;base64,UklGRooAAABXRUJQVlA4IH4AAABwBACdASoUABQAPu1oqU+ppaOiKA1RMB2JaQDO7BEc6ffhql+j+wMVjktSAAD+75+m3S+q0qWJzWTl02hkvzoMcYBjOqBWuq97tGn2Vkdr7own6dUJgyUvrx3zxw6BwozCdSlNezeLJHqxoG+8QpDZfDshXcTVVOXxqgBAAAA=",
 } as const;
 
 export function HomeHero() {
@@ -78,6 +78,7 @@ export function HomeHero() {
 
         <div
           data-hero-item
+          data-header-scrim-target
           style={heroItemStyle}
           className="relative mx-auto mt-3 w-[min(100%,64rem)] sm:mt-4"
         >

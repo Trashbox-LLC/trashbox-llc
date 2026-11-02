@@ -8,7 +8,6 @@ import { TiltMedia } from "@/components/atoms/TiltMedia";
 import { SERVICE_OFFERINGS } from "@/components/features/marketing/service-offerings";
 import { gsap } from "@/lib/gsap-client";
 import { SERVICE_PATHS } from "@/lib/sites";
-import { setForceHideSiteHeader } from "@/lib/site-header-visibility";
 
 const panels = SERVICE_OFFERINGS.map((offering) => ({
   href: SERVICE_PATHS[offering.slug],
@@ -44,9 +43,6 @@ export function HomeScrollShowcase() {
           scrub: 0.65,
           anticipatePin: 1,
           invalidateOnRefresh: true,
-          onToggle: (self) => {
-            setForceHideSiteHeader(self.isActive);
-          },
           onUpdate: (self) => {
             if (progress) {
               gsap.set(progress, { scaleX: self.progress });
@@ -86,8 +82,6 @@ export function HomeScrollShowcase() {
           },
         );
       });
-
-      return () => setForceHideSiteHeader(false);
     },
     { scope: sectionRef },
   );
@@ -98,7 +92,7 @@ export function HomeScrollShowcase() {
       className="relative overflow-hidden bg-background"
       aria-label="What we build"
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-8 pt-12 md:px-12 md:pt-16">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-8 pt-32 md:px-12 md:pt-40">
         <div className="mx-auto flex max-w-screen-2xl flex-col items-center gap-6">
           <h2 className="text-center font-headline text-3xl font-bold tracking-tight text-white md:text-5xl">
             What we build

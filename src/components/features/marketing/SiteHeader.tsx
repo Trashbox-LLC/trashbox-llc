@@ -15,11 +15,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { gsap } from "@/lib/gsap-client";
+import { headerScrimOpacity } from "@/lib/site-header-scrim";
 import { SERVICE_PATHS } from "@/lib/sites";
-import {
-  getForceHideSiteHeader,
-  subscribeForceHideSiteHeader,
-} from "@/lib/site-header-visibility";
 
 const serviceItems = [
   { href: SERVICE_PATHS.websites, label: "Websites" },
@@ -32,9 +29,6 @@ const serviceItems = [
     label: "Customer Relationship Management",
   },
 ] as const;
-
-const SCROLL_TOP_THRESHOLD = 12;
-const SCROLL_DELTA_THRESHOLD = 8;
 
 /** Match FadeIn/HomeHero: hide before paint so the header doesn't flash then snap. */
 const headerEnterStyle = {
@@ -54,9 +48,8 @@ function navLinkClass(active: boolean) {
 export function SiteHeader() {
   const pathname = usePathname() ?? "";
   const navRef = useRef<HTMLDivElement>(null);
-  const [scrolled, setScrolled] = useState(false);
-  const [hidden, setHidden] = useState(false);
-  const [forceHidden, setForceHidden] = useState(getForceHideSiteHeader);
+  const barRef = useRef<HTMLDivElement>(null);
+  const scrimRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
 
@@ -80,35 +73,30 @@ export function SiteHeader() {
   );
 
   useEffect(() => {
-    return subscribeForceHideSiteHeader(() => {
-      setForceHidden(getForceHideSiteHeader());
-    });
-  }, []);
+    const bar = barRef.current;
+    const scrim = scrimRef.current;
+    if (!bar || !scrim) return;
 
-  useEffect(() => {
-    let lastY = window.scrollY;
-
-    const onScroll = () => {
-      const y = window.scrollY;
-      setScrolled(y > SCROLL_TOP_THRESHOLD);
-
-      if (open || y <= SCROLL_TOP_THRESHOLD) {
-        setHidden(false);
-        lastY = y;
-        return;
-      }
-
-      const delta = y - lastY;
-      if (Math.abs(delta) < SCROLL_DELTA_THRESHOLD) return;
-
-      setHidden(delta > 0);
-      lastY = y;
+    const update = () => {
+      const rect = bar.getBoundingClientRect();
+      const media = document.querySelector("[data-header-scrim-target]");
+      const opacity = headerScrimOpacity({
+        headerTop: rect.top,
+        headerBottom: rect.bottom,
+        mediaTop: media ? media.getBoundingClientRect().top : null,
+        scrollY: window.scrollY,
+      });
+      scrim.style.opacity = String(opacity);
     };
 
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [open]);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -128,27 +116,22 @@ export function SiteHeader() {
   }
 
   const servicesActive = pathname.startsWith("/services");
-  const headerHidden = (hidden || forceHidden) && !open;
 
   return (
-    <nav
-      className={cn(
-        "fixed top-0 z-50 w-full transition-transform duration-300 ease-out",
-        headerHidden ? "-translate-y-full" : "translate-y-0",
-      )}
-      data-hidden={headerHidden ? "true" : "false"}
-    >
+    <nav className="fixed top-0 z-50 w-full">
       <div ref={navRef} style={headerEnterStyle}>
         <div
-          className={cn(
-            "border-b backdrop-blur-xl transition-colors duration-300",
-            scrolled && !open
-              ? "bg-background/75 border-white/10"
-              : "border-transparent bg-transparent",
-            open && "bg-background",
-          )}
+          ref={barRef}
+          className={cn("relative", open && "bg-background")}
         >
-          <div className="mx-auto flex max-w-screen-2xl items-center justify-between px-6 py-5 md:px-8 md:py-6">
+          <div
+            ref={scrimRef}
+            data-header-scrim
+            aria-hidden
+            className="bg-background/75 pointer-events-none absolute inset-0 border-b border-white/10 backdrop-blur-xl"
+            style={{ opacity: 0 }}
+          />
+          <div className="relative mx-auto flex max-w-screen-2xl items-center justify-between px-6 py-5 md:px-8 md:py-6">
             <Link
               href="/"
               className="inline-flex items-center"
