@@ -53,6 +53,15 @@ test.describe("site navigation", () => {
       page.getByRole("heading", { name: /trashbox/i }),
     ).toBeVisible();
 
+    await nav
+      .getByRole("link", { name: "Contact", exact: true })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/contact\/?$/);
+    await expect(
+      page.getByRole("heading", { name: /start a project/i }),
+    ).toBeVisible();
+
     await nav.getByRole("link", { name: "Home", exact: true }).click();
     await expect(page).toHaveURL(/\/$/);
     await expect(

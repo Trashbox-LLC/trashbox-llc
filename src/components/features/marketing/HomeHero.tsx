@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap-client";
+import { SERVICE_PATHS } from "@/lib/sites";
 
 /** Match Reveal: hide before paint so client navigations don't flash then snap. */
 const heroItemStyle = {
@@ -103,7 +104,7 @@ export function HomeHero() {
           className="relative z-10 mt-6"
         >
           <Link
-            href="/services#contact"
+            href={SERVICE_PATHS.contact}
             className="font-headline inline-flex rounded-md bg-white px-5 py-2.5 text-sm font-medium tracking-tight text-black transition-transform hover:scale-[1.02] active:scale-95"
           >
             Let's Connect

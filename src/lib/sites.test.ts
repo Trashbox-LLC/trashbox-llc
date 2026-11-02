@@ -25,7 +25,7 @@ describe("sites helpers", () => {
     expect(SERVICE_PATHS.systems).toBe("/services/systems");
     expect(SERVICE_PATHS.mobileApps).toBe("/services/mobile-apps");
     expect(SERVICE_PATHS.aiIntegration).toBe("/services/ai-integration");
-    expect(SERVICE_PATHS.contact).toBe("/services#contact");
+    expect(SERVICE_PATHS.contact).toBe("/contact");
     expect(PORTAL_PATHS.orgs).toBe("/portal/orgs/");
     expect(PORTAL_PATHS.account).toBe("/portal/account/");
     expect(PORTAL_PATHS.home).toBe("/portal/");

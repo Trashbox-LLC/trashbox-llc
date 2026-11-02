@@ -12,7 +12,7 @@ describe("HomeCta", () => {
     expect(screen.getByRole("heading", { name: /let.s build/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /start your project/i })).toHaveAttribute(
       "href",
-      "/services#contact",
+      "/contact",
     );
     expect(screen.getByRole("link", { name: /contact@trashbox\.io/i })).toHaveAttribute(
       "href",

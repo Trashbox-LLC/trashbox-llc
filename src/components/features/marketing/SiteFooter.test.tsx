@@ -12,6 +12,9 @@ describe("SiteFooter", () => {
       "/work",
     );
     expect(
+      within(sitemap).getByRole("link", { name: "Contact" }),
+    ).toHaveAttribute("href", "/contact");
+    expect(
       within(sitemap).getByRole("link", { name: "Websites" }),
     ).toHaveAttribute("href", "/services/websites");
     expect(

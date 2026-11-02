@@ -28,6 +28,7 @@ const MARKETING_PATHS = [
   SERVICE_PATHS.systems,
   SERVICE_PATHS.mobileApps,
   SERVICE_PATHS.aiIntegration,
+  SERVICE_PATHS.contact,
   "/apps/",
   PLATFORM_PATHS.hub,
   PLATFORM_PATHS.features,
@@ -159,6 +160,18 @@ export function portfolioJsonLd(
         url: site.href,
       })),
     },
+  };
+}
+
+export function contactPageJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    name: "Contact Trashbox Studios",
+    description:
+      "Start a website, app, or systems project with Trashbox Studios in Kingwood, Texas.",
+    url: absoluteUrl(SERVICE_PATHS.contact),
+    mainEntity: { "@id": ORGANIZATION_ID },
   };
 }
 

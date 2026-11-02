@@ -3,7 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type FocusEvent, type MouseEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FocusEvent,
+  type MouseEvent,
+} from "react";
 import { useGSAP } from "@gsap/react";
 import { MenuToggleIcon } from "@/components/atoms/MenuToggleIcon";
 import {
@@ -287,6 +293,7 @@ export function SiteHeader() {
   }
 
   const servicesActive = pathname.startsWith("/services");
+  const contactActive = isActive(SERVICE_PATHS.contact);
 
   return (
     <nav className="fixed top-0 z-50 w-full">
@@ -362,7 +369,9 @@ export function SiteHeader() {
                   onBlur={onServicesBlur}
                   className={cn(
                     "absolute top-full left-0 z-50 hidden pt-3 md:block",
-                    servicesOpen ? "pointer-events-auto" : "pointer-events-none",
+                    servicesOpen
+                      ? "pointer-events-auto"
+                      : "pointer-events-none",
                   )}
                 >
                   <ServicesMenu
@@ -394,10 +403,11 @@ export function SiteHeader() {
               <Link
                 href={SERVICE_PATHS.contact}
                 data-nav-tab
-                className={cn(navLinkClass(false), "relative")}
+                aria-current={contactActive ? "page" : undefined}
+                className={cn(navLinkClass(contactActive), "relative")}
               >
                 Contact
-                <TabMark current={false} />
+                <TabMark current={contactActive} />
               </Link>
               <span
                 ref={indicatorRef}
@@ -519,8 +529,9 @@ export function SiteHeader() {
               </Link>
               <Link
                 href={SERVICE_PATHS.contact}
+                aria-current={contactActive ? "page" : undefined}
                 tabIndex={open ? undefined : -1}
-                className={navLinkClass(false)}
+                className={navLinkClass(contactActive)}
                 onClick={closeMenu}
               >
                 Contact

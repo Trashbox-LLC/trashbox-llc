@@ -6,7 +6,7 @@ vi.mock("@gsap/react", () => ({
 }));
 
 describe("ReadyWhenYouAre", () => {
-  it("renders the about-style CTA linking to services contact", () => {
+  it("renders the closing CTA linking to the contact page", () => {
     render(<ReadyWhenYouAre />);
 
     expect(
@@ -14,7 +14,7 @@ describe("ReadyWhenYouAre", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /start a project/i }),
-    ).toHaveAttribute("href", "/services#contact");
+    ).toHaveAttribute("href", "/contact");
   });
 
   it("accepts a custom href", () => {

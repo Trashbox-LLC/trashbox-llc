@@ -29,7 +29,7 @@ export const SERVICE_PATHS = {
   systems: "/services/systems",
   mobileApps: "/services/mobile-apps",
   aiIntegration: "/services/ai-integration",
-  contact: "/services#contact",
+  contact: "/contact",
 } as const;
 
 export const PORTAL_PATHS = {

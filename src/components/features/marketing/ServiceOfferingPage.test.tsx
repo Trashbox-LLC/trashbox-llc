@@ -23,7 +23,7 @@ describe("ServiceOfferingPage", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /start a project/i }),
-    ).toHaveAttribute("href", "/services#contact");
+    ).toHaveAttribute("href", "/contact");
   });
 
   it("renders web applications with a process section", () => {

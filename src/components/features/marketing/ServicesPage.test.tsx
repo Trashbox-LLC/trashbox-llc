@@ -5,16 +5,8 @@ vi.mock("@gsap/react", () => ({
   useGSAP: () => {},
 }));
 
-vi.mock("@/hooks/use-hash-scroll", () => ({
-  useHashScroll: () => {},
-}));
-
-vi.mock("@/components/features/contact/ContactForm", () => ({
-  ContactForm: () => <div>Contact form</div>,
-}));
-
 describe("ServicesPage", () => {
-  it("lists service offerings with links and contact", () => {
+  it("lists service offerings and links to the contact page", () => {
     render(<ServicesPage />);
 
     expect(
@@ -38,6 +30,8 @@ describe("ServicesPage", () => {
     expect(
       screen.getByRole("link", { name: /^ai integration$/i }),
     ).toHaveAttribute("href", "/services/ai-integration");
-    expect(screen.getByText(/contact form/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /start a project/i }),
+    ).toHaveAttribute("href", "/contact");
   });
 });

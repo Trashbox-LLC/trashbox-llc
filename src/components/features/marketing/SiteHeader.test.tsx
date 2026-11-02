@@ -276,7 +276,7 @@ describe("SiteHeader", () => {
     expect(
       screen
         .getAllByRole("link", { name: /^contact$/i })
-        .every((link) => link.getAttribute("href") === "/services#contact"),
+        .every((link) => link.getAttribute("href") === "/contact"),
     ).toBe(true);
   });
 });

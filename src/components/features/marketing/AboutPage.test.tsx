@@ -23,7 +23,7 @@ describe("AboutPage", () => {
     expect(screen.getByText(/amazon leo/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /start a project/i })).toHaveAttribute(
       "href",
-      "/services#contact",
+      "/contact",
     );
   });
 });
