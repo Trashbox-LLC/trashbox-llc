@@ -62,18 +62,26 @@ export function HomeHero() {
   );
 
   return (
-    <section className="relative flex min-h-dvh items-center justify-center overflow-hidden px-5 pt-36 pb-28 sm:px-8">
+    <section className="relative min-h-dvh px-5 pt-32 pb-28 sm:px-8 sm:pt-36">
       <div className="absolute inset-0 z-0 bg-[#050505]" />
       <div
         ref={heroRef}
         className="relative z-10 mx-auto w-full max-w-7xl text-center"
       >
+        <p
+          data-hero-item
+          style={heroItemStyle}
+          className="text-sm text-white/80 sm:text-base"
+        >
+          Websites, apps, and systems for local businesses in Kingwood, TX.
+        </p>
         <h1
           data-hero-item
           style={heroItemStyle}
-          className="font-headline text-xs font-bold tracking-[0.42em] text-white uppercase sm:text-sm"
+          className="font-headline mt-4 text-[clamp(1.7rem,4.6vw,4.75rem)] leading-[1.05] font-bold tracking-tight text-balance text-white sm:mt-5"
         >
-          Trashbox Studios
+          <span className="block">Made for professionals.</span>
+          <span className="block">Built by professionals.</span>
         </h1>
 
         <div
@@ -105,22 +113,12 @@ export function HomeHero() {
           Websites, apps, and systems for businesses of every size—built to look
           sharp, work hard, and grow with you.
         </p>
-        <div
-          data-hero-item
-          style={heroItemStyle}
-          className="relative z-10 mt-6 flex flex-col items-center justify-center gap-4 sm:mt-7 sm:flex-row sm:gap-6"
-        >
+        <div data-hero-item style={heroItemStyle} className="relative z-10 mt-6">
           <Link
             href="/services#contact"
-            className="kinetic-gradient monolith-shadow font-headline text-on-primary-container px-8 py-4 text-xs font-bold tracking-widest uppercase transition-transform hover:scale-[1.02] active:scale-95 sm:px-10 sm:py-5 sm:text-sm"
+            className="font-headline inline-flex rounded-md bg-white px-5 py-2.5 text-sm font-medium tracking-tight text-black transition-transform hover:scale-[1.02] active:scale-95"
           >
-            Work With Us
-          </Link>
-          <Link
-            href="/about"
-            className="border-outline-variant/30 font-headline hover:bg-surface-container-low border px-8 py-4 text-xs font-bold tracking-widest text-white uppercase transition-colors sm:px-10 sm:py-5 sm:text-sm"
-          >
-            About Us
+            Work with us
           </Link>
         </div>
       </div>

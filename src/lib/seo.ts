@@ -14,7 +14,7 @@ export const SITE_ORIGIN = "https://www.trashbox.io";
 export const HOME_TITLE = "Trashbox LLC — Websites, apps, and systems";
 
 export const HOME_DESCRIPTION =
-  "Websites, apps, and systems for businesses of every size. Trashbox LLC is a software studio in Kingwood, Texas.";
+  "Websites, apps, and systems for local businesses in Kingwood, Texas. Made for professionals. Built by professionals.";
 
 const ORGANIZATION_ID = `${SITE_ORIGIN}/#organization`;
 

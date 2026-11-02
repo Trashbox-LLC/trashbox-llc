@@ -10,7 +10,7 @@ describe("HomePage", () => {
     render(<HomePage />);
 
     expect(
-      screen.getByRole("heading", { name: "Trashbox Studios" }),
+      screen.getByRole("heading", { name: /made for professionals/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: /software that/i }),
