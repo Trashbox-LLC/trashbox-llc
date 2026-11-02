@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SiteHeader } from "./SiteHeader";
 
@@ -143,32 +143,67 @@ describe("SiteHeader", () => {
     ).toBe(true);
   });
 
-  it("opens a Services dropdown with offering and CRM links", async () => {
+  it("opens the services menu on hover with offering and CRM links", async () => {
     const user = userEvent.setup();
     render(<SiteHeader />);
 
-    await user.click(screen.getByRole("button", { name: /^services$/i }));
+    expect(
+      screen.queryByRole("link", { name: /^websites$/i }),
+    ).not.toBeInTheDocument();
 
+    await user.hover(screen.getByRole("button", { name: /^services$/i }));
+
+    expect(screen.getByRole("link", { name: /^websites$/i })).toHaveAttribute(
+      "href",
+      "/services/websites",
+    );
     expect(
-      await screen.findByRole("menuitem", { name: /^websites$/i }),
-    ).toHaveAttribute("href", "/services/websites");
-    expect(
-      screen.getByRole("menuitem", { name: /^web applications$/i }),
+      screen.getByRole("link", { name: /^web applications$/i }),
     ).toHaveAttribute("href", "/services/web-applications");
+    expect(screen.getByRole("link", { name: /^systems$/i })).toHaveAttribute(
+      "href",
+      "/services/systems",
+    );
     expect(
-      screen.getByRole("menuitem", { name: /^systems$/i }),
-    ).toHaveAttribute("href", "/services/systems");
-    expect(
-      screen.getByRole("menuitem", { name: /^mobile apps$/i }),
+      screen.getByRole("link", { name: /^mobile apps$/i }),
     ).toHaveAttribute("href", "/services/mobile-apps");
     expect(
-      screen.getByRole("menuitem", { name: /^ai integration$/i }),
+      screen.getByRole("link", { name: /^ai integration$/i }),
     ).toHaveAttribute("href", "/services/ai-integration");
     expect(
-      screen.getByRole("menuitem", {
+      screen.getByRole("link", {
         name: /^customer relationship management$/i,
       }),
     ).toHaveAttribute("href", expect.stringMatching(/\/platform\/?$/));
+  });
+
+  it("closes the services menu when the pointer leaves the header", async () => {
+    const user = userEvent.setup();
+    render(<SiteHeader />);
+
+    await user.hover(screen.getByRole("button", { name: /^services$/i }));
+    expect(screen.getByRole("link", { name: /^websites$/i })).toBeInTheDocument();
+
+    const bar = screen
+      .getByRole("navigation")
+      .querySelector("[data-header-scrim]")?.parentElement as HTMLElement;
+    fireEvent.mouseLeave(bar, { relatedTarget: document.body });
+
+    expect(
+      screen.queryByRole("link", { name: /^websites$/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("closes the services menu on Escape", async () => {
+    const user = userEvent.setup();
+    render(<SiteHeader />);
+
+    await user.hover(screen.getByRole("button", { name: /^services$/i }));
+    await user.keyboard("{Escape}");
+
+    expect(
+      screen.queryByRole("link", { name: /^websites$/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("does not expose a top-level CRM link", () => {

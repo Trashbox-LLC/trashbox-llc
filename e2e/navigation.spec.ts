@@ -8,9 +8,10 @@ test.describe("site navigation", () => {
 
     await marketingNav
       .getByRole("button", { name: "Services", exact: true })
-      .click();
-    await page
-      .getByRole("menuitem", {
+      .hover();
+    await marketingNav
+      .getByRole("region", { name: "Services" })
+      .getByRole("link", {
         name: "Customer Relationship Management",
         exact: true,
       })
@@ -33,11 +34,13 @@ test.describe("site navigation", () => {
 
     await page.goto("/");
 
-    await page
-      .getByRole("navigation")
+    await marketingNav
       .getByRole("button", { name: "Services", exact: true })
+      .hover();
+    await marketingNav
+      .getByRole("region", { name: "Services" })
+      .getByRole("link", { name: "Websites", exact: true })
       .click();
-    await page.getByRole("menuitem", { name: "Websites", exact: true }).click();
     await expect(page).toHaveURL(/\/services\/websites\/?$/);
     await expect(
       page.getByRole("heading", { name: /sites that look sharp/i }),

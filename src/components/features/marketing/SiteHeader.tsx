@@ -3,16 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FocusEvent, type MouseEvent } from "react";
 import { useGSAP } from "@gsap/react";
 import { MenuToggleIcon } from "@/components/atoms/MenuToggleIcon";
-import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ServicesMenu,
+  ServicesMenuList,
+} from "@/components/features/marketing/ServicesMenu";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { gsap } from "@/lib/gsap-client";
 import {
@@ -26,18 +24,6 @@ import {
   CONTACT_PHONE_TEL,
   SERVICE_PATHS,
 } from "@/lib/sites";
-
-const serviceItems = [
-  { href: SERVICE_PATHS.websites, label: "Websites" },
-  { href: SERVICE_PATHS.webApplications, label: "Web Applications" },
-  { href: SERVICE_PATHS.systems, label: "Systems" },
-  { href: SERVICE_PATHS.mobileApps, label: "Mobile Apps" },
-  { href: SERVICE_PATHS.aiIntegration, label: "AI Integration" },
-  {
-    href: "/platform",
-    label: "Customer Relationship Management",
-  },
-] as const;
 
 /** Match FadeIn/HomeHero: hide before paint so the header doesn't flash then snap. */
 const headerEnterStyle = {
@@ -60,7 +46,9 @@ function TabMark({ current }: { current: boolean }) {
 
 function readPageIndicator(nav: HTMLElement): PageIndicatorFrame | null {
   const navBox = nav.getBoundingClientRect();
-  const current = nav.querySelector<HTMLElement>('[aria-current="page"]');
+  const current = nav.querySelector<HTMLElement>(
+    '[data-nav-tab][aria-current="page"]',
+  );
   const linkBox = current?.getBoundingClientRect();
   const outset = 4;
   return pageIndicatorTarget({
@@ -97,6 +85,8 @@ export function SiteHeader() {
   const indicatorFrame = useRef<PageIndicatorFrame | null>(null);
   const [open, setOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const servicesButtonRef = useRef<HTMLButtonElement>(null);
+  const servicesPanelRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
@@ -175,7 +165,9 @@ export function SiteHeader() {
         if (!listening) return;
         place(false);
       });
-      for (const link of nav.querySelectorAll("a, button")) observer.observe(link);
+      for (const link of nav.querySelectorAll("[data-nav-tab]")) {
+        observer.observe(link);
+      }
       const frame = requestAnimationFrame(() => {
         listening = true;
       });
@@ -222,9 +214,71 @@ export function SiteHeader() {
     };
   }, [open]);
 
+  useEffect(() => {
+    setServicesOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!servicesOpen) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setServicesOpen(false);
+      const button = servicesButtonRef.current;
+      if (button && button.offsetParent !== null) button.focus();
+    }
+
+    function onPointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (barRef.current?.contains(target)) return;
+      setServicesOpen(false);
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [servicesOpen]);
+
   function closeMenu() {
     setOpen(false);
     setServicesOpen(false);
+  }
+
+  function openServices() {
+    setServicesOpen(true);
+  }
+
+  function closeServices() {
+    setServicesOpen(false);
+  }
+
+  function onServicesClick(event: MouseEvent<HTMLButtonElement>) {
+    if (event.detail === 0) {
+      setServicesOpen((value) => !value);
+      return;
+    }
+    openServices();
+  }
+
+  function onServicesBlur(event: FocusEvent) {
+    const next = event.relatedTarget;
+    if (!(next instanceof Node)) {
+      closeServices();
+      return;
+    }
+    if (servicesPanelRef.current?.contains(next)) return;
+    if (servicesButtonRef.current?.contains(next)) return;
+    closeServices();
+  }
+
+  function onBarLeave(event: MouseEvent<HTMLDivElement>) {
+    const next = event.relatedTarget;
+    if (next instanceof Node && event.currentTarget.contains(next)) return;
+    closeServices();
   }
 
   function isActive(href: string, exact?: boolean) {
@@ -239,6 +293,7 @@ export function SiteHeader() {
       <div ref={navRef} style={headerEnterStyle}>
         <div
           ref={barRef}
+          onMouseLeave={onBarLeave}
           className={cn("relative", open && "bg-background")}
         >
           <div
@@ -271,6 +326,7 @@ export function SiteHeader() {
             >
               <Link
                 href="/"
+                data-nav-tab
                 aria-current={isActive("/", true) ? "page" : undefined}
                 className={cn(navLinkClass(isActive("/", true)), "relative")}
               >
@@ -278,36 +334,51 @@ export function SiteHeader() {
                 <TabMark current={isActive("/", true)} />
               </Link>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger
+              <div className="relative">
+                <button
+                  ref={servicesButtonRef}
+                  type="button"
+                  data-nav-tab
+                  aria-controls="services-menu"
+                  aria-expanded={servicesOpen}
                   aria-current={servicesActive ? "page" : undefined}
+                  onMouseEnter={openServices}
+                  onClick={onServicesClick}
+                  onBlur={onServicesBlur}
                   className={cn(
                     navLinkClass(servicesActive),
-                    "relative outline-none",
+                    servicesOpen && !servicesActive && "text-white",
+                    "relative",
                   )}
                 >
                   Services
                   <TabMark current={servicesActive} />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="start"
-                  className="bg-surface-container-low min-w-64 border-white/10"
+                </button>
+
+                <div
+                  ref={servicesPanelRef}
+                  id="services-menu"
+                  role="region"
+                  aria-label="Services"
+                  inert={servicesOpen ? undefined : true}
+                  aria-hidden={servicesOpen ? undefined : true}
+                  onMouseEnter={openServices}
+                  onBlur={onServicesBlur}
+                  className={cn(
+                    "absolute top-full left-0 z-50 hidden pt-3 md:block",
+                    "transition duration-200 ease-out motion-reduce:transition-none",
+                    servicesOpen
+                      ? "pointer-events-auto translate-y-0 opacity-100"
+                      : "pointer-events-none -translate-y-1 opacity-0",
+                  )}
                 >
-                  {serviceItems.map((item) => (
-                    <DropdownMenuItem key={item.label} asChild>
-                      <Link
-                        href={item.href}
-                        className="font-headline text-sm tracking-tight"
-                      >
-                        {item.label}
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <ServicesMenu pathname={pathname} onNavigate={closeMenu} />
+                </div>
+              </div>
 
               <Link
                 href="/work"
+                data-nav-tab
                 aria-current={isActive("/work") ? "page" : undefined}
                 className={cn(navLinkClass(isActive("/work")), "relative")}
               >
@@ -316,6 +387,7 @@ export function SiteHeader() {
               </Link>
               <Link
                 href="/about"
+                data-nav-tab
                 aria-current={isActive("/about") ? "page" : undefined}
                 className={cn(navLinkClass(isActive("/about")), "relative")}
               >
@@ -408,20 +480,16 @@ export function SiteHeader() {
                     servicesOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
                   )}
                 >
-                  <div className="min-h-0 overflow-hidden">
-                    <div className="flex flex-col gap-3 pl-4">
-                      {serviceItems.map((item) => (
-                        <Link
-                          key={item.label}
-                          href={item.href}
-                          tabIndex={open && servicesOpen ? undefined : -1}
-                          className="font-headline text-sm tracking-tight text-white/60 transition-colors hover:text-white"
-                          onClick={closeMenu}
-                        >
-                          {item.label}
-                        </Link>
-                      ))}
-                    </div>
+                  <div
+                    className="min-h-0 overflow-hidden"
+                    inert={open && servicesOpen ? undefined : true}
+                    aria-hidden={open && servicesOpen ? undefined : true}
+                  >
+                    <ServicesMenuList
+                      pathname={pathname}
+                      onNavigate={closeMenu}
+                      tabIndex={open && servicesOpen ? undefined : -1}
+                    />
                   </div>
                 </div>
               </div>

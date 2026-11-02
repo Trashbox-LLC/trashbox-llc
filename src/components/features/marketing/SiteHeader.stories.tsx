@@ -46,6 +46,22 @@ export const OverHeroImage: Story = {
   ],
 };
 
+export const ServicesMenuOpen: Story = {
+  decorators: [
+    (Story) => (
+      <div className="min-h-[420px] bg-[#050505]">
+        <Story />
+      </div>
+    ),
+  ],
+  play: async ({ canvasElement }) => {
+    const button = canvasElement.querySelector(
+      'button[aria-controls="services-menu"]',
+    ) as HTMLButtonElement | null;
+    button?.click();
+  },
+};
+
 export const MobileMenuOpen: Story = {
   parameters: {
     viewport: {
