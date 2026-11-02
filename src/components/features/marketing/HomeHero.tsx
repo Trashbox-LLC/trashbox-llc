@@ -23,7 +23,6 @@ const DEVICES = {
 
 export function HomeHero() {
   const heroRef = useRef<HTMLDivElement>(null);
-  const scrollLineRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
@@ -44,21 +43,6 @@ export function HomeHero() {
       );
     },
     { scope: heroRef },
-  );
-
-  useGSAP(
-    () => {
-      if (!scrollLineRef.current) return;
-      gsap.to(scrollLineRef.current, {
-        scaleY: 0.6,
-        duration: 1.2,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-        transformOrigin: "top center",
-      });
-    },
-    { scope: scrollLineRef },
   );
 
   return (
@@ -122,19 +106,9 @@ export function HomeHero() {
             href="/services#contact"
             className="font-headline inline-flex rounded-md bg-white px-5 py-2.5 text-sm font-medium tracking-tight text-black transition-transform hover:scale-[1.02] active:scale-95"
           >
-            Work with us
+            Let's Connect
           </Link>
         </div>
-      </div>
-
-      <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 flex-col items-center gap-4">
-        <span className="font-label text-outline text-[10px] tracking-widest uppercase">
-          Explore
-        </span>
-        <div
-          ref={scrollLineRef}
-          className="from-primary h-12 w-px bg-gradient-to-b to-transparent"
-        />
       </div>
     </section>
   );

@@ -14,7 +14,7 @@ describe("HomeHero", () => {
     });
     const tagline = screen.getByText(/local businesses in kingwood/i);
     const ctaGroup = screen
-      .getByRole("link", { name: /work with us/i })
+      .getByRole("link", { name: /let's connect/i })
       .closest("[data-hero-item]");
     const devices = screen
       .getByRole("img", {
