@@ -50,7 +50,7 @@ describe("SiteHeader", () => {
     expect(nav).not.toHaveClass("-translate-y-full");
   });
 
-  it("fades the background in as the hero image moves under the header", () => {
+  it("fades the background in as the hero text meets the header", () => {
     render(
       <>
         <SiteHeader />
@@ -62,16 +62,21 @@ describe("SiteHeader", () => {
       .getByRole("navigation")
       .querySelector("[data-header-scrim]") as HTMLElement;
     const bar = scrim.parentElement as HTMLElement;
-    const media = document.querySelector(
+    const text = document.querySelector(
       "[data-header-scrim-target]",
     ) as HTMLElement;
-    let mediaTop = 180;
+    let textTop = 200;
+    let scrollY = 0;
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      get: () => scrollY,
+    });
 
     const spy = vi
       .spyOn(Element.prototype, "getBoundingClientRect")
       .mockImplementation(function (this: Element) {
         if (this === bar) return new DOMRect(0, 0, 200, 100);
-        if (this === media) return new DOMRect(0, mediaTop, 200, 400);
+        if (this === text) return new DOMRect(0, textTop, 200, 80);
         return new DOMRect();
       });
 
@@ -80,13 +85,15 @@ describe("SiteHeader", () => {
     });
     expect(scrim.style.opacity).toBe("0");
 
-    mediaTop = 50;
+    textTop = 150;
+    scrollY = 50;
     act(() => {
       window.dispatchEvent(new Event("scroll"));
     });
     expect(scrim.style.opacity).toBe("0.5");
 
-    mediaTop = -10;
+    textTop = 100;
+    scrollY = 100;
     act(() => {
       window.dispatchEvent(new Event("scroll"));
     });
@@ -95,7 +102,7 @@ describe("SiteHeader", () => {
     spy.mockRestore();
   });
 
-  it("shows the background after leaving the top of a page without a hero image", () => {
+  it("shows the background after leaving the top of a page without hero text", () => {
     let scrollY = 0;
     Object.defineProperty(window, "scrollY", {
       configurable: true,

@@ -1,23 +1,27 @@
-/** Scroll distance before a page without a hero image picks up the header background. */
+/** Scroll distance before a page without hero text picks up the header background. */
 export const HEADER_SCRIM_SCROLL_THRESHOLD = 12;
 
 export function headerScrimOpacity({
   headerTop,
   headerBottom,
-  mediaTop,
+  textTop,
   scrollY,
 }: {
   headerTop: number;
   headerBottom: number;
-  /** Top of the hero image, or null when the page has no scrim target. */
-  mediaTop: number | null;
+  /** Top of the hero text, or null when the page has no scrim target. */
+  textTop: number | null;
   scrollY: number;
 }): number {
-  if (mediaTop !== null) {
+  if (textTop !== null) {
     const height = headerBottom - headerTop;
     if (height <= 0) return 0;
-    const overlap = headerBottom - mediaTop;
-    return Math.min(1, Math.max(0, overlap / height));
+    const gap = textTop - headerBottom;
+    if (gap <= 0) return 1;
+    const restingGap = gap + scrollY;
+    const lead = Math.min(height, restingGap);
+    if (lead <= 0 || gap >= lead) return 0;
+    return 1 - gap / lead;
   }
 
   return scrollY > HEADER_SCRIM_SCROLL_THRESHOLD ? 1 : 0;

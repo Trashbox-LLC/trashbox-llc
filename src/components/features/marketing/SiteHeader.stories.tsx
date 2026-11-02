@@ -30,7 +30,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-export const OverHeroImage: Story = {
+export const OverHeroText: Story = {
   decorators: [
     (Story) => (
       <div className="min-h-[160vh] bg-[#050505]">

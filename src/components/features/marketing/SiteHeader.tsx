@@ -188,11 +188,11 @@ export function SiteHeader() {
 
     const update = () => {
       const rect = bar.getBoundingClientRect();
-      const media = document.querySelector("[data-header-scrim-target]");
+      const text = document.querySelector("[data-header-scrim-target]");
       const opacity = headerScrimOpacity({
         headerTop: rect.top,
         headerBottom: rect.bottom,
-        mediaTop: media ? media.getBoundingClientRect().top : null,
+        textTop: text ? text.getBoundingClientRect().top : null,
         scrollY: window.scrollY,
       });
       scrim.style.opacity = String(opacity);

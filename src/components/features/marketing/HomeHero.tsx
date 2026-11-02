@@ -54,6 +54,7 @@ export function HomeHero() {
       >
         <p
           data-hero-item
+          data-header-scrim-target
           style={heroItemStyle}
           className="text-sm text-white/80 sm:text-base"
         >
@@ -70,7 +71,6 @@ export function HomeHero() {
 
         <div
           data-hero-item
-          data-header-scrim-target
           style={heroItemStyle}
           className="relative mx-auto mt-1 w-[min(100%,56rem)] sm:mt-2"
         >
