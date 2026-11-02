@@ -63,7 +63,7 @@ export function HomeHero() {
 
   return (
     <section className="relative min-h-dvh px-5 pt-24 pb-28 sm:px-8 sm:pt-20 md:pb-48 lg:pb-72">
-      <div className="absolute inset-0 z-0 bg-[#050505]" />
+      <div className="absolute inset-0 z-0 bg-[#010101]" />
       <div
         ref={heroRef}
         className="relative z-10 mx-auto w-full max-w-7xl text-center"
