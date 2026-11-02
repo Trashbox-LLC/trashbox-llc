@@ -128,6 +128,21 @@ describe("SiteHeader", () => {
     );
   });
 
+  it("marks the current page for the traveling underline", () => {
+    render(<SiteHeader />);
+
+    expect(
+      screen.getAllByRole("link", { name: /^home$/i }).every(
+        (link) => link.getAttribute("aria-current") === "page",
+      ),
+    ).toBe(true);
+    expect(
+      screen.getAllByRole("button", { name: /^services$/i }).every(
+        (button) => !button.hasAttribute("aria-current"),
+      ),
+    ).toBe(true);
+  });
+
   it("opens a Services dropdown with offering and CRM links", async () => {
     const user = userEvent.setup();
     render(<SiteHeader />);
