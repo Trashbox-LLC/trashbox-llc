@@ -241,10 +241,20 @@ describe("SiteHeader", () => {
         .every((link) => link.getAttribute("href") === "/work"),
     ).toBe(true);
     expect(
-      screen.getAllByRole("link", { name: /^about$/i }).length,
+      screen.getAllByRole("link", { name: /^about us$/i }).length,
     ).toBeGreaterThanOrEqual(1);
     expect(
+      screen
+        .getAllByRole("link", { name: /^about us$/i })
+        .every((link) => link.getAttribute("href") === "/about"),
+    ).toBe(true);
+    expect(
       screen.getAllByRole("link", { name: /^contact$/i }).length,
-    ).toBeGreaterThanOrEqual(1);
+    ).toBeGreaterThanOrEqual(2);
+    expect(
+      screen
+        .getAllByRole("link", { name: /^contact$/i })
+        .every((link) => link.getAttribute("href") === "/services#contact"),
+    ).toBe(true);
   });
 });

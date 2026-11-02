@@ -106,12 +106,12 @@ export const WithEmailThread: Story = {
   args: {
     mailboxConnected: true,
     fromAddress: "sales@example.com",
-    businessName: "Trashbox LLC",
+    businessName: "Trashbox Studios",
     fromOptions: [
       {
         id: "s1",
-        label: "Trashbox LLC (Default)",
-        displayName: "Trashbox LLC",
+        label: "Trashbox Studios (Default)",
+        displayName: "Trashbox Studios",
       },
       { id: "s2", label: "Support", displayName: "Support" },
     ],
@@ -165,12 +165,12 @@ export const WithHtmlEmail: Story = {
   args: {
     mailboxConnected: true,
     fromAddress: "sales@example.com",
-    businessName: "Trashbox LLC",
+    businessName: "Trashbox Studios",
     fromOptions: [
       {
         id: "s1",
-        label: "Trashbox LLC (Default)",
-        displayName: "Trashbox LLC",
+        label: "Trashbox Studios (Default)",
+        displayName: "Trashbox Studios",
       },
     ],
     messages: [

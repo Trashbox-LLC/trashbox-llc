@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_ORIGIN),
   title: {
     default: HOME_TITLE,
-    template: "%s — Trashbox LLC",
+    template: "%s — Trashbox Studios",
   },
   description: HOME_DESCRIPTION,
   manifest: "/site.webmanifest",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    siteName: "Trashbox LLC",
+    siteName: "Trashbox Studios",
     type: "website",
     locale: "en_US",
   },

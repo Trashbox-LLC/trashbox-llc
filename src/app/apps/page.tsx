@@ -5,7 +5,7 @@ import { marketingMetadata } from "@/lib/seo";
 export const metadata: Metadata = marketingMetadata({
   title: "Mobile apps",
   description:
-    "Browse selected mobile and experimental applications from Trashbox LLC.",
+    "Browse selected mobile and experimental applications from Trashbox Studios.",
   path: "/apps",
 });
 

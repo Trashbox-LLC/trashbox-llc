@@ -77,7 +77,7 @@ const meta = {
     ],
     variableContext: {
       lead: { name: "Ada Lovelace", email: "ada@example.com" },
-      business: { name: "Trashbox LLC" },
+      business: { name: "Trashbox Studios" },
     },
     initialLibrary: { templates, signatures, snippets },
     onSend: fn().mockResolvedValue(undefined),

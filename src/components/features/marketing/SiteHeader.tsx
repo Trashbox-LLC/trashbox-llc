@@ -307,12 +307,12 @@ export function SiteHeader() {
             <Link
               href="/"
               className="relative inline-flex h-[35.6px] w-[37.5px] shrink-0 md:h-[43.3px] md:w-[45.7px]"
-              aria-label="Trashbox LLC home"
+              aria-label="Trashbox Studios home"
             >
               {/* The SVG canvas is padded. Size the drawn mark, not the empty canvas. */}
               <Image
                 src="/images/trashbox-logo-colored.svg"
-                alt="Trashbox LLC logo"
+                alt="Trashbox Studios logo"
                 width={1024}
                 height={1024}
                 className="absolute top-1/2 left-1/2 h-[46px] w-[46px] max-w-none -translate-x-1/2 -translate-y-1/2 md:h-14 md:w-14"
@@ -391,8 +391,16 @@ export function SiteHeader() {
                 aria-current={isActive("/about") ? "page" : undefined}
                 className={cn(navLinkClass(isActive("/about")), "relative")}
               >
-                About
+                About Us
                 <TabMark current={isActive("/about")} />
+              </Link>
+              <Link
+                href={SERVICE_PATHS.contact}
+                data-nav-tab
+                className={cn(navLinkClass(false), "relative")}
+              >
+                Contact
+                <TabMark current={false} />
               </Link>
               <span
                 ref={indicatorRef}
@@ -510,7 +518,15 @@ export function SiteHeader() {
                 className={navLinkClass(isActive("/about"))}
                 onClick={closeMenu}
               >
-                About
+                About Us
+              </Link>
+              <Link
+                href={SERVICE_PATHS.contact}
+                tabIndex={open ? undefined : -1}
+                className={navLinkClass(false)}
+                onClick={closeMenu}
+              >
+                Contact
               </Link>
 
               <Button asChild className="mt-4 tracking-tight normal-case">

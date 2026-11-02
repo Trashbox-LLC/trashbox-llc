@@ -6,11 +6,12 @@ test.describe("home page", () => {
 
     const nav = page.getByRole("navigation");
 
-    await expect(page.getByRole("heading", { name: /trashbox llc/i })).toBeVisible();
-    await expect(nav.getByRole("link", { name: "Trashbox LLC home" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /trashbox studios/i })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Trashbox Studios home" })).toBeVisible();
     await expect(nav.getByRole("link", { name: "Home", exact: true })).toBeVisible();
     await expect(nav.getByRole("button", { name: "Services", exact: true })).toBeVisible();
-    await expect(nav.getByRole("link", { name: "About", exact: true })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "About Us", exact: true })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Contact", exact: true }).first()).toBeVisible();
     await expect(nav.getByRole("link", { name: "CRM", exact: true })).toHaveCount(0);
   });
 });

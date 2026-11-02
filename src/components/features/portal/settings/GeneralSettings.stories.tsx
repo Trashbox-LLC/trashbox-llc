@@ -14,7 +14,7 @@ const meta = {
   ],
   args: {
     email: "ezekielbleh@gmail.com",
-    clientName: "Trashbox LLC",
+    clientName: "Trashbox Studios",
     tier: "free",
     active: true,
     submissionsUsed: 3,

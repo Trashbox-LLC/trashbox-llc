@@ -93,7 +93,7 @@ describe("structured data", () => {
     const data = organizationJsonLd();
 
     expect(data["@type"]).toBe("Organization");
-    expect(data.name).toBe("Trashbox LLC");
+    expect(data.name).toBe("Trashbox Studios");
     expect(data.url).toBe("https://www.trashbox.io/");
     expect(data.address).toMatchObject({
       addressLocality: "Kingwood",

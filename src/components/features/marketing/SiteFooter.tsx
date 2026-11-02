@@ -83,7 +83,7 @@ export function SiteFooter(): ReactElement {
             <Link
               href="/"
               className="inline-flex items-center gap-3"
-              aria-label="Trashbox LLC home"
+              aria-label="Trashbox Studios home"
             >
               <Image
                 src="/images/trashbox-logo-colored.svg"
@@ -93,7 +93,7 @@ export function SiteFooter(): ReactElement {
                 className="size-12"
               />
               <span className="font-headline text-lg font-bold tracking-tight text-white">
-                Trashbox LLC
+                Trashbox Studios
               </span>
             </Link>
             <p className="mt-6 max-w-xs text-sm leading-relaxed text-white/55">
@@ -131,7 +131,7 @@ export function SiteFooter(): ReactElement {
         </div>
 
         <p className="mt-16 border-t border-white/10 pt-8 font-body text-xs text-white/45">
-          © {year} Trashbox LLC
+          © {year} Trashbox Studios
         </p>
       </div>
     </footer>

@@ -37,4 +37,4 @@ If this policy changes, the updated version will be posted at **https://trashbox
 
 Questions about this policy can go to [contact@trashbox.io](mailto:contact@trashbox.io).
 
-Trashbox LLC
+Trashbox Studios

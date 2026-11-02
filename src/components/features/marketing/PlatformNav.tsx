@@ -76,11 +76,11 @@ export function PlatformNav() {
           <Link
             href="/"
             className="inline-flex items-center"
-            aria-label="Trashbox LLC home"
+            aria-label="Trashbox Studios home"
           >
             <Image
               src="/images/trashbox-logo-colored.svg"
-              alt="Trashbox LLC logo"
+              alt="Trashbox Studios logo"
               width={1024}
               height={1024}
               className="size-16 md:size-20"

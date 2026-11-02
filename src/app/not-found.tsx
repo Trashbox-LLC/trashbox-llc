@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "This page could not be found.",
   robots: { index: false },
   openGraph: {
-    title: "404 — Trashbox LLC",
+    title: "404 — Trashbox Studios",
   },
 };
 

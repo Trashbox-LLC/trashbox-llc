@@ -1,6 +1,6 @@
-# Trashbox LLC
+# Trashbox Studios
 
-The Trashbox LLC marketing site, built on the business template stack.
+The Trashbox Studios marketing site, built on the business template stack.
 
 ## Tech Stack
 

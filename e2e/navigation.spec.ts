@@ -29,7 +29,7 @@ test.describe("site navigation", () => {
       page.getByRole("button", { name: "Services", exact: true }),
     ).toHaveCount(0);
     await expect(
-      page.getByRole("link", { name: "About", exact: true }),
+      page.getByRole("link", { name: "About Us", exact: true }),
     ).toHaveCount(0);
 
     await page.goto("/");
@@ -47,7 +47,7 @@ test.describe("site navigation", () => {
     ).toBeVisible();
 
     const nav = page.getByRole("navigation");
-    await nav.getByRole("link", { name: "About", exact: true }).click();
+    await nav.getByRole("link", { name: "About Us", exact: true }).click();
     await expect(page).toHaveURL(/\/about\/?$/);
     await expect(
       page.getByRole("heading", { name: /trashbox/i }),
@@ -56,7 +56,7 @@ test.describe("site navigation", () => {
     await nav.getByRole("link", { name: "Home", exact: true }).click();
     await expect(page).toHaveURL(/\/$/);
     await expect(
-      page.getByRole("heading", { name: /trashbox llc/i }),
+      page.getByRole("heading", { name: /trashbox studios/i }),
     ).toBeVisible();
   });
 });

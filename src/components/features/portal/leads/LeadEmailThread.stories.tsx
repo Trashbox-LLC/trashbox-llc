@@ -167,7 +167,7 @@ export const WithContentLibrary: Story = {
     library: { templates, signatures, snippets },
     variableContext: {
       lead: { name: "Ada Lovelace", email: "ada@example.com" },
-      business: { name: "Trashbox LLC" },
+      business: { name: "Trashbox Studios" },
       sender: { name: "Sales Team", email: "sales@example.com" },
     },
   },
@@ -204,7 +204,7 @@ export const WithOutboundReply: Story = {
     library: { templates, signatures, snippets },
     variableContext: {
       lead: { name: "Ada Lovelace", email: "ada@example.com" },
-      business: { name: "Trashbox LLC" },
+      business: { name: "Trashbox Studios" },
     },
   },
 };
@@ -219,7 +219,7 @@ export const Transcript: Story = {
     library: { templates, signatures, snippets },
     variableContext: {
       lead: { name: "Ada Lovelace", email: "ada@example.com" },
-      business: { name: "Trashbox LLC" },
+      business: { name: "Trashbox Studios" },
     },
   },
 };
@@ -233,7 +233,7 @@ export const HtmlEmail: Story = {
     library: { templates, signatures, snippets },
     variableContext: {
       lead: { name: "Ada Lovelace", email: "ada@example.com" },
-      business: { name: "Trashbox LLC" },
+      business: { name: "Trashbox Studios" },
     },
   },
 };
@@ -246,7 +246,7 @@ export const MultiDayThread: Story = {
     library: { templates, signatures, snippets },
     variableContext: {
       lead: { name: "Ada Lovelace", email: "ada@example.com" },
-      business: { name: "Trashbox LLC" },
+      business: { name: "Trashbox Studios" },
     },
   },
 };
