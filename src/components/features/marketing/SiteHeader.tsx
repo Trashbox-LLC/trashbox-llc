@@ -70,7 +70,7 @@ function navLinkClass(active: boolean) {
   return cn(
     "font-headline text-sm tracking-tight transition-colors md:pb-1",
     active
-      ? "border-b-2 border-white pb-1 font-bold text-white md:border-b-0"
+      ? "border-b-2 border-white pb-1 text-white md:border-b-0"
       : "text-white/60 hover:text-white",
   );
 }
