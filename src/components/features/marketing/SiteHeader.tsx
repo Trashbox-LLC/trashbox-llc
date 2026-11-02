@@ -185,7 +185,7 @@ export function SiteHeader() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button asChild className="hidden active:scale-95 md:inline-flex">
+              <Button asChild className="hidden py-2 active:scale-95 md:inline-flex">
                 <Link href={SERVICE_PATHS.contact}>Contact</Link>
               </Button>
               <Button
