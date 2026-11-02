@@ -18,7 +18,7 @@ const DEVICES = {
   width: 2462,
   height: 2413,
   blurDataURL:
-    "data:image/webp;base64,UklGRooAAABXRUJQVlA4IH4AAABwBACdASoUABQAPu1oqU+ppaOiKA1RMB2JaQDO7BEc6ffhql+j+wMVjktSAAD+75+m3S+q0qWJzWTl02hkvzoMcYBjOqBWuq97tGn2Vkdr7own6dUJgyUvrx3zxw6BwozCdSlNezeLJHqxoG+8QpDZfDshXcTVVOXxqgBAAAA=",
+    "data:image/webp;base64,UklGRoAAAABXRUJQVlA4IHQAAAAwBACdASoUABQAPu1mqk8ppaOiKA1RMB2JZwAALgmdVvo35Nm7gdQwEAAA/u0mtuaF292ICs8hW9bwuwx1EFd0Qs1RJMZxzW5195So3Osgec5UgJcysTSZhOiWoxn03bY55XBOnO+qnZNGOVNp/Az7FTKQAA==",
 } as const;
 
 export function HomeHero() {

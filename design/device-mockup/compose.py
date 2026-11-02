@@ -26,7 +26,7 @@ REPO = ROOT.parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument("--finish", choices=["dark", "silver"], default="dark")
 parser.add_argument("--preview", action="store_true")
-parser.add_argument("--laptop", default=str(REPO / "public/images/work/wide/texas-covenant.webp"))
+parser.add_argument("--laptop", default=str(ROOT / "shots/texas-covenant-laptop.png"))
 parser.add_argument(
     "--phone",
     default=str(
@@ -40,11 +40,6 @@ SRC = ROOT / "renders" / args.finish / ("preview" if args.preview else "")
 OUT = SRC
 # Softening for the mirrored screenshot, as a fraction of its width, to match the slightly rough floor.
 REFLECTION_BLUR = 0.006
-# The phone's display panel is a sharper corner than the metal bezel, so the screenshot
-# gets clipped to the bezel's rounded opening. Radii are fractions of the screen width and height.
-# Just past the panel's own corner, so only the tip that clears the bezel is removed.
-PHONE_CORNER = (0.19, 0.092)
-PHONE_INSET = (0.0, 0.0)
 REFLECTION_STRENGTH = 0.55
 REFLECTION_FADE = 1.6
 
@@ -84,31 +79,6 @@ def perspective_coeffs(src_pts, dst_pts):
     return np.linalg.solve(np.array(rows, dtype=np.float64), np.array(rhs, dtype=np.float64))
 
 
-def screen_uv(corners, shape):
-    """Map every output pixel back to the screen's 0–1 surface coordinates."""
-    unit = [(0, 0), (1, 0), (1, 1), (0, 1)]
-    dst = [corners["topLeft"], corners["topRight"], corners["bottomRight"], corners["bottomLeft"]]
-    a, b, c, d, e, f, g, h = perspective_coeffs(unit, dst)
-    y, x = np.mgrid[0 : shape[0], 0 : shape[1]].astype(np.float64)
-    denom = g * x + h * y + 1
-    return (a * x + b * y + c) / denom, (d * x + e * y + f) / denom
-
-
-def rounded_opening(u, v, radius, inset):
-    """True where a screen pixel sits inside the bezel's rounded rectangle."""
-    ru, rv = radius
-    iu, iv = inset
-    u = (u - iu) / (1 - 2 * iu)
-    v = (v - iv) / (1 - 2 * iv)
-    ax = np.abs(u - 0.5)
-    ay = np.abs(v - 0.5)
-    dx = ax - (0.5 - ru)
-    dy = ay - (0.5 - rv)
-    corner = (dx > 0) & (dy > 0)
-    inside_corner = (dx / ru) ** 2 + (dy / rv) ** 2 <= 1
-    return (u >= 0) & (u <= 1) & (v >= 0) & (v <= 1) & (~corner | inside_corner)
-
-
 def warp(image: Image.Image, corners: dict, size) -> Image.Image:
     w, h = image.size
     src = [(0, 0), (w, 0), (w, h), (0, h)]
@@ -123,26 +93,16 @@ glare = load("glare.png")
 info = json.loads((SRC / "corners.json").read_text())
 
 laptop_mask = masks[..., 0] * masks[..., 3]
-phone_panel = masks[..., 1] * masks[..., 3]
-phone_u, phone_v = screen_uv(info["phone"]["corners"], phone_panel.shape)
-phone_mask = phone_panel * rounded_opening(phone_u, phone_v, PHONE_CORNER, PHONE_INSET)
+# The rendered screen is already the rounded panel inside the bezel. Its edge is
+# only partly opaque, and that fringe was letting the laptop show through. Cover
+# the whole panel, including the fringe, so the screenshot meets the bezel.
+phone_mask = masks[..., 1] * masks[..., 3]
+phone_cover = (phone_mask > 0.02).astype(np.float64)
 screen_mask = np.clip(laptop_mask + phone_mask, 0, 1)
 
-def dilate(mask: np.ndarray, radius: int) -> np.ndarray:
-    image = Image.fromarray((mask > 0.02).astype(np.uint8) * 255)
-    image = image.filter(ImageFilter.MaxFilter(radius * 2 + 1))
-    return np.asarray(image) > 0
-
-
 template = scene.copy()
-# The panel's square corner is black geometry that draws past the bezel, over the laptop.
-# Drop it, and the whole panel, so the laptop screenshot behind shows through.
-lu, lv = screen_uv(info["laptop"]["corners"], phone_panel.shape)
-on_laptop = (lu > 0) & (lu < 1) & (lv > 0) & (lv < 1)
-dark = scene[..., :3].max(axis=-1) < 0.12
-notch = dilate(phone_panel, 3) & (phone_panel <= 0.02) & on_laptop & dark
-template[..., 3] = np.where((phone_panel > 0.02) | notch, 0.0, 1.0 - laptop_mask)
-save(template, "template.png")
+# Alpha is set after the phone screenshot is warped, so the cutout matches
+# pixels the screenshot actually covers.
 
 glare_out = glare.copy()
 glare_out[..., 3] = glare[..., 3] * screen_mask
@@ -179,9 +139,6 @@ for device in ("laptop", "phone"):
     physical = np.clip(r[..., 0] * r[..., 3], 0, 1) ** (1 / 2.2)
     # The mirrored screen's bottom edge touches the device; fade toward its far (top) edge like a glass table.
     fade = screen_v(info[device]["reflectionCorners"], physical.shape) ** REFLECTION_FADE
-    if device == "phone":
-        ru, rv = screen_uv(info["phone"]["reflectionCorners"], physical.shape)
-        physical = physical * rounded_opening(ru, rv, PHONE_CORNER, PHONE_INSET)
     reflection_masks[device] = physical * fade * REFLECTION_STRENGTH
     save(white_with_alpha(reflection_masks[device]), f"reflection-mask-{device}.png")
 
@@ -191,17 +148,25 @@ shots = {
     "phone": cover(Image.open(args.phone).convert("RGB"), info["phone"]["aspect"]),
 }
 
-def place_screen(shot, device, opening):
+def screen_layer(shot, device, opening):
     layer = np.asarray(warp(shot, info[device]["corners"], size)).astype(np.float64) / 255.0
     if opening is not None:
         layer[..., 3] *= opening
+    return layer
+
+
+def to_image(layer):
     return Image.fromarray(np.clip(layer * 255.0 + 0.5, 0, 255).astype(np.uint8), "RGBA")
 
 
+phone_layer = screen_layer(shots["phone"], "phone", phone_cover)
+template[..., 3] = np.where(phone_layer[..., 3] > 0.5, 0.0, 1.0 - laptop_mask)
+save(template, "template.png")
+
 canvas = Image.new("RGBA", size, (0, 0, 0, 255))
-canvas.alpha_composite(place_screen(shots["laptop"], "laptop", None))
-canvas.alpha_composite(place_screen(shots["phone"], "phone", phone_mask))
-canvas.alpha_composite(Image.open(OUT / "template.png"))
+canvas.alpha_composite(to_image(screen_layer(shots["laptop"], "laptop", None)))
+canvas.alpha_composite(to_image(phone_layer))
+canvas.alpha_composite(to_image(template))
 base = np.asarray(canvas).astype(np.float64) / 255.0
 
 for device, shot in shots.items():
