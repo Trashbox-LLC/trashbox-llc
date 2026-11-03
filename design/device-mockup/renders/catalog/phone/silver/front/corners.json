@@ -1,7 +1,7 @@
 {
   "canvas": {
-    "width": 960,
-    "height": 720
+    "width": 1920,
+    "height": 1440
   },
   "reflections": false,
   "device": "phone",
@@ -11,20 +11,20 @@
     "aspect": 0.4612,
     "corners": {
       "topLeft": [
-        376.91,
-        136.47
+        753.82,
+        272.94
       ],
       "topRight": [
-        583.09,
-        136.48
+        1166.18,
+        272.96
       ],
       "bottomRight": [
-        583.09,
-        583.49
+        1166.18,
+        1166.98
       ],
       "bottomLeft": [
-        376.91,
-        583.5
+        753.82,
+        1166.99
       ]
     }
   }

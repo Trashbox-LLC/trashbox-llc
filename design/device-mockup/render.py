@@ -647,17 +647,24 @@ CATALOG_LOOK = {
 
 
 def tint_shell(meshes, screen, color):
-    """Recolor the laptop's deck and lid. Keys and vents stay as they are."""
+    """Recolor the metallic chassis. Keys, vents, and dark plastic stay as they are."""
     for mat, bsdf in chassis_materials(meshes, screen):
-        if mat.name != "PaletteMaterial002":
-            continue
         base = bsdf.inputs["Base Color"]
-        for name in ("Base Color", "Metallic", "Roughness"):
-            for link in list(bsdf.inputs[name].links):
-                mat.node_tree.links.remove(link)
-        base.default_value = (*color, 1)
-        bsdf.inputs["Metallic"].default_value = 1.0
-        bsdf.inputs["Roughness"].default_value = 0.45
+        metallic = bsdf.inputs.get("Metallic")
+        if metallic is None or base.is_linked:
+            continue
+        light = max(base.default_value[:3]) > 0.2
+        if metallic.is_linked:
+            if not light:
+                continue
+        elif float(metallic.default_value) < 0.5 or not light:
+            continue
+        base.default_value = (color[0], color[1], color[2], 1.0)
+        if not metallic.is_linked:
+            metallic.default_value = 1.0
+        roughness = bsdf.inputs.get("Roughness")
+        if roughness is not None and not roughness.is_linked:
+            roughness.default_value = 0.42
 
 
 def tint_phone(color, roughness=0.32):
@@ -732,8 +739,8 @@ def render_catalog_variant(device, color_name, pose):
             apply_dark(meshes, screen)
         else:
             apply_silver(meshes, screen, silver_colors)
-            if color_name != "silver":
-                tint_shell(meshes, screen, CATALOG_COLORS[color_name])
+        if color_name != "silver":
+            tint_shell(meshes, screen, CATALOG_COLORS[color_name])
     else:
         rig, _coll, meshes = import_model("iphone-17-pro.decoded.glb", "phone")
         screen = bpy.data.objects["Object_23"]
