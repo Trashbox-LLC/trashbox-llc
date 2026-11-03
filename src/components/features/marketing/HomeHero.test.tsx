@@ -12,7 +12,7 @@ describe("HomeHero", () => {
     const heading = screen.getByRole("heading", {
       name: /made for professionals/i,
     });
-    const tagline = screen.getByText(/local businesses in kingwood/i);
+    const tagline = screen.getByText(/website design, creation, & digital marketing/i);
     const ctaGroup = screen
       .getByRole("link", { name: /let's connect/i })
       .closest("[data-hero-item]");
