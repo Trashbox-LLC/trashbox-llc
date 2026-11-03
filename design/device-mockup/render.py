@@ -11,6 +11,11 @@ Writes to renders/<finish>/ (or renders/<finish>/preview/):
                 each screen's floor reflection as a white-screen intensity (linear)
   corners.json  screen and floor-reflection corners in output pixels, plus screen aspect ratios
   mockup.blend  the lit scene, to open in Blender and look around in rendered view
+
+A screen-swappable catalog, one device at a time and without a floor reflection:
+  Blender -b --factory-startup -P render.py -- --catalog [--preview] [--device laptop|phone] [--color name] [--pose name]
+
+Writes renders/catalog/<device>/<color>/<pose>/ with scene.png, masks.png, glare.png, and corners.json.
 """
 
 import json
@@ -27,12 +32,30 @@ ROOT = Path(__file__).resolve().parent
 MODELS = ROOT / "models"
 ARGS = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
 PREVIEW = "--preview" in ARGS
-FINISH = ARGS[ARGS.index("--finish") + 1] if "--finish" in ARGS else "dark"
-if FINISH not in ("dark", "silver"):
-    raise SystemExit(f"unknown finish: {FINISH}")
-FINISH_DIR = ROOT / "renders" / FINISH
-OUT = FINISH_DIR / ("preview" if PREVIEW else "")
-OUT.mkdir(parents=True, exist_ok=True)
+CATALOG = "--catalog" in ARGS
+
+
+def arg_value(flag, default=None):
+    if flag not in ARGS:
+        return default
+    index = ARGS.index(flag) + 1
+    if index >= len(ARGS):
+        raise SystemExit(f"{flag} needs a value")
+    return ARGS[index]
+
+
+if not CATALOG:
+    FINISH = arg_value("--finish", "dark")
+    if FINISH not in ("dark", "silver"):
+        raise SystemExit(f"unknown finish: {FINISH}")
+    FINISH_DIR = ROOT / "renders" / FINISH
+    OUT = FINISH_DIR / ("preview" if PREVIEW else "")
+    OUT.mkdir(parents=True, exist_ok=True)
+else:
+    # Catalog variants set these per render. The hero path is the only caller of EXPOSURE[FINISH].
+    FINISH = "silver"
+    FINISH_DIR = ROOT / "renders" / "catalog"
+    OUT = FINISH_DIR
 
 # 4:3 so the frame runs past the devices far enough to hold their floor reflections.
 WIDTH, HEIGHT = (960, 720) if PREVIEW else (3840, 2880)
@@ -286,7 +309,7 @@ def screen_corners(scene, cam, obj):
     return out, mirrored, width_cm / height_cm
 
 
-def configure_render(scene, *, samples, transparent, view="AgX", denoise=True):
+def configure_render(scene, *, samples, transparent, view="AgX", denoise=True, exposure=None, color_depth="16"):
     scene.render.engine = "CYCLES"
     scene.cycles.samples = samples
     scene.cycles.use_denoising = denoise
@@ -296,10 +319,14 @@ def configure_render(scene, *, samples, transparent, view="AgX", denoise=True):
     scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = "PNG"
     scene.render.image_settings.color_mode = "RGBA"
-    scene.render.image_settings.color_depth = "16"
+    scene.render.image_settings.color_depth = color_depth
     scene.view_settings.view_transform = view
     scene.view_settings.look = "None"
-    scene.view_settings.exposure = EXPOSURE[FINISH] if view == "AgX" else 0.0
+    if exposure is None:
+        exposure = EXPOSURE[FINISH] if view == "AgX" else 0.0
+    elif view != "AgX":
+        exposure = 0.0
+    scene.view_settings.exposure = exposure
     scene.cycles.filter_width = 1.5
 
 
@@ -592,5 +619,248 @@ def main():
     print("CORNERS", json.dumps(corners))
 
 
+# Screen-swappable singles. No floor, so there is nothing for a screen to reflect in.
+CATALOG_POSES = {
+    "laptop": [
+        {"name": "three-quarter-left", "yaw": 32.0, "lean": 0.0, "elevation": 16.0, "azimuth": 0.0},
+        {"name": "three-quarter-right", "yaw": -32.0, "lean": 0.0, "elevation": 16.0, "azimuth": 0.0},
+        {"name": "front", "yaw": 0.0, "lean": 0.0, "elevation": 24.0, "azimuth": 0.0},
+    ],
+    "phone": [
+        {"name": "three-quarter-left", "yaw": 26.0, "lean": 8.0, "elevation": 10.0, "azimuth": 0.0},
+        {"name": "three-quarter-right", "yaw": -26.0, "lean": 8.0, "elevation": 10.0, "azimuth": 0.0},
+        {"name": "front", "yaw": 0.0, "lean": 2.0, "elevation": 2.0, "azimuth": 0.0},
+    ],
+}
+CATALOG_COLORS = {
+    "silver": None,
+    "graphite": (0.045, 0.045, 0.048),
+    "blue": tuple(srgb_to_linear(c) for c in (0.227, 0.361, 0.541)),
+    "gold": tuple(srgb_to_linear(c) for c in (0.769, 0.627, 0.408)),
+}
+CATALOG_LOOK = {
+    "silver": {"dome": 3.0, "exposure": 0.45},
+    "graphite": {"dome": 1.4, "exposure": 0.38},
+    "blue": {"dome": 3.0, "exposure": 0.45},
+    "gold": {"dome": 2.6, "exposure": 0.42},
+}
+
+
+def tint_shell(meshes, screen, color):
+    """Recolor the laptop's deck and lid. Keys and vents stay as they are."""
+    for mat, bsdf in chassis_materials(meshes, screen):
+        if mat.name != "PaletteMaterial002":
+            continue
+        base = bsdf.inputs["Base Color"]
+        for name in ("Base Color", "Metallic", "Roughness"):
+            for link in list(bsdf.inputs[name].links):
+                mat.node_tree.links.remove(link)
+        base.default_value = (*color, 1)
+        bsdf.inputs["Metallic"].default_value = 1.0
+        bsdf.inputs["Roughness"].default_value = 0.45
+
+
+def tint_phone(color, roughness=0.32):
+    bsdf = principled(bpy.data.materials.get("Anodized_aluminum"))
+    if not bsdf:
+        return
+    links = bsdf.id_data.links
+    for link in list(bsdf.inputs["Base Color"].links):
+        links.remove(link)
+    bsdf.inputs["Base Color"].default_value = (*color, 1)
+    bsdf.inputs["Metallic"].default_value = 1.0
+    bsdf.inputs["Roughness"].default_value = roughness
+
+
+def fit_camera(scene, cam, meshes, elevation, azimuth, fill=0.86):
+    """Orbit the camera so the device fills the frame, with even padding."""
+    bpy.context.view_layer.update()
+    lo, hi = world_bounds(meshes)
+    center = (lo + hi) / 2
+    radius = max((hi - lo).length / 2, 0.001)
+    lens = cam.data.lens
+    hfov = 2 * math.atan(cam.data.sensor_width / (2 * lens))
+    dist = radius / math.sin(hfov / 2)
+
+    def move(distance):
+        el = math.radians(elevation)
+        az = math.radians(azimuth)
+        cam.location = center + Vector(
+            (
+                math.sin(az) * math.cos(el) * distance,
+                -math.cos(az) * math.cos(el) * distance,
+                math.sin(el) * distance,
+            )
+        )
+        cam.rotation_euler = (center - cam.location).to_track_quat("-Z", "Y").to_euler()
+        bpy.context.view_layer.update()
+
+    def projected_span():
+        xs, ys = [], []
+        for obj in meshes:
+            mw = obj.matrix_world
+            for vertex in obj.data.vertices:
+                p = world_to_camera_view(scene, cam, mw @ vertex.co)
+                xs.append(p.x)
+                ys.append(p.y)
+        return max(max(xs) - min(xs), max(ys) - min(ys))
+
+    move(dist)
+    span = projected_span()
+    if span > 1e-4:
+        move(dist * span / fill)
+
+
+def render_catalog_variant(device, color_name, pose):
+    global WIDTH, HEIGHT, SAMPLES, CAMERA_SHIFT_Y, OUT
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    scene = bpy.context.scene
+    use_gpu(scene)
+
+    WIDTH, HEIGHT = (960, 720) if PREVIEW else (1920, 1440)
+    SAMPLES = 24 if PREVIEW else 64
+    CAMERA_SHIFT_Y = 0.0
+    OUT = ROOT / "renders" / "catalog" / device / color_name / pose["name"]
+    OUT.mkdir(parents=True, exist_ok=True)
+
+    if device == "laptop":
+        silver_colors = {} if color_name == "graphite" else original_laptop_colors()
+        rig, _coll, meshes = import_model("macbook-rigged.decoded.glb", "laptop")
+        screen = bpy.data.objects["Screen"]
+        place(rig, meshes, screen, (0.0, 0.0, 0.0), pose["yaw"], pose["lean"])
+        if color_name == "graphite":
+            apply_dark(meshes, screen)
+        else:
+            apply_silver(meshes, screen, silver_colors)
+            if color_name != "silver":
+                tint_shell(meshes, screen, CATALOG_COLORS[color_name])
+    else:
+        rig, _coll, meshes = import_model("iphone-17-pro.decoded.glb", "phone")
+        screen = bpy.data.objects["Object_23"]
+        bezel = bpy.data.objects["Object_4"]
+        for name in ("Object_23", "Object_20", "Object_21", "Object_7", "Object_4"):
+            clip_to_bezel(bpy.data.objects[name], bezel, margin=0.0005)
+        place(
+            rig,
+            meshes,
+            screen,
+            (0.0, 0.0, 0.0),
+            pose["yaw"],
+            pose["lean"],
+            scale=100.0,
+            front_from="offset",
+        )
+        if color_name != "silver":
+            tint_phone(CATALOG_COLORS[color_name])
+
+    world = bpy.data.worlds.new("World")
+    world.use_nodes = True
+    world.node_tree.nodes["Background"].inputs["Color"].default_value = (0, 0, 0, 1)
+    world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.0
+    scene.world = world
+
+    look = CATALOG_LOOK[color_name]
+    dome_size = 500
+    dome = add_area_light(
+        "Dome", (0, 0, 200), (0, 0, 0), (dome_size, dome_size), look["dome"] * math.pi * dome_size**2
+    )
+    dome.visible_camera = False
+    add_area_light("Key", (-70, -80, 100), (0, 0, 8), (100, 70), 150000)
+    add_area_light("Rim", (80, 80, 55), (0, 0, 10), (60, 40), 70000, color=(0.92, 0.95, 1.0))
+    add_area_light("RimLeft", (-90, 60, 45), (0, 0, 10), (50, 40), 45000, color=(0.95, 0.97, 1.0))
+    add_area_light("Fill", (50, -120, 35), (0, 0, 10), (90, 50), 22000, glossy=False)
+    add_area_light("Top", (0, 15, 150), (0, 0, 0), (130, 130), 40000)
+
+    cam_data = bpy.data.cameras.new("Camera")
+    cam_data.lens = 70.0
+    cam_data.sensor_width = 36
+    cam_data.sensor_fit = "HORIZONTAL"
+    cam_data.shift_y = 0.0
+    cam = bpy.data.objects.new("Camera", cam_data)
+    scene.collection.objects.link(cam)
+    scene.camera = cam
+    fit_camera(scene, cam, meshes, pose["elevation"], pose["azimuth"])
+
+    configure_render(scene, samples=SAMPLES, transparent=True, exposure=look["exposure"], color_depth="8")
+    corners, _mirrored, aspect = screen_corners(scene, cam, screen)
+    originals = {o.name: [s.material for s in o.material_slots] for o in bpy.data.objects if o.type == "MESH"}
+
+    def restore():
+        for o in bpy.data.objects:
+            if o.type == "MESH":
+                o.hide_render = False
+                for slot, mat in zip(o.material_slots, originals[o.name]):
+                    slot.material = mat
+
+    set_material(screen, make_material("ScreenBlack", color=(0.0, 0.0, 0.0), roughness=0.08))
+    configure_render(scene, samples=SAMPLES, transparent=True, exposure=look["exposure"], color_depth="8")
+    scene.render.filepath = str(OUT / "scene.png")
+    bpy.ops.render.render(write_still=True)
+    restore()
+
+    holdout = make_material("Holdout", holdout=True)
+    for o in bpy.data.objects:
+        if o.type == "MESH":
+            set_material(o, holdout)
+    glass_obj = bpy.data.objects.get("Object_21")
+    if glass_obj:
+        glass_obj.hide_render = True
+    channel = (1.0, 0.0, 0.0) if device == "laptop" else (0.0, 1.0, 0.0)
+    set_material(screen, make_material("Mask", emission=channel))
+    configure_render(
+        scene, samples=max(16, SAMPLES // 2), transparent=True, view="Standard", denoise=False, color_depth="8"
+    )
+    scene.render.filepath = str(OUT / "masks.png")
+    bpy.ops.render.render(write_still=True)
+    restore()
+
+    for o in bpy.data.objects:
+        if o.type == "MESH":
+            set_material(o, holdout)
+    if glass_obj:
+        glass_obj.hide_render = True
+    set_material(screen, make_material("ScreenGlass", color=(0.0, 0.0, 0.0), roughness=0.04))
+    dome.hide_render = True
+    configure_render(scene, samples=SAMPLES, transparent=True, exposure=look["exposure"], color_depth="8")
+    scene.render.filepath = str(OUT / "glare.png")
+    bpy.ops.render.render(write_still=True)
+    dome.hide_render = False
+    restore()
+
+    payload = {
+        "canvas": {"width": WIDTH, "height": HEIGHT},
+        "reflections": False,
+        "device": device,
+        "color": color_name,
+        "pose": pose["name"],
+        device: {"aspect": round(aspect, 4), "corners": corners},
+    }
+    (OUT / "corners.json").write_text(json.dumps(payload, indent=2))
+    print("CATALOG", device, color_name, pose["name"])
+
+
+def catalog_main():
+    device_filter = arg_value("--device")
+    color_filter = arg_value("--color")
+    pose_filter = arg_value("--pose")
+    devices = [device_filter] if device_filter else ["laptop", "phone"]
+    colors = [color_filter] if color_filter else list(CATALOG_COLORS)
+    for device in devices:
+        if device not in CATALOG_POSES:
+            raise SystemExit(f"unknown device: {device}")
+        poses = [p for p in CATALOG_POSES[device] if pose_filter in (None, p["name"])]
+        if pose_filter and not poses:
+            raise SystemExit(f"unknown pose: {pose_filter}")
+        for color_name in colors:
+            if color_name not in CATALOG_COLORS:
+                raise SystemExit(f"unknown color: {color_name}")
+            for pose in poses:
+                render_catalog_variant(device, color_name, pose)
+    print("catalog done", FINISH_DIR)
+
+
 if os.environ.get("MOCKUP_IMPORT_ONLY") != "1":
-    main()
+    if CATALOG:
+        catalog_main()
+    else:
+        main()

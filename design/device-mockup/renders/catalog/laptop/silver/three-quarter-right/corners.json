@@ -1,0 +1,31 @@
+{
+  "canvas": {
+    "width": 1920,
+    "height": 1440
+  },
+  "reflections": false,
+  "device": "laptop",
+  "color": "silver",
+  "pose": "three-quarter-right",
+  "laptop": {
+    "aspect": 1.5447,
+    "corners": {
+      "topLeft": [
+        824.04,
+        324.54
+      ],
+      "topRight": [
+        1555.48,
+        406.06
+      ],
+      "bottomRight": [
+        1453.67,
+        968.14
+      ],
+      "bottomLeft": [
+        731.25,
+        825.87
+      ]
+    }
+  }
+}

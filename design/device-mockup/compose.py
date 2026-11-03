@@ -2,6 +2,7 @@
 
 Run:
   python3 compose.py [--finish dark|silver] [--preview] [--laptop path] [--phone path]
+  python3 compose.py --src renders/catalog/laptop/silver/three-quarter-left --laptop path
 
 Reads renders/<finish>/ (or renders/<finish>/preview/) and writes:
   template.png        scene with the screens cut out (put screenshots underneath)
@@ -11,6 +12,9 @@ Reads renders/<finish>/ (or renders/<finish>/preview/) and writes:
   reflection-mask-laptop.png, reflection-mask-phone.png
                       how strongly each screen shows in the floor (mask the mirrored screenshot with it)
   preview.png         template with sample screenshots and their reflections placed, to check the fit
+
+A catalog render (renders/catalog/<device>/<color>/<pose>/, no floor reflection) uses the same
+command. Pass --laptop or --phone for the one device that folder contains. The other shot is ignored.
 """
 
 import argparse
@@ -34,9 +38,12 @@ parser.add_argument(
         / ".cursor/projects/Users-ezekielmohr-Coding-Projects-Trashbox-Projects-Websites-trashbox-llc/assets/01-today-3e382d0f-cb43-4b35-bb74-452cbf853472.jpg"
     ),
 )
+parser.add_argument("--src", default="", help="Render folder to compose. Defaults to renders/<finish>/.")
 args = parser.parse_args()
 
-SRC = ROOT / "renders" / args.finish / ("preview" if args.preview else "")
+SRC = Path(args.src) if args.src else ROOT / "renders" / args.finish / ("preview" if args.preview else "")
+if not SRC.is_absolute():
+    SRC = (ROOT / SRC).resolve()
 OUT = SRC
 # Softening for the mirrored screenshot, as a fraction of its width, to match the slightly rough floor.
 REFLECTION_BLUR = 0.006
@@ -87,10 +94,43 @@ def warp(image: Image.Image, corners: dict, size) -> Image.Image:
     return image.convert("RGBA").transform(size, Image.Transform.PERSPECTIVE, coeffs, Image.Resampling.BICUBIC)
 
 
+def compose_solo(scene, masks, glare, info):
+    """One device, no floor. The screenshot replaces the screen; the background stays empty."""
+    device = info["device"]
+    channel = 0 if device == "laptop" else 1
+    mask = masks[..., channel] * masks[..., 3]
+    cover_mask = (mask > 0.02).astype(np.float64)
+    shot_path = args.laptop if device == "laptop" else args.phone
+    shot = cover(Image.open(shot_path).convert("RGB"), info[device]["aspect"])
+    size = (scene.shape[1], scene.shape[0])
+
+    def screen_layer(image, opening):
+        layer = np.asarray(warp(image, info[device]["corners"], size)).astype(np.float64) / 255.0
+        layer[..., 3] *= opening
+        return layer
+
+    layer = screen_layer(shot, cover_mask)
+    template = scene.copy()
+    template[..., 3] = np.where(layer[..., 3] > 0.5, 0.0, scene[..., 3])
+    save(template, "template.png")
+
+    canvas = Image.new("RGBA", size, (0, 0, 0, 0))
+    canvas.alpha_composite(Image.fromarray(np.clip(layer * 255.0 + 0.5, 0, 255).astype(np.uint8), "RGBA"))
+    canvas.alpha_composite(Image.open(OUT / "template.png"))
+    base = np.asarray(canvas).astype(np.float64) / 255.0
+    glare_rgb = glare[..., :3] * (glare[..., 3] * cover_mask)[..., None]
+    base[..., :3] = 1.0 - (1.0 - base[..., :3]) * (1.0 - glare_rgb)
+    save(base, "preview.png")
+    print("wrote template.png, preview.png")
+
+
 scene = load("scene.png")
 masks = load("masks.png")
 glare = load("glare.png")
 info = json.loads((SRC / "corners.json").read_text())
+if info.get("reflections", True) is False:
+    compose_solo(scene, masks, glare, info)
+    raise SystemExit(0)
 
 laptop_mask = masks[..., 0] * masks[..., 3]
 # The rendered screen is already the rounded panel inside the bezel. Its edge is
