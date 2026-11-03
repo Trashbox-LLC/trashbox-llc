@@ -19,11 +19,8 @@ describe("ContactForm", () => {
     render(<ContactForm />);
 
     await user.type(screen.getByPlaceholderText("Your name"), "Ada Lovelace");
-    await user.type(screen.getByPlaceholderText("you@company.com"), "ada@example.com");
-    await user.type(
-      screen.getByPlaceholderText("Share a short brief, timeline, or goals…"),
-      "Need a marketing site for launch.",
-    );
+    await user.type(screen.getByPlaceholderText("you@email.com"), "ada@example.com");
+    await user.type(screen.getByPlaceholderText("Your message"), "Hello there.");
     await user.click(screen.getByRole("button", { name: /send message/i }));
 
     expect(
@@ -31,7 +28,7 @@ describe("ContactForm", () => {
     ).toBeInTheDocument();
   });
 
-  it("sends the chosen service as metadata and leaves the message as typed", async () => {
+  it("sends the phone number with the message as typed", async () => {
     vi.mocked(submitContactForm).mockResolvedValue({
       success: true,
       message: "Thanks—we got your message.",
@@ -41,20 +38,16 @@ describe("ContactForm", () => {
     render(<ContactForm />);
 
     await user.type(screen.getByPlaceholderText("Your name"), "Ada Lovelace");
-    await user.type(screen.getByPlaceholderText("you@company.com"), "ada@example.com");
-    await user.click(screen.getByRole("combobox", { name: /what do you need/i }));
-    await user.click(screen.getByRole("option", { name: "Web application" }));
-    await user.type(
-      screen.getByPlaceholderText("Share a short brief, timeline, or goals…"),
-      "Hello. Test 123",
-    );
+    await user.type(screen.getByPlaceholderText("you@email.com"), "ada@example.com");
+    await user.type(screen.getByPlaceholderText("Your phone number"), "714-555-0100");
+    await user.type(screen.getByPlaceholderText("Your message"), "Hello. Test 123");
     await user.click(screen.getByRole("button", { name: /send message/i }));
 
     expect(submitContactForm).toHaveBeenCalledWith({
       name: "Ada Lovelace",
       email: "ada@example.com",
       message: "Hello. Test 123",
-      metadata: { service: "Web application" },
+      metadata: { phone: "714-555-0100" },
     });
   });
 
