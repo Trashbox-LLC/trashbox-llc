@@ -4,7 +4,9 @@ test.describe("site navigation", () => {
   test("header links move between key pages", async ({ page }) => {
     await page.goto("/");
 
-    const marketingNav = page.getByRole("navigation");
+    const marketingNav = page.getByRole("navigation").filter({
+      has: page.locator("[data-nav-tab]"),
+    });
 
     await marketingNav
       .getByRole("button", { name: "Services", exact: true })
@@ -46,7 +48,9 @@ test.describe("site navigation", () => {
       page.getByRole("heading", { name: /sites that look sharp/i }),
     ).toBeVisible();
 
-    const nav = page.getByRole("navigation");
+    const nav = page.getByRole("navigation").filter({
+      has: page.locator("[data-nav-tab]"),
+    });
     await nav.getByRole("link", { name: "About Us", exact: true }).click();
     await expect(page).toHaveURL(/\/about\/?$/);
     await expect(
@@ -65,7 +69,7 @@ test.describe("site navigation", () => {
     await nav.getByRole("link", { name: "Home", exact: true }).click();
     await expect(page).toHaveURL(/\/$/);
     await expect(
-      page.getByRole("heading", { name: /trashbox studios/i }),
+      page.getByRole("heading", { name: /made for professionals/i }),
     ).toBeVisible();
   });
 });
