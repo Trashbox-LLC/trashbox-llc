@@ -5,6 +5,7 @@ import {
   HOME_TITLE,
   SITE_ORIGIN,
   absoluteUrl,
+  contactPageJsonLd,
   crmJsonLd,
   indexablePaths,
   marketingMetadata,
@@ -33,6 +34,7 @@ describe("public site URLs", () => {
         "/work/",
         "/services/",
         "/services/websites/",
+        "/contact/",
         "/platform/",
         "/platform/pricing/",
         "/apps/bmplayer/privacy/",
@@ -93,7 +95,7 @@ describe("structured data", () => {
     const data = organizationJsonLd();
 
     expect(data["@type"]).toBe("Organization");
-    expect(data.name).toBe("Trashbox LLC");
+    expect(data.name).toBe("Trashbox Studios");
     expect(data.url).toBe("https://www.trashbox.io/");
     expect(data.address).toMatchObject({
       addressLocality: "Kingwood",
@@ -101,6 +103,17 @@ describe("structured data", () => {
     });
     expect(data).not.toHaveProperty("aggregateRating");
     expect(data).not.toHaveProperty("review");
+  });
+
+  it("describes the contact page as the studio's contact point", () => {
+    const data = contactPageJsonLd();
+
+    expect(data["@type"]).toBe("ContactPage");
+    expect(data.url).toBe("https://www.trashbox.io/contact/");
+    expect(data.mainEntity).toEqual({
+      "@id": "https://www.trashbox.io/#organization",
+    });
+    expect(data).not.toHaveProperty("aggregateRating");
   });
 
   it("describes a service page without inventing offers", () => {

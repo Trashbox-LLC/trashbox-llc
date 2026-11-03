@@ -1,0 +1,11 @@
+3D models used in these renders (Creative Commons Attribution 4.0, https://creativecommons.org/licenses/by/4.0/):
+
+- "MacBook Pro M3 16 inch 2024" by jackbaeten (https://sketchfab.com/jackbaeten)
+  Source: https://sketchfab.com/3d-models/macbook-pro-m3-16-inch-2024-8e34fc2b303144f78490007d91ff57c4
+  Lid/base split and rig by rigged-macbook-3d (https://github.com/william-laverty/rigged-macbook-3d).
+  Recoloured to space gray (dark set) or restored to the original silver (silver set) for these renders.
+- "iPhone 17 Pro" by Ranguel (https://sketchfab.com/Ranguel)
+  Source: https://sketchfab.com/3d-models/iphone-17-pro-4541aa8a28324b33a2baaf81d263aaec
+  Housing recoloured to graphite in the dark set; original silver in the silver set.
+
+Apple, iPhone and MacBook are trademarks of Apple Inc. These are fan-made models, not supplied or endorsed by Apple.

@@ -11,10 +11,10 @@ import {
 /** Production canonical host. Apex trashbox.io redirects here. */
 export const SITE_ORIGIN = "https://www.trashbox.io";
 
-export const HOME_TITLE = "Trashbox LLC — Websites, apps, and systems";
+export const HOME_TITLE = "Trashbox Studios — Websites, apps, and systems";
 
 export const HOME_DESCRIPTION =
-  "Websites, apps, and systems for businesses of every size. Trashbox LLC is a software studio in Kingwood, Texas.";
+  "Websites, apps, and systems for local businesses in Kingwood, Texas. Made for professionals. Built by professionals.";
 
 const ORGANIZATION_ID = `${SITE_ORIGIN}/#organization`;
 
@@ -28,6 +28,7 @@ const MARKETING_PATHS = [
   SERVICE_PATHS.systems,
   SERVICE_PATHS.mobileApps,
   SERVICE_PATHS.aiIntegration,
+  SERVICE_PATHS.contact,
   "/apps/",
   PLATFORM_PATHS.hub,
   PLATFORM_PATHS.features,
@@ -71,14 +72,14 @@ export function marketingMetadata(input: {
       title: input.title,
       description: input.description,
       url,
-      siteName: "Trashbox LLC",
+      siteName: "Trashbox Studios",
       type: "website",
       images: [
         {
           url: "/android-chrome-512x512.png",
           width: 512,
           height: 512,
-          alt: "Trashbox LLC",
+          alt: "Trashbox Studios",
         },
       ],
     },
@@ -107,7 +108,7 @@ export function organizationJsonLd() {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": ORGANIZATION_ID,
-    name: "Trashbox LLC",
+    name: "Trashbox Studios",
     url: absoluteUrl("/"),
     logo: `${SITE_ORIGIN}/android-chrome-512x512.png`,
     email: CONTACT_EMAIL,
@@ -133,7 +134,7 @@ export function websiteJsonLd() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "@id": `${SITE_ORIGIN}/#website`,
-    name: "Trashbox LLC",
+    name: "Trashbox Studios",
     url: absoluteUrl("/"),
     publisher: { "@id": ORGANIZATION_ID },
     description: HOME_DESCRIPTION,
@@ -147,7 +148,7 @@ export function portfolioJsonLd(
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     name: "Work",
-    description: "Websites built by Trashbox LLC.",
+    description: "Websites built by Trashbox Studios.",
     url: absoluteUrl("/work"),
     isPartOf: { "@id": `${SITE_ORIGIN}/#website` },
     mainEntity: {
@@ -159,6 +160,18 @@ export function portfolioJsonLd(
         url: site.href,
       })),
     },
+  };
+}
+
+export function contactPageJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    name: "Contact Trashbox Studios",
+    description:
+      "Start a website, app, or systems project with Trashbox Studios in Kingwood, Texas.",
+    url: absoluteUrl(SERVICE_PATHS.contact),
+    mainEntity: { "@id": ORGANIZATION_ID },
   };
 }
 

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MaterialIcon } from "@/components/atoms/MaterialIcon";
 import { Button } from "@/components/ui/button";
+import { SERVICE_PATHS } from "@/lib/sites";
 
 export function NotFoundContent() {
   return (
@@ -87,7 +88,7 @@ export function NotFoundContent() {
                 </li>
                 <li>
                   <Link
-                    href="/services#contact"
+                    href={SERVICE_PATHS.contact}
                     className="block py-1 text-sm font-medium transition-colors hover:text-primary"
                   >
                     Contact Engineering

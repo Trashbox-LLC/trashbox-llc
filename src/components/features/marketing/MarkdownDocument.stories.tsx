@@ -7,7 +7,7 @@ Last updated: January 1, 2026
 
 ## Overview
 
-We collect only what we need to run **Trashbox LLC** services.
+We collect only what we need to run **Trashbox Studios** services.
 
 ### What we store
 

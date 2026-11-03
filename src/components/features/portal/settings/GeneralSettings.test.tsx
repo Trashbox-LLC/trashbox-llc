@@ -7,7 +7,7 @@ describe("GeneralSettings", () => {
     render(
       <GeneralSettings
         email="ezekielbleh@gmail.com"
-        clientName="Trashbox LLC"
+        clientName="Trashbox Studios"
         tier="solo"
         active
         submissionsUsed={25}
@@ -17,7 +17,7 @@ describe("GeneralSettings", () => {
 
     expect(screen.getByText(/^signed in$/i)).toBeInTheDocument();
     expect(screen.getByText("ezekielbleh@gmail.com")).toBeInTheDocument();
-    expect(screen.getByText(/Client: Trashbox LLC/i)).toBeInTheDocument();
+    expect(screen.getByText(/Client: Trashbox Studios/i)).toBeInTheDocument();
     expect(screen.getByText(/Plan:/i)).toBeInTheDocument();
     expect(screen.getByText("solo")).toBeInTheDocument();
     expect(screen.getByText(/25/)).toBeInTheDocument();

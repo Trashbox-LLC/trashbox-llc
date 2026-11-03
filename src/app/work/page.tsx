@@ -6,7 +6,7 @@ import { marketingMetadata, portfolioJsonLd } from "@/lib/seo";
 
 export const metadata: Metadata = marketingMetadata({
   title: "Work",
-  description: "Websites built by Trashbox LLC.",
+  description: "Websites built by Trashbox Studios.",
   path: "/work",
 });
 

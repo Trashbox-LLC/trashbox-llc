@@ -6,7 +6,7 @@ import { SERVICE_PATHS } from "@/lib/sites";
 export const metadata: Metadata = marketingMetadata({
   title: "Websites, apps, and systems",
   description:
-    "Websites, web applications, systems, mobile apps, and AI integration—one-off builds and ongoing development from Trashbox LLC.",
+    "Websites, web applications, systems, mobile apps, and AI integration—one-off builds and ongoing development from Trashbox Studios.",
   path: SERVICE_PATHS.hub,
 });
 

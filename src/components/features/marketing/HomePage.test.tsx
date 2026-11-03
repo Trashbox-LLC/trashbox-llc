@@ -6,24 +6,24 @@ vi.mock("@gsap/react", () => ({
 }));
 
 describe("HomePage", () => {
-  it("renders hero, about, and cta sections without selected outputs", () => {
+  it("renders the hero and closing section without the other home sections", () => {
     render(<HomePage />);
 
     expect(
-      screen.getByRole("heading", { name: "Trashbox LLC" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: /software that/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: /what we build/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: /hire us for a single project/i }),
+      screen.getByRole("heading", { name: /made for professionals/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: /let.s build/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /software that/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /what we build/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /hire us for a single project/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: /selected outputs/i }),
     ).not.toBeInTheDocument();

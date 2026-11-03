@@ -1,0 +1,84 @@
+{
+  "canvas": {
+    "width": 960,
+    "height": 720
+  },
+  "laptop": {
+    "aspect": 1.5447,
+    "corners": {
+      "topLeft": [
+        287.53,
+        113.37
+      ],
+      "topRight": [
+        649.35,
+        114.89
+      ],
+      "bottomRight": [
+        678.25,
+        344.69
+      ],
+      "bottomLeft": [
+        304.98,
+        356.66
+      ]
+    },
+    "reflectionCorners": {
+      "topLeft": [
+        291.23,
+        628.43
+      ],
+      "topRight": [
+        646.28,
+        602.47
+      ],
+      "bottomRight": [
+        677.87,
+        396.1
+      ],
+      "bottomLeft": [
+        305.34,
+        411.33
+      ]
+    }
+  },
+  "phone": {
+    "aspect": 0.4612,
+    "corners": {
+      "topLeft": [
+        221.94,
+        232.42
+      ],
+      "topRight": [
+        317.69,
+        230.52
+      ],
+      "bottomRight": [
+        324.76,
+        443.65
+      ],
+      "bottomLeft": [
+        229.04,
+        450.04
+      ]
+    },
+    "reflectionCorners": {
+      "topLeft": [
+        226.16,
+        669.04
+      ],
+      "topRight": [
+        320.29,
+        658.34
+      ],
+      "bottomRight": [
+        324.82,
+        454.26
+      ],
+      "bottomLeft": [
+        229.15,
+        460.87
+      ]
+    }
+  }
+}

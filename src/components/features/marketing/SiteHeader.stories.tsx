@@ -30,6 +30,38 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
+export const OverHeroText: Story = {
+  decorators: [
+    (Story) => (
+      <div className="min-h-[160vh] bg-[#050505]">
+        <Story />
+        <div className="px-8 pt-48">
+          <div
+            data-header-scrim-target
+            className="mx-auto h-[40vh] max-w-4xl bg-white/15"
+          />
+        </div>
+      </div>
+    ),
+  ],
+};
+
+export const ServicesMenuOpen: Story = {
+  decorators: [
+    (Story) => (
+      <div className="min-h-[420px] bg-[#050505]">
+        <Story />
+      </div>
+    ),
+  ],
+  play: async ({ canvasElement }) => {
+    const button = canvasElement.querySelector(
+      'button[aria-controls="services-menu"]',
+    ) as HTMLButtonElement | null;
+    button?.click();
+  },
+};
+
 export const MobileMenuOpen: Story = {
   parameters: {
     viewport: {

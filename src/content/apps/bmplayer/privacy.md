@@ -2,7 +2,7 @@
 
 **Last updated:** March 28, 2026
 
-This Privacy Policy describes how **Trashbox LLC** ("we," "us," or "our") collects, uses, and shares information when you use **BMPlayer** (the "App").
+This Privacy Policy describes how **Trashbox Studios** ("we," "us," or "our") collects, uses, and shares information when you use **BMPlayer** (the "App").
 
 By using the App, you agree to this Privacy Policy. If you do not agree, please do not use the App.
 
@@ -128,6 +128,6 @@ We may update this Privacy Policy from time to time. We will post the updated po
 
 ## 10. Contact us
 
-**Trashbox LLC**  
+**Trashbox Studios**  
 **Email:** contact@trashbox.io  
 **Address:** 25452 Northpark Lake Dr, TX 77365, United States

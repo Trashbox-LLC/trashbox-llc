@@ -5,6 +5,7 @@ import { FadeIn } from "@/components/atoms/FadeIn";
 import { MaterialIcon } from "@/components/atoms/MaterialIcon";
 import { Reveal } from "@/components/atoms/Reveal";
 import { Button } from "@/components/ui/button";
+import { SERVICE_PATHS } from "@/lib/sites";
 
 const cards = [
   {
@@ -158,7 +159,7 @@ export function AppsPage() {
         </p>
         <div className="flex flex-col justify-center gap-4 md:flex-row">
           <Button asChild size="lg" className="active:scale-95">
-            <Link href="/services#contact">Start a Project</Link>
+            <Link href={SERVICE_PATHS.contact}>Start a Project</Link>
           </Button>
           <Button asChild variant="outline" size="lg">
             <Link href="/services">View Services</Link>

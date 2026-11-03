@@ -3,38 +3,33 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FocusEvent,
+  type MouseEvent,
+} from "react";
 import { useGSAP } from "@gsap/react";
 import { MenuToggleIcon } from "@/components/atoms/MenuToggleIcon";
-import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ServicesMenu,
+  ServicesMenuList,
+} from "@/components/features/marketing/ServicesMenu";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { gsap } from "@/lib/gsap-client";
-import { SERVICE_PATHS } from "@/lib/sites";
 import {
-  getForceHideSiteHeader,
-  subscribeForceHideSiteHeader,
-} from "@/lib/site-header-visibility";
-
-const serviceItems = [
-  { href: SERVICE_PATHS.websites, label: "Websites" },
-  { href: SERVICE_PATHS.webApplications, label: "Web Applications" },
-  { href: SERVICE_PATHS.systems, label: "Systems" },
-  { href: SERVICE_PATHS.mobileApps, label: "Mobile Apps" },
-  { href: SERVICE_PATHS.aiIntegration, label: "AI Integration" },
-  {
-    href: "/platform",
-    label: "Customer Relationship Management",
-  },
-] as const;
-
-const SCROLL_TOP_THRESHOLD = 12;
-const SCROLL_DELTA_THRESHOLD = 8;
+  indicatorMoved,
+  pageIndicatorTarget,
+  type PageIndicatorFrame,
+} from "@/lib/page-indicator";
+import { headerScrimOpacity } from "@/lib/site-header-scrim";
+import {
+  CONTACT_PHONE_DISPLAY,
+  CONTACT_PHONE_TEL,
+  SERVICE_PATHS,
+} from "@/lib/sites";
 
 /** Match FadeIn/HomeHero: hide before paint so the header doesn't flash then snap. */
 const headerEnterStyle = {
@@ -42,11 +37,46 @@ const headerEnterStyle = {
   transform: "translateY(-16px)",
 } as const;
 
+function TabMark({ current }: { current: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "absolute -inset-x-1 bottom-0 h-px rounded-full bg-white",
+        current ? "opacity-100" : "opacity-0",
+        "group-data-[motion-indicator=ready]/nav:opacity-0",
+      )}
+    />
+  );
+}
+
+function readPageIndicator(nav: HTMLElement): PageIndicatorFrame | null {
+  const navBox = nav.getBoundingClientRect();
+  const current = nav.querySelector<HTMLElement>(
+    '[data-nav-tab][aria-current="page"]',
+  );
+  const linkBox = current?.getBoundingClientRect();
+  const outset = 4;
+  return pageIndicatorTarget({
+    reducedMotion:
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    navLeft: navBox.left,
+    navWidth: navBox.width,
+    link: linkBox
+      ? {
+          left: linkBox.left - outset,
+          width: linkBox.width + outset * 2,
+        }
+      : null,
+  });
+}
+
 function navLinkClass(active: boolean) {
   return cn(
-    "font-headline tracking-tight text-sm uppercase transition-colors",
+    "font-headline text-sm tracking-tight transition-colors md:pb-1",
     active
-      ? "border-b-2 border-white pb-1 font-bold text-white"
+      ? "border-b-2 border-white pb-1 text-white md:border-b-0"
       : "text-white/60 hover:text-white",
   );
 }
@@ -54,11 +84,15 @@ function navLinkClass(active: boolean) {
 export function SiteHeader() {
   const pathname = usePathname() ?? "";
   const navRef = useRef<HTMLDivElement>(null);
-  const [scrolled, setScrolled] = useState(false);
-  const [hidden, setHidden] = useState(false);
-  const [forceHidden, setForceHidden] = useState(getForceHideSiteHeader);
+  const barRef = useRef<HTMLDivElement>(null);
+  const scrimRef = useRef<HTMLDivElement>(null);
+  const navItemsRef = useRef<HTMLDivElement>(null);
+  const indicatorRef = useRef<HTMLSpanElement>(null);
+  const indicatorFrame = useRef<PageIndicatorFrame | null>(null);
   const [open, setOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const servicesButtonRef = useRef<HTMLButtonElement>(null);
+  const servicesPanelRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
@@ -79,36 +113,105 @@ export function SiteHeader() {
     { scope: navRef },
   );
 
-  useEffect(() => {
-    return subscribeForceHideSiteHeader(() => {
-      setForceHidden(getForceHideSiteHeader());
-    });
-  }, []);
+  useGSAP(
+    () => {
+      const nav = navItemsRef.current;
+      const indicator = indicatorRef.current;
+      if (!nav || !indicator) return;
 
-  useEffect(() => {
-    let lastY = window.scrollY;
+      let slide = 0;
+      let slideTween: gsap.core.Tween | null = null;
 
-    const onScroll = () => {
-      const y = window.scrollY;
-      setScrolled(y > SCROLL_TOP_THRESHOLD);
+      const place = (animate: boolean) => {
+        const target = readPageIndicator(nav);
+        if (!target) {
+          cancelAnimationFrame(slide);
+          slideTween?.kill();
+          gsap.set(indicator, { autoAlpha: 0 });
+          delete nav.dataset.motionIndicator;
+          return;
+        }
+        nav.dataset.motionIndicator = "ready";
+        const previous = indicatorFrame.current;
+        const moved = indicatorMoved(previous, target);
+        if (!animate && !moved) return;
+        cancelAnimationFrame(slide);
+        slideTween?.kill();
+        if (animate && moved && previous) {
+          gsap.set(indicator, {
+            x: previous.x,
+            width: previous.width,
+            autoAlpha: 1,
+          });
+          slide = requestAnimationFrame(() => {
+            slideTween = gsap.to(indicator, {
+              x: target.x,
+              width: target.width,
+              autoAlpha: 1,
+              duration: 0.55,
+              ease: "power2.inOut",
+              overwrite: "auto",
+            });
+          });
+        } else {
+          gsap.set(indicator, {
+            x: target.x,
+            width: target.width,
+            autoAlpha: 1,
+          });
+        }
+        indicatorFrame.current = target;
+      };
 
-      if (open || y <= SCROLL_TOP_THRESHOLD) {
-        setHidden(false);
-        lastY = y;
-        return;
+      place(true);
+
+      if (typeof ResizeObserver === "undefined") return;
+      let listening = false;
+      const observer = new ResizeObserver(() => {
+        if (!listening) return;
+        place(false);
+      });
+      for (const link of nav.querySelectorAll("[data-nav-tab]")) {
+        observer.observe(link);
       }
+      const frame = requestAnimationFrame(() => {
+        listening = true;
+      });
+      return () => {
+        cancelAnimationFrame(slide);
+        cancelAnimationFrame(frame);
+        slideTween?.kill();
+        observer.disconnect();
+      };
+    },
+    { scope: navItemsRef, dependencies: [pathname] },
+  );
 
-      const delta = y - lastY;
-      if (Math.abs(delta) < SCROLL_DELTA_THRESHOLD) return;
+  useEffect(() => {
+    const bar = barRef.current;
+    const scrim = scrimRef.current;
+    if (!bar || !scrim) return;
 
-      setHidden(delta > 0);
-      lastY = y;
+    const update = () => {
+      const rect = bar.getBoundingClientRect();
+      const text = document.querySelector("[data-header-scrim-target]");
+      const opacity = headerScrimOpacity({
+        headerTop: rect.top,
+        headerBottom: rect.bottom,
+        textTop: text ? text.getBoundingClientRect().top : null,
+        scrollY: window.scrollY,
+      });
+      scrim.style.opacity = String(opacity);
     };
 
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [open]);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -117,9 +220,71 @@ export function SiteHeader() {
     };
   }, [open]);
 
+  useEffect(() => {
+    setServicesOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!servicesOpen) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setServicesOpen(false);
+      const button = servicesButtonRef.current;
+      if (button && button.offsetParent !== null) button.focus();
+    }
+
+    function onPointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (barRef.current?.contains(target)) return;
+      setServicesOpen(false);
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [servicesOpen]);
+
   function closeMenu() {
     setOpen(false);
     setServicesOpen(false);
+  }
+
+  function openServices() {
+    setServicesOpen(true);
+  }
+
+  function closeServices() {
+    setServicesOpen(false);
+  }
+
+  function onServicesClick(event: MouseEvent<HTMLButtonElement>) {
+    if (event.detail === 0) {
+      setServicesOpen((value) => !value);
+      return;
+    }
+    openServices();
+  }
+
+  function onServicesBlur(event: FocusEvent) {
+    const next = event.relatedTarget;
+    if (!(next instanceof Node)) {
+      closeServices();
+      return;
+    }
+    if (servicesPanelRef.current?.contains(next)) return;
+    if (servicesButtonRef.current?.contains(next)) return;
+    closeServices();
+  }
+
+  function onServicesLeave(event: MouseEvent<HTMLDivElement>) {
+    const next = event.relatedTarget;
+    if (next instanceof Node && event.currentTarget.contains(next)) return;
+    closeServices();
   }
 
   function isActive(href: string, exact?: boolean) {
@@ -128,80 +293,141 @@ export function SiteHeader() {
   }
 
   const servicesActive = pathname.startsWith("/services");
-  const headerHidden = (hidden || forceHidden) && !open;
+  const contactActive = isActive(SERVICE_PATHS.contact);
 
   return (
-    <nav
-      className={cn(
-        "fixed top-0 z-50 w-full transition-transform duration-300 ease-out",
-        headerHidden ? "-translate-y-full" : "translate-y-0",
-      )}
-      data-hidden={headerHidden ? "true" : "false"}
-    >
+    <nav className="fixed top-0 z-50 w-full">
       <div ref={navRef} style={headerEnterStyle}>
-        <div
-          className={cn(
-            "border-b backdrop-blur-xl transition-colors duration-300",
-            scrolled && !open
-              ? "bg-background/75 border-white/10"
-              : "border-transparent bg-transparent",
-            open && "bg-background",
-          )}
-        >
-          <div className="mx-auto flex max-w-screen-2xl items-center justify-between px-6 py-5 md:px-8 md:py-6">
+        <div ref={barRef} className={cn("relative", open && "bg-background")}>
+          <div
+            ref={scrimRef}
+            data-header-scrim
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-black/75 backdrop-blur-xl"
+            style={{ opacity: 0 }}
+          />
+          <div className="relative mx-auto flex max-w-screen-2xl items-center justify-between px-6 py-2 md:px-8">
             <Link
               href="/"
-              className="inline-flex items-center"
-              aria-label="Trashbox LLC home"
+              className="relative inline-flex h-[35.6px] w-[37.5px] shrink-0 md:h-[43.3px] md:w-[45.7px]"
+              aria-label="Trashbox Studios home"
             >
+              {/* The SVG canvas is padded. Size the drawn mark, not the empty canvas. */}
               <Image
                 src="/images/trashbox-logo-colored.svg"
-                alt="Trashbox LLC logo"
+                alt="Trashbox Studios logo"
                 width={1024}
                 height={1024}
-                className="size-16 md:size-20"
+                className="absolute top-1/2 left-1/2 h-[46px] w-[46px] max-w-none -translate-x-1/2 -translate-y-1/2 md:h-14 md:w-14"
                 priority
               />
             </Link>
 
-            <div className="hidden items-center gap-10 md:flex md:gap-12">
-              <Link href="/" className={navLinkClass(isActive("/", true))}>
+            <div
+              ref={navItemsRef}
+              className="group/nav relative hidden items-center gap-10 md:flex md:gap-12"
+            >
+              <Link
+                href="/"
+                data-nav-tab
+                aria-current={isActive("/", true) ? "page" : undefined}
+                className={cn(navLinkClass(isActive("/", true)), "relative")}
+              >
                 Home
+                <TabMark current={isActive("/", true)} />
               </Link>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  className={cn(navLinkClass(servicesActive), "outline-none")}
+              <div className="relative" onMouseLeave={onServicesLeave}>
+                <button
+                  ref={servicesButtonRef}
+                  type="button"
+                  data-nav-tab
+                  aria-controls="services-menu"
+                  aria-expanded={servicesOpen}
+                  aria-current={servicesActive ? "page" : undefined}
+                  onMouseEnter={openServices}
+                  onClick={onServicesClick}
+                  onBlur={onServicesBlur}
+                  className={cn(
+                    navLinkClass(servicesActive),
+                    servicesOpen && !servicesActive && "text-white",
+                    "relative",
+                  )}
                 >
                   Services
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="start"
-                  className="bg-surface-container-low min-w-64 border-white/10"
-                >
-                  {serviceItems.map((item) => (
-                    <DropdownMenuItem key={item.label} asChild>
-                      <Link
-                        href={item.href}
-                        className="font-headline text-sm tracking-tight uppercase"
-                      >
-                        {item.label}
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <TabMark current={servicesActive} />
+                </button>
 
-              <Link href="/work" className={navLinkClass(isActive("/work"))}>
+                <div
+                  ref={servicesPanelRef}
+                  id="services-menu"
+                  role="region"
+                  aria-label="Services"
+                  inert={servicesOpen ? undefined : true}
+                  aria-hidden={servicesOpen ? undefined : true}
+                  onMouseEnter={openServices}
+                  onBlur={onServicesBlur}
+                  className={cn(
+                    "absolute top-full left-0 z-50 hidden pt-3 md:block",
+                    servicesOpen
+                      ? "pointer-events-auto"
+                      : "pointer-events-none",
+                  )}
+                >
+                  <ServicesMenu
+                    pathname={pathname}
+                    onNavigate={closeMenu}
+                    open={servicesOpen}
+                  />
+                </div>
+              </div>
+
+              <Link
+                href="/work"
+                data-nav-tab
+                aria-current={isActive("/work") ? "page" : undefined}
+                className={cn(navLinkClass(isActive("/work")), "relative")}
+              >
                 Work
+                <TabMark current={isActive("/work")} />
               </Link>
-              <Link href="/about" className={navLinkClass(isActive("/about"))}>
-                About
+              <Link
+                href="/about"
+                data-nav-tab
+                aria-current={isActive("/about") ? "page" : undefined}
+                className={cn(navLinkClass(isActive("/about")), "relative")}
+              >
+                About Us
+                <TabMark current={isActive("/about")} />
               </Link>
+              <Link
+                href={SERVICE_PATHS.contact}
+                data-nav-tab
+                aria-current={contactActive ? "page" : undefined}
+                className={cn(navLinkClass(contactActive), "relative")}
+              >
+                Contact
+                <TabMark current={contactActive} />
+              </Link>
+              <span
+                ref={indicatorRef}
+                aria-hidden
+                data-page-indicator
+                className="pointer-events-none absolute bottom-0 left-0 h-px w-0 rounded-full bg-white opacity-0"
+              />
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button asChild className="hidden active:scale-95 md:inline-flex">
+            <div className="flex items-center gap-5">
+              <a
+                href={CONTACT_PHONE_TEL}
+                className="font-headline hidden text-sm tracking-tight text-white/60 transition-colors hover:text-white md:inline"
+              >
+                {CONTACT_PHONE_DISPLAY}
+              </a>
+              <Button
+                asChild
+                className="hidden py-2 tracking-tight normal-case active:scale-95 md:inline-flex"
+              >
                 <Link href={SERVICE_PATHS.contact}>Contact</Link>
               </Button>
               <Button
@@ -245,6 +471,7 @@ export function SiteHeader() {
             >
               <Link
                 href="/"
+                aria-current={isActive("/", true) ? "page" : undefined}
                 tabIndex={open ? undefined : -1}
                 className={navLinkClass(isActive("/", true))}
                 onClick={closeMenu}
@@ -268,26 +495,23 @@ export function SiteHeader() {
                     servicesOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
                   )}
                 >
-                  <div className="min-h-0 overflow-hidden">
-                    <div className="flex flex-col gap-3 pl-4">
-                      {serviceItems.map((item) => (
-                        <Link
-                          key={item.label}
-                          href={item.href}
-                          tabIndex={open && servicesOpen ? undefined : -1}
-                          className="font-headline text-sm tracking-tight text-white/60 uppercase transition-colors hover:text-white"
-                          onClick={closeMenu}
-                        >
-                          {item.label}
-                        </Link>
-                      ))}
-                    </div>
+                  <div
+                    className="min-h-0 overflow-hidden"
+                    inert={open && servicesOpen ? undefined : true}
+                    aria-hidden={open && servicesOpen ? undefined : true}
+                  >
+                    <ServicesMenuList
+                      pathname={pathname}
+                      onNavigate={closeMenu}
+                      tabIndex={open && servicesOpen ? undefined : -1}
+                    />
                   </div>
                 </div>
               </div>
 
               <Link
                 href="/work"
+                aria-current={isActive("/work") ? "page" : undefined}
                 tabIndex={open ? undefined : -1}
                 className={navLinkClass(isActive("/work"))}
                 onClick={closeMenu}
@@ -296,14 +520,24 @@ export function SiteHeader() {
               </Link>
               <Link
                 href="/about"
+                aria-current={isActive("/about") ? "page" : undefined}
                 tabIndex={open ? undefined : -1}
                 className={navLinkClass(isActive("/about"))}
                 onClick={closeMenu}
               >
-                About
+                About Us
+              </Link>
+              <Link
+                href={SERVICE_PATHS.contact}
+                aria-current={contactActive ? "page" : undefined}
+                tabIndex={open ? undefined : -1}
+                className={navLinkClass(contactActive)}
+                onClick={closeMenu}
+              >
+                Contact
               </Link>
 
-              <Button asChild className="mt-4">
+              <Button asChild className="mt-4 tracking-tight normal-case">
                 <Link
                   href={SERVICE_PATHS.contact}
                   tabIndex={open ? undefined : -1}

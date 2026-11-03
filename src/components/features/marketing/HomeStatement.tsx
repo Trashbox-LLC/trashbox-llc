@@ -47,7 +47,7 @@ export function HomeStatement() {
       >
         <Image
           src="/images/trashbox-logo-colored.svg"
-          alt="Trashbox LLC"
+          alt="Trashbox Studios"
           width={1024}
           height={1024}
           className="mb-10 size-36 md:mb-12 md:size-48 lg:size-56"
