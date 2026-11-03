@@ -65,7 +65,7 @@ export function HomeHero() {
           className="font-headline mt-2 shrink-0 text-[clamp(1.7rem,4.6vw,4.75rem)] leading-[1.05] font-bold tracking-tight text-balance text-white sm:mt-3"
         >
           <span className="block">Made for professionals.</span>
-          <span className="block">Built by professionals.</span>
+          <span className="headline-shader block">Built by professionals.</span>
         </h1>
 
         <div className="relative mx-auto mt-1 min-h-0 w-[min(100%,56rem)] flex-1 sm:mt-2">
