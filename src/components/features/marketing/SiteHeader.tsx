@@ -298,12 +298,18 @@ export function SiteHeader() {
   return (
     <nav className="fixed top-0 z-50 w-full">
       <div ref={navRef} style={headerEnterStyle}>
-        <div ref={barRef} className={cn("relative", open && "bg-background")}>
+        <div
+          ref={barRef}
+          className={cn(
+            "relative pt-[env(safe-area-inset-top)]",
+            open && "bg-background",
+          )}
+        >
           <div
             ref={scrimRef}
             data-header-scrim
             aria-hidden
-            className="pointer-events-none absolute inset-0 bg-black/75 backdrop-blur-xl"
+            className="pointer-events-none absolute inset-0 bg-black/40 backdrop-blur-md"
             style={{ opacity: 0 }}
           />
           <div className="relative mx-auto flex max-w-screen-2xl items-center justify-between px-6 py-2 md:px-8">

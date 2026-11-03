@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope, Space_Grotesk } from "next/font/google";
 import { JsonLd } from "@/components/features/marketing/JsonLd";
 import { AuthProvider } from "@/lib/auth";
@@ -26,6 +26,15 @@ const manrope = Manrope({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#000000",
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_ORIGIN),
   title: {
@@ -51,6 +60,9 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+  },
+  appleWebApp: {
+    statusBarStyle: "black",
   },
 };
 
@@ -78,6 +90,10 @@ export default function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${manrope.variable} font-body antialiased`}
       >
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[env(safe-area-inset-top)] bg-black"
+        />
         <JsonLd data={organizationJsonLd()} />
         <JsonLd data={websiteJsonLd()} />
         <AuthProvider>

@@ -15,6 +15,10 @@ type MarketingLayoutProps = {
   children: React.ReactNode;
 };
 
+function isLogoPreview(path: string): boolean {
+  return path.replace(/\/$/, "") === "/logo-preview";
+}
+
 /** Marketing chrome; portal and platform routes use their own headers. */
 export function MarketingLayout({ children }: MarketingLayoutProps) {
   const nextPath = usePathname();
@@ -49,7 +53,7 @@ export function MarketingLayout({ children }: MarketingLayoutProps) {
 
   return (
     <>
-      {splashDismissed ? null : (
+      {splashDismissed || isLogoPreview(pathname) ? null : (
         <SplashScreen onDone={() => setSplashDismissed(true)} />
       )}
       {shell}

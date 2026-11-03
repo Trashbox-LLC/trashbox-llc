@@ -74,9 +74,16 @@ export function HomeStats() {
       <div className="mx-auto max-w-6xl">
         <p
           id="home-stats-heading"
-          className="text-center text-sm text-white/70 sm:text-base"
+          className="flex items-center justify-center gap-2.5 text-base text-white sm:gap-3 sm:text-lg"
         >
-          Customers already look online
+          <svg
+            aria-hidden
+            viewBox="0 0 16 14"
+            className="h-3.5 w-4 shrink-0 text-[#3DDC97] sm:h-4"
+          >
+            <path fill="currentColor" d="M8 0 16 14H0Z" />
+          </svg>
+          Most customers start online.
         </p>
         <ul className="sr-only">
           {HOME_STATS.map((stat) => (

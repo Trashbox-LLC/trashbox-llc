@@ -32,6 +32,19 @@ describe("HomePage", () => {
     expect(screen.queryByText(/aura capital/i)).not.toBeInTheDocument();
   });
 
+  it("can use the skyline cover instead of the device mockup", () => {
+    render(<HomePage hero="cover" />);
+
+    expect(
+      screen.getByRole("img", { name: "City skyline at dusk" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("img", {
+        name: "Texas Covenant Home Inspections website on a laptop beside the Calorie & Protein Tracker",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
   it("links the website and mobile spots and each client site", () => {
     render(<HomePage />);
 
