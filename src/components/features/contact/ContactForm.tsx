@@ -97,7 +97,7 @@ export function ContactForm() {
             <Input
               id="contact-name"
               name="name"
-              placeholder="Your name"
+              placeholder="Jane Smith"
               type="text"
               autoComplete="name"
               required
@@ -110,7 +110,7 @@ export function ContactForm() {
             <Input
               id="contact-email"
               name="email"
-              placeholder="you@email.com"
+              placeholder="jane@example.com"
               type="email"
               autoComplete="email"
               required
@@ -124,7 +124,7 @@ export function ContactForm() {
           <Input
             id="contact-phone"
             name="phone"
-            placeholder="Your phone number"
+            placeholder="(555) 555-0100"
             type="tel"
             autoComplete="tel"
           />
@@ -136,7 +136,7 @@ export function ContactForm() {
           <Textarea
             id="contact-message"
             name="message"
-            placeholder="Your message"
+            placeholder="How can we help?"
             rows={4}
             required
           />

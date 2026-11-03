@@ -18,9 +18,9 @@ describe("ContactForm", () => {
     const user = userEvent.setup();
     render(<ContactForm />);
 
-    await user.type(screen.getByPlaceholderText("Your name"), "Ada Lovelace");
-    await user.type(screen.getByPlaceholderText("you@email.com"), "ada@example.com");
-    await user.type(screen.getByPlaceholderText("Your message"), "Hello there.");
+    await user.type(screen.getByPlaceholderText("Jane Smith"), "Ada Lovelace");
+    await user.type(screen.getByPlaceholderText("jane@example.com"), "ada@example.com");
+    await user.type(screen.getByPlaceholderText("How can we help?"), "Hello there.");
     await user.click(screen.getByRole("button", { name: /send message/i }));
 
     expect(
@@ -37,10 +37,10 @@ describe("ContactForm", () => {
     const user = userEvent.setup();
     render(<ContactForm />);
 
-    await user.type(screen.getByPlaceholderText("Your name"), "Ada Lovelace");
-    await user.type(screen.getByPlaceholderText("you@email.com"), "ada@example.com");
-    await user.type(screen.getByPlaceholderText("Your phone number"), "714-555-0100");
-    await user.type(screen.getByPlaceholderText("Your message"), "Hello. Test 123");
+    await user.type(screen.getByPlaceholderText("Jane Smith"), "Ada Lovelace");
+    await user.type(screen.getByPlaceholderText("jane@example.com"), "ada@example.com");
+    await user.type(screen.getByPlaceholderText("(555) 555-0100"), "714-555-0100");
+    await user.type(screen.getByPlaceholderText("How can we help?"), "Hello. Test 123");
     await user.click(screen.getByRole("button", { name: /send message/i }));
 
     expect(submitContactForm).toHaveBeenCalledWith({
