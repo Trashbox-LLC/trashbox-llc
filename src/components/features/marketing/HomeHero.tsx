@@ -88,11 +88,11 @@ export function HomeHero() {
             />
           </div>
 
-          <div className="absolute inset-0 z-20 flex justify-center max-sm:items-center sm:items-end">
+          <div className="absolute inset-0 z-20 flex justify-center max-sm:items-center sm:items-end sm:pb-12">
             <div data-hero-item style={heroItemStyle}>
               <Link
                 href={SERVICE_PATHS.contact}
-                className="font-headline inline-flex rounded-md bg-white px-5 py-2.5 text-sm font-medium tracking-tight text-black transition-transform hover:scale-[1.02] active:scale-95"
+                className="font-headline inline-flex rounded-md bg-white px-5 py-2.5 text-sm font-medium tracking-tight text-black transition-transform hover:scale-[1.02] active:scale-95 sm:px-8 sm:py-3.5 sm:text-base"
               >
                 Let's Connect
               </Link>

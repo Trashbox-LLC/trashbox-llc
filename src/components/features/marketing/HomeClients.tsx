@@ -44,14 +44,14 @@ export function HomeClients() {
   });
 
   return (
-    <section aria-labelledby="home-clients" className="bg-black px-5 py-24 sm:px-8 md:py-32">
+    <section aria-labelledby="home-clients" className="bg-[#010101] px-5 pt-6 pb-16 sm:px-8 sm:pb-20">
       <h2
         id="home-clients"
-        className="text-center font-label text-[10px] tracking-[0.4em] text-white/50 uppercase"
+        className="text-center text-sm text-white/70 sm:text-base"
       >
-        Clients
+        Trusted By Local Businesses
       </h2>
-      <ul className="mx-auto mt-12 flex max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-6 md:gap-x-14">
+      <ul className="mx-auto mt-8 flex max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-6 md:gap-x-14">
         {marks.map((mark) => (
           <li key={mark.href}>
             <a
