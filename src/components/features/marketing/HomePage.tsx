@@ -7,7 +7,7 @@ import { HomeMobile } from "@/components/features/marketing/HomeMobile";
 import { HomeStats } from "@/components/features/marketing/HomeStats";
 import { HomeWebsites } from "@/components/features/marketing/HomeWebsites";
 
-export function HomePage({ hero = "devices" }: { hero?: "devices" | "cover" }) {
+export function HomePage({ hero = "cover" }: { hero?: "devices" | "cover" }) {
   return (
     <>
       {hero === "cover" ? <HomeCoverHero /> : <HomeHero />}

@@ -15,6 +15,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-export const Cover: Story = {
-  args: { hero: "cover" },
+export const Devices: Story = {
+  args: { hero: "devices" },
 };
