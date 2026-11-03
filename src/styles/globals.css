@@ -258,6 +258,9 @@ html:has(.splash-screen) {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
+  /* The gradient fill stops at the line box, which cuts off descenders. */
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
   animation: headline-shader 16s ease-in-out infinite;
 }
 

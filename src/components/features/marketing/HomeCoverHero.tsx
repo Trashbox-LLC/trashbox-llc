@@ -66,7 +66,7 @@ export function HomeCoverHero() {
 
       <div
         ref={heroRef}
-        className="relative z-10 mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col justify-center text-center sm:justify-start"
+        className="relative z-10 mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col justify-center text-center"
       >
         <p
           data-hero-item
@@ -79,13 +79,13 @@ export function HomeCoverHero() {
         <h1
           data-hero-item
           style={heroItemStyle}
-          className="font-headline mt-3 shrink-0 text-[clamp(2.35rem,10.5vw,3rem)] leading-[1.02] font-bold tracking-tight text-balance text-white sm:mt-3 sm:text-[clamp(1.7rem,4.6vw,4.75rem)] sm:leading-[1.05]"
+          className="font-headline mt-3 shrink-0 text-[clamp(2.75rem,6.6vw,6.5rem)] leading-[1.02] font-bold tracking-tight text-balance text-white"
         >
           <span className="block">Made for professionals.</span>
           <span className="headline-shader block">Built by professionals.</span>
         </h1>
 
-        <div className="mt-8 flex justify-center sm:mt-auto">
+        <div className="mt-8 flex justify-center">
           <div data-hero-item style={heroItemStyle}>
             <Link
               href={SERVICE_PATHS.contact}
