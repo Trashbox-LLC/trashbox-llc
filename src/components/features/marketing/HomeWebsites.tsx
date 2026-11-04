@@ -16,19 +16,7 @@ export function HomeWebsites() {
   return (
     <section className="bg-black px-5 py-20 sm:px-8 md:py-28">
       <div className="mx-auto grid max-w-screen-2xl items-center gap-12 lg:grid-cols-2 lg:gap-20">
-        <Reveal>
-          <Image
-            src={LAPTOP.src}
-            alt={LAPTOP.alt}
-            width={LAPTOP.width}
-            height={LAPTOP.height}
-            placeholder="blur"
-            blurDataURL={LAPTOP.blurDataURL}
-            sizes="(max-width: 1024px) 100vw, 50vw"
-            className="h-auto w-full"
-          />
-        </Reveal>
-        <Reveal fade className="flex flex-col items-center text-center lg:items-end lg:pr-16 lg:text-right xl:pr-28">
+        <Reveal fade className="flex flex-col items-center text-center lg:order-2 lg:items-end lg:pr-16 lg:text-right xl:pr-28">
           <h2 className="font-headline max-w-2xl text-5xl leading-[1.05] font-bold tracking-tight text-balance text-white sm:text-6xl lg:text-7xl">
             <Link
               href={SERVICE_PATHS.websites}
@@ -41,6 +29,18 @@ export function HomeWebsites() {
             From a focused launch site to a full brand presence—built to be
             clear, fast, and easy to hand off or keep improving.
           </p>
+        </Reveal>
+        <Reveal className="lg:order-1">
+          <Image
+            src={LAPTOP.src}
+            alt={LAPTOP.alt}
+            width={LAPTOP.width}
+            height={LAPTOP.height}
+            placeholder="blur"
+            blurDataURL={LAPTOP.blurDataURL}
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            className="h-auto w-full"
+          />
         </Reveal>
       </div>
     </section>
