@@ -424,17 +424,11 @@ export function SiteHeader() {
             </div>
 
             <div className="flex items-center gap-5">
-              <a
-                href={CONTACT_PHONE_TEL}
-                className="font-headline hidden text-sm tracking-tight text-white/60 transition-colors hover:text-white md:inline"
-              >
-                {CONTACT_PHONE_DISPLAY}
-              </a>
               <Button
                 asChild
                 className="hidden py-2 tracking-tight normal-case active:scale-95 md:inline-flex"
               >
-                <Link href={SERVICE_PATHS.contact}>Contact</Link>
+                <a href={CONTACT_PHONE_TEL}>{CONTACT_PHONE_DISPLAY}</a>
               </Button>
               <Button
                 type="button"
@@ -544,13 +538,12 @@ export function SiteHeader() {
               </Link>
 
               <Button asChild className="mt-4 tracking-tight normal-case">
-                <Link
-                  href={SERVICE_PATHS.contact}
+                <a
+                  href={CONTACT_PHONE_TEL}
                   tabIndex={open ? undefined : -1}
-                  onClick={closeMenu}
                 >
-                  Contact
-                </Link>
+                  {CONTACT_PHONE_DISPLAY}
+                </a>
               </Button>
             </div>
           </div>
