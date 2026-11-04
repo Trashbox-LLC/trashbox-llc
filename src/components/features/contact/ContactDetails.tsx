@@ -32,7 +32,7 @@ export function ContactDetails() {
   return (
     <aside>
       <h2 className="font-headline mb-8 text-2xl font-bold tracking-tight text-white md:text-3xl">
-        Request a free consultation
+        Contact us for a free consultation
       </h2>
       <ul className="flex flex-col gap-4">
         {methods.map((method) => (
