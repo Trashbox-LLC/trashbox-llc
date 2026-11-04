@@ -28,7 +28,7 @@ export function HomeWebsites() {
             className="h-auto w-full"
           />
         </Reveal>
-        <Reveal fade className="lg:flex lg:flex-col lg:items-end lg:pr-16 lg:text-right xl:pr-28">
+        <Reveal fade className="flex flex-col items-center text-center lg:items-end lg:pr-16 lg:text-right xl:pr-28">
           <h2 className="font-headline max-w-2xl text-5xl leading-[1.05] font-bold tracking-tight text-balance text-white sm:text-6xl lg:text-7xl">
             <Link
               href={SERVICE_PATHS.websites}

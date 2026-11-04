@@ -17,7 +17,7 @@ export function HomeMobile() {
     <section className="bg-black px-5 py-20 sm:px-8 md:py-28">
       <div className="mx-auto grid max-w-screen-2xl items-stretch gap-10 lg:grid-cols-2 lg:gap-16">
         <Reveal fade className="relative lg:h-full">
-          <div className="max-w-2xl lg:absolute lg:top-[28%] lg:right-0 lg:left-16 lg:-translate-y-1/2 xl:left-28">
+          <div className="mx-auto flex max-w-2xl flex-col items-center text-center lg:absolute lg:top-[28%] lg:right-0 lg:left-16 lg:mx-0 lg:-translate-y-1/2 lg:items-start lg:text-left xl:left-28">
             <h2 className="font-headline text-5xl leading-[1.05] font-bold tracking-tight text-balance text-white sm:text-6xl lg:text-7xl">
               <Link
                 href={SERVICE_PATHS.mobileApps}
