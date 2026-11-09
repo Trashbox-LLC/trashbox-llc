@@ -62,12 +62,15 @@ export function SplashScreen({
   useEffect(() => {
     const screen = screenRef.current;
     if (!screen || persist) return;
+    const splash: HTMLDivElement = screen;
     let releaseTimer = 0;
 
     function onAnimationStart(event: AnimationEvent): void {
-      if (event.target !== screen) return;
+      if (event.target !== splash) return;
       if (event.animationName !== SPLASH_LEAVE_ANIMATION) return;
-      const duration = cssDurationMs(getComputedStyle(screen).animationDuration);
+      const duration = cssDurationMs(
+        getComputedStyle(splash).animationDuration,
+      );
       releaseTimer = window.setTimeout(
         releaseMotion,
         pageMotionReleaseDelay(duration),
@@ -76,7 +79,7 @@ export function SplashScreen({
 
     function onAnimationEnd(event: AnimationEvent): void {
       if (finished.current) return;
-      if (event.target !== screen) return;
+      if (event.target !== splash) return;
       if (event.animationName !== SPLASH_LEAVE_ANIMATION) return;
       finished.current = true;
       window.clearTimeout(releaseTimer);
@@ -85,12 +88,12 @@ export function SplashScreen({
       setGone(true);
     }
 
-    screen.addEventListener("animationstart", onAnimationStart);
-    screen.addEventListener("animationend", onAnimationEnd);
+    splash.addEventListener("animationstart", onAnimationStart);
+    splash.addEventListener("animationend", onAnimationEnd);
     return () => {
       window.clearTimeout(releaseTimer);
-      screen.removeEventListener("animationstart", onAnimationStart);
-      screen.removeEventListener("animationend", onAnimationEnd);
+      splash.removeEventListener("animationstart", onAnimationStart);
+      splash.removeEventListener("animationend", onAnimationEnd);
     };
   }, [persist]);
 

@@ -20,10 +20,11 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { gsap } from "@/lib/gsap-client";
 import {
-  indicatorMoved,
-  pageIndicatorTarget,
-  type PageIndicatorFrame,
-} from "@/lib/page-indicator";
+  DEFAULT_HOME_DEV_SETTINGS,
+  HOME_DEV_CHANGE_EVENT,
+  readHomeDevSettings,
+  type HeaderTone,
+} from "@/components/features/marketing/home-dev-settings";
 import { headerScrimOpacity } from "@/lib/site-header-scrim";
 import {
   CONTACT_PHONE_DISPLAY,
@@ -37,48 +38,28 @@ const headerEnterStyle = {
   transform: "translateY(-16px)",
 } as const;
 
-function TabMark({ current }: { current: boolean }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        "absolute -inset-x-1 bottom-0 h-px rounded-full bg-white",
-        current ? "opacity-100" : "opacity-0",
-        "group-data-[motion-indicator=ready]/nav:opacity-0",
-      )}
-    />
-  );
-}
-
-function readPageIndicator(nav: HTMLElement): PageIndicatorFrame | null {
-  const navBox = nav.getBoundingClientRect();
-  const current = nav.querySelector<HTMLElement>(
-    '[data-nav-tab][aria-current="page"]',
-  );
-  const linkBox = current?.getBoundingClientRect();
-  const outset = 4;
-  return pageIndicatorTarget({
-    reducedMotion:
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    navLeft: navBox.left,
-    navWidth: navBox.width,
-    link: linkBox
-      ? {
-          left: linkBox.left - outset,
-          width: linkBox.width + outset * 2,
-        }
-      : null,
-  });
-}
-
-function navLinkClass(active: boolean) {
+function navLinkClass(tone: HeaderTone) {
   return cn(
-    "font-headline text-sm tracking-tight transition-colors md:pb-1",
-    active
-      ? "border-b-2 border-white pb-1 text-white md:border-b-0"
-      : "text-white/60 hover:text-white",
+    "nav-link-line inline-flex items-center font-headline text-sm leading-5 tracking-tight",
+    tone === "white" ? "text-white" : "text-white/60",
   );
+}
+
+function useHeaderTone(): HeaderTone {
+  const [tone, setTone] = useState<HeaderTone>(DEFAULT_HOME_DEV_SETTINGS.header);
+
+  useEffect(() => {
+    const sync = () => setTone(readHomeDevSettings(localStorage).header);
+    sync();
+    window.addEventListener(HOME_DEV_CHANGE_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(HOME_DEV_CHANGE_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
+  return tone;
 }
 
 export function SiteHeader() {
@@ -86,9 +67,6 @@ export function SiteHeader() {
   const navRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const scrimRef = useRef<HTMLDivElement>(null);
-  const navItemsRef = useRef<HTMLDivElement>(null);
-  const indicatorRef = useRef<HTMLSpanElement>(null);
-  const indicatorFrame = useRef<PageIndicatorFrame | null>(null);
   const [open, setOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const servicesButtonRef = useRef<HTMLButtonElement>(null);
@@ -111,80 +89,6 @@ export function SiteHeader() {
       );
     },
     { scope: navRef },
-  );
-
-  useGSAP(
-    () => {
-      const nav = navItemsRef.current;
-      const indicator = indicatorRef.current;
-      if (!nav || !indicator) return;
-
-      let slide = 0;
-      let slideTween: gsap.core.Tween | null = null;
-
-      const place = (animate: boolean) => {
-        const target = readPageIndicator(nav);
-        if (!target) {
-          cancelAnimationFrame(slide);
-          slideTween?.kill();
-          gsap.set(indicator, { autoAlpha: 0 });
-          delete nav.dataset.motionIndicator;
-          return;
-        }
-        nav.dataset.motionIndicator = "ready";
-        const previous = indicatorFrame.current;
-        const moved = indicatorMoved(previous, target);
-        if (!animate && !moved) return;
-        cancelAnimationFrame(slide);
-        slideTween?.kill();
-        if (animate && moved && previous) {
-          gsap.set(indicator, {
-            x: previous.x,
-            width: previous.width,
-            autoAlpha: 1,
-          });
-          slide = requestAnimationFrame(() => {
-            slideTween = gsap.to(indicator, {
-              x: target.x,
-              width: target.width,
-              autoAlpha: 1,
-              duration: 0.55,
-              ease: "power2.inOut",
-              overwrite: "auto",
-            });
-          });
-        } else {
-          gsap.set(indicator, {
-            x: target.x,
-            width: target.width,
-            autoAlpha: 1,
-          });
-        }
-        indicatorFrame.current = target;
-      };
-
-      place(true);
-
-      if (typeof ResizeObserver === "undefined") return;
-      let listening = false;
-      const observer = new ResizeObserver(() => {
-        if (!listening) return;
-        place(false);
-      });
-      for (const link of nav.querySelectorAll("[data-nav-tab]")) {
-        observer.observe(link);
-      }
-      const frame = requestAnimationFrame(() => {
-        listening = true;
-      });
-      return () => {
-        cancelAnimationFrame(slide);
-        cancelAnimationFrame(frame);
-        slideTween?.kill();
-        observer.disconnect();
-      };
-    },
-    { scope: navItemsRef, dependencies: [pathname] },
   );
 
   useEffect(() => {
@@ -294,9 +198,11 @@ export function SiteHeader() {
 
   const servicesActive = pathname.startsWith("/services");
   const contactActive = isActive(SERVICE_PATHS.contact);
+  const headerTone = useHeaderTone();
+  const linkClass = navLinkClass(headerTone);
 
   return (
-    <nav className="fixed top-0 z-50 w-full">
+    <nav className="fixed top-0 z-50 w-full" data-header-tone={headerTone}>
       <div ref={navRef} style={headerEnterStyle}>
         <div
           ref={barRef}
@@ -329,21 +235,20 @@ export function SiteHeader() {
               />
             </Link>
 
-            <div
-              ref={navItemsRef}
-              className="group/nav relative hidden items-center gap-10 md:flex md:gap-12"
-            >
+            <div className="hidden items-center gap-10 md:flex md:gap-12">
               <Link
                 href="/"
                 data-nav-tab
                 aria-current={isActive("/", true) ? "page" : undefined}
-                className={cn(navLinkClass(isActive("/", true)), "relative")}
+                className={linkClass}
               >
                 Home
-                <TabMark current={isActive("/", true)} />
               </Link>
 
-              <div className="relative" onMouseLeave={onServicesLeave}>
+              <div
+                className="relative flex items-center"
+                onMouseLeave={onServicesLeave}
+              >
                 <button
                   ref={servicesButtonRef}
                   type="button"
@@ -354,14 +259,9 @@ export function SiteHeader() {
                   onMouseEnter={openServices}
                   onClick={onServicesClick}
                   onBlur={onServicesBlur}
-                  className={cn(
-                    navLinkClass(servicesActive),
-                    servicesOpen && !servicesActive && "text-white",
-                    "relative",
-                  )}
+                  className={linkClass}
                 >
                   Services
-                  <TabMark current={servicesActive} />
                 </button>
 
                 <div
@@ -392,35 +292,26 @@ export function SiteHeader() {
                 href="/work"
                 data-nav-tab
                 aria-current={isActive("/work") ? "page" : undefined}
-                className={cn(navLinkClass(isActive("/work")), "relative")}
+                className={linkClass}
               >
                 Work
-                <TabMark current={isActive("/work")} />
               </Link>
               <Link
                 href="/about"
                 data-nav-tab
                 aria-current={isActive("/about") ? "page" : undefined}
-                className={cn(navLinkClass(isActive("/about")), "relative")}
+                className={linkClass}
               >
                 About Us
-                <TabMark current={isActive("/about")} />
               </Link>
               <Link
                 href={SERVICE_PATHS.contact}
                 data-nav-tab
                 aria-current={contactActive ? "page" : undefined}
-                className={cn(navLinkClass(contactActive), "relative")}
+                className={linkClass}
               >
                 Contact
-                <TabMark current={contactActive} />
               </Link>
-              <span
-                ref={indicatorRef}
-                aria-hidden
-                data-page-indicator
-                className="pointer-events-none absolute bottom-0 left-0 h-px w-0 rounded-full bg-white opacity-0"
-              />
             </div>
 
             <div className="flex items-center gap-5">
@@ -473,7 +364,7 @@ export function SiteHeader() {
                 href="/"
                 aria-current={isActive("/", true) ? "page" : undefined}
                 tabIndex={open ? undefined : -1}
-                className={navLinkClass(isActive("/", true))}
+                className={linkClass}
                 onClick={closeMenu}
               >
                 Home
@@ -483,7 +374,7 @@ export function SiteHeader() {
                 <button
                   type="button"
                   tabIndex={open ? undefined : -1}
-                  className={cn(navLinkClass(servicesActive), "text-left")}
+                  className={cn(linkClass, "text-left")}
                   aria-expanded={servicesOpen}
                   onClick={() => setServicesOpen((v) => !v)}
                 >
@@ -513,7 +404,7 @@ export function SiteHeader() {
                 href="/work"
                 aria-current={isActive("/work") ? "page" : undefined}
                 tabIndex={open ? undefined : -1}
-                className={navLinkClass(isActive("/work"))}
+                className={linkClass}
                 onClick={closeMenu}
               >
                 Work
@@ -522,7 +413,7 @@ export function SiteHeader() {
                 href="/about"
                 aria-current={isActive("/about") ? "page" : undefined}
                 tabIndex={open ? undefined : -1}
-                className={navLinkClass(isActive("/about"))}
+                className={linkClass}
                 onClick={closeMenu}
               >
                 About Us
@@ -531,7 +422,7 @@ export function SiteHeader() {
                 href={SERVICE_PATHS.contact}
                 aria-current={contactActive ? "page" : undefined}
                 tabIndex={open ? undefined : -1}
-                className={navLinkClass(contactActive)}
+                className={linkClass}
                 onClick={closeMenu}
               >
                 Contact
