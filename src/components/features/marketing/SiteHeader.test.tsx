@@ -136,7 +136,7 @@ describe("SiteHeader", () => {
     ).toBe(true);
   });
 
-  it("marks the current page for the traveling underline", () => {
+  it("marks the current page in the header", () => {
     render(<SiteHeader />);
 
     expect(

@@ -6,11 +6,11 @@ vi.mock("@gsap/react", () => ({
 }));
 
 describe("HomeCoverHero", () => {
-  it("uses the skyline as cover art and leaves out the device mockup", () => {
+  it("uses the late-day skyline as cover art and leaves out the device mockup", () => {
     render(<HomeCoverHero />);
 
     expect(
-      screen.getByRole("img", { name: "City skyline at dusk" }),
+      screen.getByRole("img", { name: "Downtown towers in late-day sun" }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("img", {

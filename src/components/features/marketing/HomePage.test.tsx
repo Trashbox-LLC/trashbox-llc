@@ -32,11 +32,11 @@ describe("HomePage", () => {
     expect(screen.queryByText(/aura capital/i)).not.toBeInTheDocument();
   });
 
-  it("uses the skyline cover as the homepage hero", () => {
+  it("uses the late-day skyline as the homepage hero", () => {
     render(<HomePage />);
 
     expect(
-      screen.getByRole("img", { name: "City skyline at dusk" }),
+      screen.getByRole("img", { name: "Downtown towers in late-day sun" }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("img", {

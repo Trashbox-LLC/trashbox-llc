@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { HomePage } from "@/components/features/marketing/HomePage";
+import { HomePreview } from "@/components/features/marketing/HomePreview";
 import { HOME_DESCRIPTION, HOME_TITLE, marketingMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = marketingMetadata({
@@ -10,5 +10,5 @@ export const metadata: Metadata = marketingMetadata({
 });
 
 export default function Page() {
-  return <HomePage />;
+  return <HomePreview />;
 }
