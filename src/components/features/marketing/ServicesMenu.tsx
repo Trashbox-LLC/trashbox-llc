@@ -70,9 +70,9 @@ export function ServicesMenu({
   return (
     <div
       className={cn(
-        "w-max border py-2 shadow-[0_16px_40px_rgba(0,0,0,0.35)] transition-[background-color,border-color,box-shadow,backdrop-filter] duration-200 ease-out motion-reduce:transition-none",
+        "w-max overflow-hidden rounded-xl border py-2 shadow-[0_16px_40px_rgba(0,0,0,0.35)] transition-[background-color,border-color,box-shadow,backdrop-filter] duration-200 ease-out motion-reduce:transition-none",
         open
-          ? "border-white/15 bg-black/40 backdrop-blur-xl"
+          ? "border-white/15 bg-black/40 backdrop-blur-md"
           : "border-transparent bg-black/0 shadow-none backdrop-blur-[0px]",
       )}
     >

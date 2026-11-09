@@ -8,6 +8,7 @@ export const API_BASE_URL = "https://api.trashbox.io";
 export const CONTACT_EMAIL = "contact@trashbox.io";
 export const CONTACT_PHONE_DISPLAY = "714-586-1630";
 export const CONTACT_PHONE_TEL = "tel:+17145861630";
+export const CONTACT_SMS = "sms:+17145861630";
 export const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}`;
 
 export const PLATFORM_BASE = "/platform";

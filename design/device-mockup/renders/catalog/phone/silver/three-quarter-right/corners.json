@@ -1,0 +1,31 @@
+{
+  "canvas": {
+    "width": 1920,
+    "height": 1440
+  },
+  "reflections": false,
+  "device": "phone",
+  "color": "silver",
+  "pose": "three-quarter-right",
+  "phone": {
+    "aspect": 0.4612,
+    "corners": {
+      "topLeft": [
+        793.4,
+        276.73
+      ],
+      "topRight": [
+        1159.15,
+        287.09
+      ],
+      "bottomRight": [
+        1102.47,
+        1180.32
+      ],
+      "bottomLeft": [
+        743.36,
+        1129.59
+      ]
+    }
+  }
+}

@@ -203,6 +203,14 @@ html:has(.splash-screen) {
   animation: splash-leave 1s cubic-bezier(0.76, 0, 0.24, 1) 2s forwards;
 }
 
+/* Keep page CSS motion parked until the wipe is almost finished. */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.splash-screen:not(.splash-motion-released)) .splash-screen ~ *,
+  html:has(.splash-screen:not(.splash-motion-released)) .splash-screen ~ * * {
+    animation-play-state: paused !important;
+  }
+}
+
 .splash-screen-persist,
 .splash-screen-persist .splash-mark {
   animation: none;
@@ -226,6 +234,71 @@ html:has(.splash-screen) {
   to {
     opacity: 0;
     transform: scale(0);
+  }
+}
+
+/* Glyphs mask a slow pastel wash. The first frame is the start position. */
+.headline-shader {
+  background-image:
+    radial-gradient(ellipse at 16% 45%, #f5d0fe 0%, transparent 46%),
+    radial-gradient(ellipse at 74% 42%, #7dd3fc 0%, transparent 48%),
+    radial-gradient(ellipse at 46% 78%, #c4b5fd 0%, transparent 52%),
+    linear-gradient(
+      108deg,
+      #93c5fd 0%,
+      #7dd3fc 16%,
+      #c4b5fd 38%,
+      #f9a8d4 56%,
+      #a5f3fc 74%,
+      #93c5fd 100%
+    );
+  background-size:
+    180% 180%,
+    160% 160%,
+    150% 150%,
+    150% 100%;
+  background-position:
+    8% 40%,
+    92% 55%,
+    28% 72%,
+    0% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  /* The gradient fill stops at the line box, which cuts off descenders. */
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+  animation: headline-shader 16s ease-in-out infinite;
+}
+
+@keyframes headline-shader {
+  0% {
+    background-position:
+      8% 40%,
+      92% 55%,
+      28% 72%,
+      0% 50%;
+  }
+  50% {
+    background-position:
+      88% 62%,
+      6% 34%,
+      78% 18%,
+      100% 50%;
+  }
+  100% {
+    background-position:
+      8% 40%,
+      92% 55%,
+      28% 72%,
+      0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .headline-shader {
+    animation: none;
   }
 }
 

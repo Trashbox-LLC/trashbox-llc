@@ -2,45 +2,18 @@
 
 import { type FormEvent, useState } from "react";
 import { FadeIn } from "@/components/atoms/FadeIn";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { submitContactForm } from "@/lib/contact-form";
-import {
-  CONTACT_EMAIL,
-  CONTACT_MAILTO,
-  CONTACT_PHONE_DISPLAY,
-  CONTACT_PHONE_TEL,
-} from "@/lib/sites";
 
-const SERVICE_NONE = "__none__";
-
-const SERVICE_OPTIONS = [
-  "Website",
-  "Web application",
-  "Mobile app",
-  "Systems / backend",
-  "AI integration",
-  "Ongoing development",
-  "Not sure yet",
-] as const;
+const labelClassName = "text-sm tracking-normal normal-case";
 
 export function ContactForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
     "idle",
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [service, setService] = useState(SERVICE_NONE);
-
-  const serviceValue = service === SERVICE_NONE ? "" : service;
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,7 +23,7 @@ export function ContactForm() {
     const data = new FormData(form);
     const name = String(data.get("name") || "").trim();
     const email = String(data.get("email") || "").trim();
-    const selectedService = String(data.get("service") || "").trim();
+    const phone = String(data.get("phone") || "").trim();
     const message = String(data.get("message") || "").trim();
     const honeypot = String(data.get("_honeypot") || "");
 
@@ -70,13 +43,12 @@ export function ContactForm() {
       name,
       email,
       message,
-      metadata: selectedService ? { service: selectedService } : undefined,
+      metadata: phone ? { phone } : undefined,
     });
 
     if (result.success) {
       setStatus("sent");
       form.reset();
-      setService(SERVICE_NONE);
     } else {
       setStatus("error");
       setErrorMessage(result.message);
@@ -85,7 +57,7 @@ export function ContactForm() {
 
   return (
     <FadeIn>
-      <form className="mx-auto max-w-4xl space-y-12" onSubmit={onSubmit}>
+      <form className="space-y-8" onSubmit={onSubmit}>
         <input
           type="text"
           name="_honeypot"
@@ -94,57 +66,52 @@ export function ContactForm() {
           aria-hidden="true"
           className="absolute -left-[9999px] h-0 w-0 opacity-0"
         />
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
-          <div>
-            <Label htmlFor="contact-name">Name</Label>
-            <Input
-              id="contact-name"
-              name="name"
-              placeholder="Your name"
-              type="text"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="contact-email">Email</Label>
-            <Input
-              id="contact-email"
-              name="email"
-              placeholder="you@company.com"
-              type="email"
-              required
-            />
-          </div>
+        <div>
+          <Label htmlFor="contact-name" className={labelClassName}>
+            Name
+          </Label>
+          <Input
+            id="contact-name"
+            name="name"
+            placeholder="Jane Smith"
+            type="text"
+            autoComplete="name"
+            required
+          />
         </div>
         <div>
-          <Label htmlFor="contact-service">What do you need?</Label>
-          <input type="hidden" name="service" value={serviceValue} />
-          <Select value={service} onValueChange={setService}>
-            <SelectTrigger
-              id="contact-service"
-              aria-label="What do you need?"
-              className="py-4"
-            >
-              <SelectValue placeholder="Select an option" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={SERVICE_NONE} disabled className="hidden">
-                Select an option
-              </SelectItem>
-              {SERVICE_OPTIONS.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label htmlFor="contact-email" className={labelClassName}>
+            Email
+          </Label>
+          <Input
+            id="contact-email"
+            name="email"
+            placeholder="jane@example.com"
+            type="email"
+            autoComplete="email"
+            required
+          />
         </div>
         <div>
-          <Label htmlFor="contact-message">Project details</Label>
+          <Label htmlFor="contact-phone" className={labelClassName}>
+            Phone number
+          </Label>
+          <Input
+            id="contact-phone"
+            name="phone"
+            placeholder="(555) 555-0100"
+            type="tel"
+            autoComplete="tel"
+          />
+        </div>
+        <div>
+          <Label htmlFor="contact-message" className={labelClassName}>
+            Message details
+          </Label>
           <Textarea
             id="contact-message"
             name="message"
-            placeholder="Share a short brief, timeline, or goals…"
+            placeholder="How can we help?"
             rows={4}
             required
           />
@@ -157,24 +124,14 @@ export function ContactForm() {
         {status === "error" && errorMessage && (
           <p className="text-sm text-red-300">{errorMessage}</p>
         )}
-        <div className="flex flex-col gap-6 pt-8 sm:flex-row sm:items-center sm:justify-between">
-          <Button type="submit" size="xl" disabled={status === "sending"}>
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={status === "sending"}
+            className="font-headline inline-flex items-center justify-center rounded-md bg-white px-6 py-3 text-base font-medium tracking-tight text-black transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-white/50 disabled:pointer-events-none disabled:opacity-40"
+          >
             {status === "sending" ? "Sending…" : "Send message"}
-          </Button>
-          <div className="flex flex-col gap-2 sm:items-end">
-            <a
-              href={CONTACT_PHONE_TEL}
-              className="text-sm text-white/70 transition-colors hover:text-white"
-            >
-              {CONTACT_PHONE_DISPLAY}
-            </a>
-            <a
-              href={CONTACT_MAILTO}
-              className="text-sm text-white/50 transition-colors hover:text-white"
-            >
-              {CONTACT_EMAIL}
-            </a>
-          </div>
+          </button>
         </div>
       </form>
     </FadeIn>

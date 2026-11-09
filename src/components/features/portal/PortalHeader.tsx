@@ -237,7 +237,7 @@ export function PortalHeader() {
     >
       <div
         className={cn(
-          "border-b backdrop-blur-xl transition-colors duration-300",
+          "border-b pt-[env(safe-area-inset-top)] backdrop-blur-xl transition-colors duration-300",
           scrolled
             ? "bg-background/90 border-white/10"
             : "border-outline-variant/10 bg-background/80",

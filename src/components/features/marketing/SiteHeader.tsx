@@ -298,12 +298,18 @@ export function SiteHeader() {
   return (
     <nav className="fixed top-0 z-50 w-full">
       <div ref={navRef} style={headerEnterStyle}>
-        <div ref={barRef} className={cn("relative", open && "bg-background")}>
+        <div
+          ref={barRef}
+          className={cn(
+            "relative pt-[env(safe-area-inset-top)]",
+            open && "bg-background",
+          )}
+        >
           <div
             ref={scrimRef}
             data-header-scrim
             aria-hidden
-            className="pointer-events-none absolute inset-0 bg-black/75 backdrop-blur-xl"
+            className="pointer-events-none absolute inset-0 bg-black/40 backdrop-blur-md"
             style={{ opacity: 0 }}
           />
           <div className="relative mx-auto flex max-w-screen-2xl items-center justify-between px-6 py-2 md:px-8">
@@ -418,17 +424,11 @@ export function SiteHeader() {
             </div>
 
             <div className="flex items-center gap-5">
-              <a
-                href={CONTACT_PHONE_TEL}
-                className="font-headline hidden text-sm tracking-tight text-white/60 transition-colors hover:text-white md:inline"
-              >
-                {CONTACT_PHONE_DISPLAY}
-              </a>
               <Button
                 asChild
                 className="hidden py-2 tracking-tight normal-case active:scale-95 md:inline-flex"
               >
-                <Link href={SERVICE_PATHS.contact}>Contact</Link>
+                <a href={CONTACT_PHONE_TEL}>{CONTACT_PHONE_DISPLAY}</a>
               </Button>
               <Button
                 type="button"
@@ -538,13 +538,12 @@ export function SiteHeader() {
               </Link>
 
               <Button asChild className="mt-4 tracking-tight normal-case">
-                <Link
-                  href={SERVICE_PATHS.contact}
+                <a
+                  href={CONTACT_PHONE_TEL}
                   tabIndex={open ? undefined : -1}
-                  onClick={closeMenu}
                 >
-                  Contact
-                </Link>
+                  {CONTACT_PHONE_DISPLAY}
+                </a>
               </Button>
             </div>
           </div>

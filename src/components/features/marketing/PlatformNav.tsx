@@ -65,7 +65,7 @@ export function PlatformNav() {
     <nav className="fixed top-0 z-50 w-full" aria-label="Trashbox CRM">
       <div
         className={cn(
-          "border-b backdrop-blur-xl transition-colors duration-300",
+          "border-b pt-[env(safe-area-inset-top)] backdrop-blur-xl transition-colors duration-300",
           scrolled && !open
             ? "bg-background/75 border-white/10"
             : "border-transparent bg-transparent",

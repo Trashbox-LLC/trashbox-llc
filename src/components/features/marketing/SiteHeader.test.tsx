@@ -129,10 +129,11 @@ describe("SiteHeader", () => {
   it("calls the site number from the header", () => {
     render(<SiteHeader />);
 
-    expect(screen.getByRole("link", { name: "714-586-1630" })).toHaveAttribute(
-      "href",
-      "tel:+17145861630",
-    );
+    const phones = screen.getAllByRole("link", { name: "714-586-1630" });
+    expect(phones.length).toBeGreaterThan(0);
+    expect(
+      phones.every((link) => link.getAttribute("href") === "tel:+17145861630"),
+    ).toBe(true);
   });
 
   it("marks the current page for the traveling underline", () => {
