@@ -1,5 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { FadeIn } from "@/components/atoms/FadeIn";
+import { SPLASH_LEAVE_ANIMATION } from "@/components/features/marketing/SplashScreen";
 import { MarketingLayout } from "./MarketingLayout";
 
 const usePathname = vi.fn(() => "/");
@@ -15,6 +17,17 @@ vi.mock("@/components/features/marketing/SiteHeader", () => ({
 vi.mock("@/components/features/marketing/SiteFooter", () => ({
   SiteFooter: () => <footer>Site footer</footer>,
 }));
+
+function finishSplash(): void {
+  const splash = screen.getByRole("status", { name: "Loading" });
+  const event = new Event("animationend", { bubbles: true });
+  Object.defineProperty(event, "animationName", {
+    value: SPLASH_LEAVE_ANIMATION,
+  });
+  act(() => {
+    splash.dispatchEvent(event);
+  });
+}
 
 describe("MarketingLayout", () => {
   beforeEach(() => {
@@ -61,6 +74,45 @@ describe("MarketingLayout", () => {
     expect(
       screen.queryByRole("status", { name: "Loading" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("holds entrance motion until the loading screen finishes", async () => {
+    render(
+      <MarketingLayout>
+        <FadeIn>
+          <p>Intro copy</p>
+        </FadeIn>
+      </MarketingLayout>,
+    );
+
+    const intro = screen.getByText("Intro copy").parentElement;
+    expect(intro).toHaveStyle({ opacity: "0" });
+
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    expect(intro).toHaveStyle({ opacity: "0" });
+
+    finishSplash();
+
+    await waitFor(() => {
+      expect(intro).not.toHaveStyle({ opacity: "0" });
+    });
+  });
+
+  it("plays entrance motion immediately on portal routes", async () => {
+    usePathname.mockReturnValue("/portal/inbox/");
+
+    render(
+      <MarketingLayout>
+        <FadeIn>
+          <p>Portal intro</p>
+        </FadeIn>
+      </MarketingLayout>,
+    );
+
+    const intro = screen.getByText("Portal intro").parentElement;
+    await waitFor(() => {
+      expect(intro).not.toHaveStyle({ opacity: "0" });
+    });
   });
 
   it("omits the loading screen on portal routes", () => {

@@ -203,6 +203,14 @@ html:has(.splash-screen) {
   animation: splash-leave 1s cubic-bezier(0.76, 0, 0.24, 1) 2s forwards;
 }
 
+/* Keep page CSS motion parked until the wipe is almost finished. */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.splash-screen:not(.splash-motion-released)) .splash-screen ~ *,
+  html:has(.splash-screen:not(.splash-motion-released)) .splash-screen ~ * * {
+    animation-play-state: paused !important;
+  }
+}
+
 .splash-screen-persist,
 .splash-screen-persist .splash-mark {
   animation: none;

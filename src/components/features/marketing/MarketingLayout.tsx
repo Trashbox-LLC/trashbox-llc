@@ -1,10 +1,16 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { SiteFooter } from "@/components/features/marketing/SiteFooter";
 import { SiteHeader } from "@/components/features/marketing/SiteHeader";
 import { SplashScreen } from "@/components/features/marketing/SplashScreen";
+import { ScrollTrigger } from "@/lib/gsap-client";
+import {
+  holdPageMotion,
+  pageMotionHeld,
+  prefersReducedMotion,
+} from "@/lib/page-motion";
 import {
   isPortalWorkspacePath,
   subscribePortalNavigate,
@@ -15,8 +21,8 @@ type MarketingLayoutProps = {
   children: React.ReactNode;
 };
 
-function isLogoPreview(path: string): boolean {
-  return path.replace(/\/$/, "") === "/logo-preview";
+function isLogoPreview(path: string | null | undefined): boolean {
+  return path?.replace(/\/$/, "") === "/logo-preview";
 }
 
 /** Marketing chrome; portal and platform routes use their own headers. */
@@ -24,6 +30,16 @@ export function MarketingLayout({ children }: MarketingLayoutProps) {
   const nextPath = usePathname();
   const [pathname, setPathname] = useState(nextPath);
   const [splashDismissed, setSplashDismissed] = useState(false);
+  const [motionReleased, setMotionReleased] = useState(false);
+  const motionHeld = pageMotionHeld({
+    motionReleased,
+    portal: isPortalPath(pathname),
+    logoPreview: isLogoPreview(pathname),
+    reducedMotion: prefersReducedMotion(),
+  });
+  const wasHeld = useRef(motionHeld);
+  // Pause before child layout effects create entrance tweens.
+  holdPageMotion(motionHeld);
 
   useEffect(() => {
     const win = window.location.pathname;
@@ -36,6 +52,14 @@ export function MarketingLayout({ children }: MarketingLayoutProps) {
   useEffect(() => {
     if (isPortalPath(pathname)) setSplashDismissed(true);
   }, [pathname]);
+
+  useEffect(() => () => holdPageMotion(false), []);
+
+  useLayoutEffect(() => {
+    const released = wasHeld.current && !motionHeld;
+    wasHeld.current = motionHeld;
+    if (released) ScrollTrigger.refresh();
+  }, [motionHeld]);
 
   if (isPortalPath(pathname)) {
     return <div className="flex min-h-dvh flex-col">{children}</div>;
@@ -54,7 +78,13 @@ export function MarketingLayout({ children }: MarketingLayoutProps) {
   return (
     <>
       {splashDismissed || isLogoPreview(pathname) ? null : (
-        <SplashScreen onDone={() => setSplashDismissed(true)} />
+        <SplashScreen
+          onReveal={() => setMotionReleased(true)}
+          onDone={() => {
+            setMotionReleased(true);
+            setSplashDismissed(true);
+          }}
+        />
       )}
       {shell}
     </>

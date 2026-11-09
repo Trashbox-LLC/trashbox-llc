@@ -2,6 +2,10 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import {
+  cssDurationMs,
+  pageMotionReleaseDelay,
+} from "@/lib/page-motion";
 import { cn } from "@/lib/utils";
 
 export const SPLASH_LEAVE_ANIMATION = "splash-leave";
@@ -11,6 +15,8 @@ const LOGO = "/images/trashbox-logo-outlined.svg";
 type SplashScreenProps = {
   /** Loop the fill and keep the screen up. Used by Storybook. */
   persist?: boolean;
+  /** Page underneath may start while this screen is still leaving. */
+  onReveal?: () => void;
   onDone?: () => void;
 };
 
@@ -23,16 +29,32 @@ function prefersReducedMotion(): boolean {
 }
 
 /** First-paint cover: grey outlined mark fills white, then the screen wipes away. */
-export function SplashScreen({ persist = false, onDone }: SplashScreenProps) {
+export function SplashScreen({
+  persist = false,
+  onReveal,
+  onDone,
+}: SplashScreenProps) {
   const [gone, setGone] = useState(false);
+  const [motionReleased, setMotionReleased] = useState(false);
   const finished = useRef(false);
+  const revealed = useRef(false);
   const screenRef = useRef<HTMLDivElement>(null);
+  const onRevealRef = useRef(onReveal);
   const onDoneRef = useRef(onDone);
+  onRevealRef.current = onReveal;
   onDoneRef.current = onDone;
+
+  function releaseMotion(): void {
+    if (revealed.current) return;
+    revealed.current = true;
+    setMotionReleased(true);
+    onRevealRef.current?.();
+  }
 
   useEffect(() => {
     if (persist || !prefersReducedMotion()) return;
     finished.current = true;
+    releaseMotion();
     onDoneRef.current?.();
     setGone(true);
   }, [persist]);
@@ -40,18 +62,36 @@ export function SplashScreen({ persist = false, onDone }: SplashScreenProps) {
   useEffect(() => {
     const screen = screenRef.current;
     if (!screen || persist) return;
+    let releaseTimer = 0;
+
+    function onAnimationStart(event: AnimationEvent): void {
+      if (event.target !== screen) return;
+      if (event.animationName !== SPLASH_LEAVE_ANIMATION) return;
+      const duration = cssDurationMs(getComputedStyle(screen).animationDuration);
+      releaseTimer = window.setTimeout(
+        releaseMotion,
+        pageMotionReleaseDelay(duration),
+      );
+    }
 
     function onAnimationEnd(event: AnimationEvent): void {
       if (finished.current) return;
       if (event.target !== screen) return;
       if (event.animationName !== SPLASH_LEAVE_ANIMATION) return;
       finished.current = true;
+      window.clearTimeout(releaseTimer);
+      releaseMotion();
       onDoneRef.current?.();
       setGone(true);
     }
 
+    screen.addEventListener("animationstart", onAnimationStart);
     screen.addEventListener("animationend", onAnimationEnd);
-    return () => screen.removeEventListener("animationend", onAnimationEnd);
+    return () => {
+      window.clearTimeout(releaseTimer);
+      screen.removeEventListener("animationstart", onAnimationStart);
+      screen.removeEventListener("animationend", onAnimationEnd);
+    };
   }, [persist]);
 
   if (gone) return null;
@@ -64,6 +104,7 @@ export function SplashScreen({ persist = false, onDone }: SplashScreenProps) {
       aria-live="polite"
       className={cn(
         "splash-screen bg-background fixed inset-0 z-[80] flex items-center justify-center",
+        motionReleased && "splash-motion-released",
         persist && "splash-screen-persist",
       )}
     >
