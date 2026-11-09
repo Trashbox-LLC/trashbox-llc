@@ -8,10 +8,20 @@ import { HomeMobile } from "@/components/features/marketing/HomeMobile";
 import { HomeStats } from "@/components/features/marketing/HomeStats";
 import { HomeWebsites } from "@/components/features/marketing/HomeWebsites";
 
-export function HomePage({ hero = "cover" }: { hero?: "devices" | "cover" }) {
+export function HomePage({
+  hero = "cover",
+  headline = "gradient",
+}: {
+  hero?: "devices" | "cover";
+  headline?: "gradient" | "solid";
+}) {
   return (
     <>
-      {hero === "cover" ? <HomeCoverHero /> : <HomeHero />}
+      {hero === "cover" ? (
+        <HomeCoverHero headline={headline} />
+      ) : (
+        <HomeHero />
+      )}
       <HomeClients />
       <HomeStats />
       <HomeWebsites />

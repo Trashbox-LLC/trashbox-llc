@@ -6,6 +6,7 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap-client";
 import { SERVICE_PATHS } from "@/lib/sites";
+import { cn } from "@/lib/utils";
 
 /** Match Reveal: hide before paint so client navigations don't flash then snap. */
 const heroItemStyle = {
@@ -20,7 +21,11 @@ const COVER = {
     "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAADQAwCdASoUAA4APzmGuVOvKSWisAgB4CcJbACdH8ADBsmfbMk3vdgA/j8r4/Prcul/Yt+3eIh/KiPVYw1vrSQ3PqUzzJcp2/0mAbs9xc3SyjxE+zXB8AAA",
 } as const;
 
-export function HomeCoverHero() {
+export function HomeCoverHero({
+  headline = "gradient",
+}: {
+  headline?: "gradient" | "solid";
+} = {}) {
   const heroRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -82,7 +87,11 @@ export function HomeCoverHero() {
           className="font-headline mt-3 shrink-0 text-[clamp(2.75rem,6.6vw,6.5rem)] leading-[1.02] font-bold tracking-tight text-balance text-white"
         >
           <span className="block">Made for professionals.</span>
-          <span className="headline-shader block">Built by professionals.</span>
+          <span
+            className={cn("block", headline === "gradient" && "headline-shader")}
+          >
+            Built by professionals.
+          </span>
         </h1>
 
         <div className="mt-8 flex justify-center">
