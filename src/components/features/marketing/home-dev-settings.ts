@@ -43,11 +43,11 @@ export interface HomeDevSettings {
 }
 
 export const DEFAULT_KICKER_SETTINGS: HomeKickerSettings = {
-  size: "base",
+  size: "xl",
   weight: "regular",
   color: "soft",
-  tracking: "normal",
-  case: "text",
+  tracking: "tight",
+  case: "caps",
 };
 
 export const DEFAULT_HOME_DEV_SETTINGS: HomeDevSettings = {
@@ -114,12 +114,20 @@ function oneOf<T extends string>(
   return options.some((option) => option === value) ? (value as T) : fallback;
 }
 
+const PREVIOUS_KICKER_DEFAULT: HomeKickerSettings = {
+  size: "base",
+  weight: "regular",
+  color: "soft",
+  tracking: "normal",
+  case: "text",
+};
+
 function kickerFrom(value: unknown): HomeKickerSettings {
   const record =
     value && typeof value === "object"
       ? (value as Record<string, unknown>)
       : {};
-  return {
+  const kicker: HomeKickerSettings = {
     size: oneOf(KICKER_SIZES, record.size, DEFAULT_KICKER_SETTINGS.size),
     weight: oneOf(
       KICKER_WEIGHTS,
@@ -134,6 +142,10 @@ function kickerFrom(value: unknown): HomeKickerSettings {
     ),
     case: oneOf(KICKER_CASES, record.case, DEFAULT_KICKER_SETTINGS.case),
   };
+  const matchesPreviousDefault = (
+    Object.keys(PREVIOUS_KICKER_DEFAULT) as (keyof HomeKickerSettings)[]
+  ).every((key) => kicker[key] === PREVIOUS_KICKER_DEFAULT[key]);
+  return matchesPreviousDefault ? DEFAULT_KICKER_SETTINGS : kicker;
 }
 
 export function parseHomeDevSettings(

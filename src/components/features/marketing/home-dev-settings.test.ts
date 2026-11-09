@@ -44,6 +44,32 @@ describe("parseHomeDevSettings", () => {
     });
   });
 
+  it("replaces the previous eyebrow default when that is what was saved", () => {
+    expect(
+      parseHomeDevSettings(
+        JSON.stringify({
+          kicker: {
+            size: "base",
+            weight: "regular",
+            color: "soft",
+            tracking: "normal",
+            case: "text",
+          },
+        }),
+      ).kicker,
+    ).toEqual(DEFAULT_KICKER_SETTINGS);
+  });
+
+  it("starts the eyebrow in full caps at extra large size with tight spacing", () => {
+    expect(DEFAULT_KICKER_SETTINGS).toEqual({
+      size: "xl",
+      weight: "regular",
+      color: "soft",
+      tracking: "tight",
+      case: "caps",
+    });
+  });
+
   it("keeps a saved header color and ignores an unknown one", () => {
     expect(parseHomeDevSettings(JSON.stringify({ header: "white" })).header).toBe(
       "white",
