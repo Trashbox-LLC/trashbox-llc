@@ -1,3 +1,4 @@
+import { HomeAppIconFans } from "@/components/features/marketing/HomeAppIconFans";
 import { HomeClients } from "@/components/features/marketing/HomeClients";
 import { HomeCoverHero } from "@/components/features/marketing/HomeCoverHero";
 import { HomeCta } from "@/components/features/marketing/HomeCta";
@@ -15,6 +16,7 @@ export function HomePage({ hero = "cover" }: { hero?: "devices" | "cover" }) {
       <HomeStats />
       <HomeWebsites />
       <HomeMobile />
+      <HomeAppIconFans />
       {/* Placeholder Google reviews. Uncomment when real reviews replace the stand-ins.
       <HomeReviews />
       */}
